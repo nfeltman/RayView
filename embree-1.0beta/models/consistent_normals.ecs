@@ -1,0 +1,5 @@
+-i consistent_normals.xml
+-vp -19.2301 379.885 219.804 
+-vi 0 100 0 
+-vu 0.068444 0.619094 -0.782329
+-renderer pathtracer

@@ -3,7 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "common\common.vcxproj", "{ED848C9A-C161-4036-8DF7-DB169BCB81BC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app", "app\app.vcxproj", "{ED848C9A-C161-4036-8DF7-FB169BCB81BC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "embree", "app\app.vcxproj", "{ED848C9A-C161-4036-8DF7-FB169BCB81BC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ED858C9A-C161-4036-8DF7-EB169BCB81BC} = {ED858C9A-C161-4036-8DF7-EB169BCB81BC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "renderer", "renderer\renderer.vcxproj", "{ED848C9A-C161-4036-8DF7-EB169BCB81BC}"
 EndProject

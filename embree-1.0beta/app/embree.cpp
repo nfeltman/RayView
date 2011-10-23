@@ -214,6 +214,7 @@ namespace embree
     Ref<Device::RTCamera> camera = createCamera(AffineSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp));
     Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>(), fileName);
     g_device->rtRenderFrame(g_renderer,camera,scene,g_frameBuffer);
+    g_rendered = true;
   }
 
   static void parseCommandLine(Ref<ParseStream> cin, const FileName& path)
@@ -433,6 +434,9 @@ namespace embree
         std::cout << std::endl;
         std::cout << "-o file" << std::endl;
         std::cout << "  Renders and outputs the image to the file." << std::endl;
+        std::cout << std::endl;
+        std::cout << "-savetrace file" << std::endl;
+        std::cout << "  Renders and saves the ray trace data to the file." << std::endl;
         std::cout << std::endl;
         std::cout << "-display" << std::endl;
         std::cout << "  Interactively displays the rendering into a window." << std::endl;

@@ -11,12 +11,14 @@ namespace embree
 		public Intersector
 	{
 	public:
-		PrintingTraverser(const Ref<Intersector >& sub, const FileName file) : subIntersector(sub){}
+		PrintingTraverser(const Ref<Intersector >& sub, const FileName& file);
+		~PrintingTraverser();
 		void intersect(const Ray& ray, Hit& hit) const;
 		bool occluded (const Ray& ray) const;
 	
 	private:
 		Ref<Intersector> subIntersector;
+		FILE* file;
 	};
 }
 

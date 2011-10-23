@@ -21,12 +21,13 @@
 #include "bvh2/bvh2_traverser.h"
 #include "bvh4/bvh4_builder.h"
 #include "bvh4/bvh4_traverser.h"
+#include "PrintingTraverser.h"
 
 #include <string>
 
 namespace embree
 {
-  Intersector* rtcCreateAccel(const char* type, const BuildTriangle* triangles, size_t numTriangles)
+  Intersector* rtcCreateAccelNoTrace(const char* type, const BuildTriangle* triangles, size_t numTriangles)
   {
     if      (!strcmp(type,"default"     )) return new BVH4Traverser(BVH4Builder::build(triangles,numTriangles));
     else if (!strcmp(type,"bvh2"        )) return new BVH2Traverser(BVH2Builder::build(triangles,numTriangles));
@@ -40,5 +41,12 @@ namespace embree
       throw std::runtime_error("invalid acceleration structure: "+std::string(type));
       return NULL;
     }
+  }
+  Intersector* rtcCreateAccel(const char* type, const FileName& traceFile, const BuildTriangle* triangles, size_t numTriangles)
+  {
+	  Intersector *sansTracer = rtcCreateAccelNoTrace(type,triangles,numTriangles);
+	  if(traceFile.str().length()==0)
+		  return sansTracer;
+	  return new PrintingTraverser(sansTracer, traceFile);
   }
 }

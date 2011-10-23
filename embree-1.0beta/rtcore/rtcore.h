@@ -17,6 +17,7 @@
 #ifndef __EMBREE_RTCORE_H__
 #define __EMBREE_RTCORE_H__
 
+#include "sys/filename.h"
 #include "ray.h"
 #include "hit.h"
 
@@ -74,7 +75,7 @@ namespace embree
   };
 
   /*! Creates acceleration structure of specified type. */
-  Intersector* rtcCreateAccel(const char* type, const BuildTriangle* triangles, size_t numTriangles);
+  Intersector* rtcCreateAccel(const char* type, const FileName& traceFile, const BuildTriangle* triangles, size_t numTriangles);
 }
 
 #endif

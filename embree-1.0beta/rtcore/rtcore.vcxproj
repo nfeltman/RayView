@@ -224,6 +224,7 @@
     <ClInclude Include="common\spatial_binning.h" />
     <ClInclude Include="common\stack_item.h" />
     <ClInclude Include="hit.h" />
+    <ClInclude Include="PrintingTraverser.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="rtcore.h" />
   </ItemGroup>
@@ -240,6 +241,7 @@
     <ClCompile Include="common\object_binning.cpp" />
     <ClCompile Include="common\object_binning_parallel.cpp" />
     <ClCompile Include="common\spatial_binning.cpp" />
+    <ClCompile Include="PrintingTraverser.cpp" />
     <ClCompile Include="rtcore.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

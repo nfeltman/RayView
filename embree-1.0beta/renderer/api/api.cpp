@@ -563,7 +563,7 @@ namespace embree
     return (RTPrimitive) new PrimitiveHandle(light->instance,space);
   }
 
-  RT_API_SYMBOL RTScene rtNewScene(const char* type, RTPrimitive* prims, size_t size)
+  RT_API_SYMBOL RTScene rtNewScene(const char* type, const FileName& traceFile, RTPrimitive* prims, size_t size)
   {
     Lock<MutexSys> lock(*mutex);
     verifyInitialized();
@@ -627,7 +627,7 @@ namespace embree
     }
 
     /* build acceleration structure */
-    scene->accel = rtcCreateAccel(type, (const BuildTriangle*)triangles.begin(),triangles.size());
+    scene->accel = rtcCreateAccel(type, traceFile, (const BuildTriangle*)triangles.begin(),triangles.size());
 
     return (RTScene) new ConstHandle<BackendScene>(scene);
   }

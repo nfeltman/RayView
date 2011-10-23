@@ -18,6 +18,7 @@
 #define __EMBREE_API_H__
 
 #include <stddef.h>
+#include "sys/filename.h"
 
 #ifndef RT_API_SYMBOL
 #define RT_API_SYMBOL extern "C"  //!< makes API functions use C name mangling
@@ -166,7 +167,7 @@ namespace embree
    *  \param prims is a pointer to an array of primitives
    *  \param size is the number of primitives in that array \returns
    *  scene handle */
-  RT_API_SYMBOL RTScene rtNewScene(const char* type, RTPrimitive* prims, size_t size);
+  RT_API_SYMBOL RTScene rtNewScene(const char* type, const FileName& traceFile, RTPrimitive* prims, size_t size);
 
   /*! Creates a new renderer. \param type is the type of renderer to
    *  create (e.g. "debug", "pathtracer"). \returns renderer handle */

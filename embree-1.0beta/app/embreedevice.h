@@ -160,7 +160,7 @@ namespace embree
     Ref<RTPrimitive> rtNewPrimitive(const Ref<RTLight>& light, const AffineSpace& transform);
 
     /** create a new scene. */
-    Ref<RTScene> rtNewScene(const char* type, const FileName traceFile, Ref<RTPrimitive>* prims, size_t size);
+    Ref<RTScene> rtNewScene(const char* type, const FileName& traceFile, Ref<RTPrimitive>* prims, size_t size);
 
     /** creates a renderer */
     Ref<RTRenderer> rtNewRenderer(const char* type);

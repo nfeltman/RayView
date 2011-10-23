@@ -201,7 +201,7 @@ namespace embree
       prims.push_back(device->rtNewPrimitive(createRandomShape(device,s),createRandomMaterial(device),AffineSpace(one)));
     }
 
-    return device->rtNewScene(g_accel.c_str(),&prims[0],prims.size());
+    return device->rtNewScene(g_accel.c_str(), FileName(""),&prims[0],prims.size());
   }
 }
 

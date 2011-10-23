@@ -110,7 +110,7 @@ namespace embree
     return texture_map[fileName.str()] = texture;
   }
 
-  Ref<Device::RTScene> createScene(const Ref<Scene>& root)
+  Ref<Device::RTScene> createScene(const Ref<Scene>& root, const FileName traceFile)
   {
     std::vector<Ref<Device::RTPrimitive> > prims;
     for (Scene::iterator i=root->begin(); i!=root->end(); i++)
@@ -122,7 +122,7 @@ namespace embree
       else
         throw std::runtime_error("invalid scene graph leaf node");
     }
-  Ref<Device::RTScene> scene = g_device->rtNewScene(g_accel.c_str(),prims.size() == 0 ? NULL : &prims[0],prims.size());
+  Ref<Device::RTScene> scene = g_device->rtNewScene(g_accel.c_str(),traceFile, prims.size() == 0 ? NULL : &prims[0],prims.size());
     return scene;
   }
 
@@ -184,7 +184,7 @@ namespace embree
 
     OrthonormalSpace camSpace = OrthonormalSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp);
     float speed = 0.02f * length(g_camLookAt-g_camPos);
-    GLUTDisplay(camSpace,speed,createScene(g_scene.cast<Scene>()));
+    GLUTDisplay(camSpace,speed,createScene(g_scene.cast<Scene>(), FileName("")));
     g_rendered = true;
   }
 
@@ -194,7 +194,7 @@ namespace embree
 
     /* render */
     Ref<Device::RTCamera> camera = createCamera(AffineSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp));
-    Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>());
+    Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>(), FileName(""));
     g_device->rtRenderFrame(g_renderer,camera,scene,g_frameBuffer);
 
     /* store to disk */
@@ -204,6 +204,16 @@ namespace embree
     storeImage(image.cast<Image>(),fileName);
     g_device->rtUnmapFrameBuffer(g_frameBuffer);
     g_rendered = true;
+  }
+
+  static void traceMode(const FileName& fileName)
+  {
+    if (!g_renderer) throw std::runtime_error("no renderer set");
+
+    /* render */
+    Ref<Device::RTCamera> camera = createCamera(AffineSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp));
+    Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>(), fileName);
+    g_device->rtRenderFrame(g_renderer,camera,scene,g_frameBuffer);
   }
 
   static void parseCommandLine(Ref<ParseStream> cin, const FileName& path)
@@ -382,6 +392,10 @@ namespace embree
       /* render frame */
       else if (tag == "-o")
         outputMode(path + cin->getFileName());
+	  	  
+      /* save ray traces */
+      else if (tag == "-savetrace")
+        traceMode(path + cin->getFileName());
 
       /* display image */
       else if (tag == "-display")

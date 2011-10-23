@@ -91,10 +91,10 @@ namespace embree
   }
 
   /** create a new scene. */
-  Ref<Device::RTScene> Device::rtNewScene(const char* type, Ref<RTPrimitive>* prims_i, size_t size) {
+  Ref<Device::RTScene> Device::rtNewScene(const char* type, const FileName traceFile, Ref<RTPrimitive>* prims_i, size_t size) {
     embree::RTPrimitive* prims = new embree::RTPrimitive[size];
     for (size_t i=0; i<size; i++) prims[i] = (embree::RTPrimitive) prims_i[i]->handle;
-    Ref<Device::RTScene> scene = new Device::RTScene (this,embree::rtNewScene(type,prims,size));
+    Ref<Device::RTScene> scene = new Device::RTScene (this,embree::rtNewScene(type,traceFile,prims,size));
     delete[] prims; prims = NULL;
     return scene;
   }

@@ -18,6 +18,7 @@
 #define __EMBREE_DEVICE_H__
 
 #include "sys/platform.h"
+#include "sys/filename.h"
 #include "math/math.h"
 #include "math/vec2.h"
 #include "math/vec3.h"
@@ -159,7 +160,7 @@ namespace embree
     Ref<RTPrimitive> rtNewPrimitive(const Ref<RTLight>& light, const AffineSpace& transform);
 
     /** create a new scene. */
-    Ref<RTScene> rtNewScene(const char* type, Ref<RTPrimitive>* prims, size_t size);
+    Ref<RTScene> rtNewScene(const char* type, const FileName traceFile, Ref<RTPrimitive>* prims, size_t size);
 
     /** creates a renderer */
     Ref<RTRenderer> rtNewRenderer(const char* type);

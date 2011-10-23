@@ -221,6 +221,9 @@
       <Project>{ed848c9a-c161-4036-8df7-db169bcb81bc}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\rtcore\rtcore.vcxproj">
+      <Project>{ed858c9a-c161-4036-8df7-eb169bcb81bc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="embree.cpp" />

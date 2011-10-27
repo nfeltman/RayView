@@ -38,22 +38,22 @@ namespace RayVisualizer{
         {
             base.OnLoad(e);
 
-            RaySet rays = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\evilTrace.txt", FileMode.Open, FileAccess.Read));
+            RaySet rays = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\hugeTrace.txt", FileMode.Open, FileAccess.Read));
             rayArray = new Vector3[rays.Rays.Count * 2];
             for(int k=0;k<rays.Rays.Count;k++)
             {
                 rayArray[k * 2 + 0] = new Vector3(rays.Rays[k].Origin.x, rays.Rays[k].Origin.y, rays.Rays[k].Origin.z);
-                rayArray[k * 2 + 1] = new Vector3(rays.Rays[k].Direction.x, rays.Rays[k].Direction.y, rays.Rays[k].Direction.z)*20+rayArray[k*2];
+                rayArray[k * 2 + 1] = new Vector3(rays.Rays[k].End.x, rays.Rays[k].End.y, rays.Rays[k].End.z)+rayArray[k*2];
             }
 
             location = new Vector3(-4, 0, -4);
             forward = new Vector3(1, 0, 0);
             right = new Vector3(0, 0, 1);
 
-            GL.ClearColor(Color.SkyBlue);
-            GL.Enable(EnableCap.DepthTest);
+            GL.ClearColor(Color.LightGray);
+            //GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.DstColor);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
         }
         protected override void OnResize(EventArgs e)
         {
@@ -123,14 +123,14 @@ namespace RayVisualizer{
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref lookat);
 
-            GL.Color4(.5,0,0,.25);
+            GL.Color4(.3,0,0,.1);
             GL.Begin(BeginMode.Lines);
             foreach(Vector3 v in rayArray)
                 GL.Vertex3(v);
             GL.End();
 
             this.SwapBuffers();
-            Thread.Sleep(1);
+            Thread.Sleep(10);
         }
 
         [STAThread]

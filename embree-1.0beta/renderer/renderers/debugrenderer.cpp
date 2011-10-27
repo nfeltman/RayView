@@ -56,7 +56,7 @@ namespace embree
           {
             /*! shoot current ray */
             new (&hit) DifferentialGeometry;
-            scene->accel->intersect(ray,hit);
+            scene->accel->intersect(ray,hit,0);
             scene->postIntersect(ray,hit);
             numRays++;
             if (!hit) break;

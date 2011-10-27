@@ -878,7 +878,7 @@ namespace embree
     {
       const RTRay& r = rays[i];
       Ray ray(Vec3f(r.org.x,r.org.y,r.org.z),Vec3f(r.dir.x,r.dir.y,r.dir.z),r._near,r._far);
-      Hit hit; scene->instance->accel->intersect(ray,hit);
+      Hit hit; scene->instance->accel->intersect(ray,hit,0);
       if (hit.id0 == -1) { hits[i].prim = -1; hits[i].dist = hit.t; }
       else { hits[i].prim = (int)scene->instance->geometry[hit.id0]->id; hits[i].dist = hit.t; }
     }
@@ -896,7 +896,7 @@ namespace embree
     /* trace ray */
     Ray ray;
     camera->instance->ray(Vec2f(x,y), Vec2f(0.5f, 0.5f), ray);
-    Hit hit; scene->instance->accel->intersect(ray,hit);
+    Hit hit; scene->instance->accel->intersect(ray,hit,-3);
     if (hit) { p = ray.org + hit.t * ray.dir; return true; }
     else return false;
   }

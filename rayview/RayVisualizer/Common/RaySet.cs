@@ -10,28 +10,23 @@ namespace RayVisualizer.Common
     {
         public float x, y, z;
     }
-    public class Ray
+    public class RayCast
     {
-        public CVector3 Origin { get; set; }
-        public CVector3 Direction { get; set; }
-    }
-    public class Hit
-    {
+        public bool Hit { get; set; }
+        public int Depth { get; set; }
         public int ObjID { get; set; }
-        public CVector3 loc { get; set; }
+        public CVector3 Origin { get; set; }
+        public CVector3 End { get; set; } //unit vector if no hit
     }
     public class RaySet
     {
-        public IList<Ray> Rays { get { return rays; } }
-        public IList<Hit> Hits { get { return hits; } }
+        public IList<RayCast> Rays { get { return rays; } }
 
-        private IList<Ray> rays;
-        private IList<Hit> hits;
+        private IList<RayCast> rays;
 
         public RaySet()
         {
-            rays = new List<Ray>();
-            hits = new List<Hit>();
+            rays = new List<RayCast>();
         }
 
         public static RaySet ReadFromFile(Stream file)
@@ -43,12 +38,25 @@ namespace RayVisualizer.Common
             int count = 0;
             while ((line = read.ReadLine())!=null)
             {
-                if ((count++ & 31) == 0)
+                if ((count++ & 7) != 0)
                     continue;
                 string[] a = line.Split(' ');
-                set.Rays.Add(new Ray() {    Origin = new CVector3() { x=float.Parse(a[0]), y = float.Parse(a[1]), z = float.Parse(a[2])},
-                                            Direction = new CVector3() { x = float.Parse(a[3]), y = float.Parse(a[4]), z = float.Parse(a[5]) }});
-                set.Hits.Add(null);
+                CVector3 origin = new CVector3() { x = float.Parse(a[2]), y = float.Parse(a[3]), z = float.Parse(a[4]) };
+                CVector3 end = new CVector3() { x = float.Parse(a[5]), y = float.Parse(a[6]), z = float.Parse(a[7]) };
+                int depth = int.Parse(a[1]);
+                if(depth>0)
+                if (a[0].Equals("hit"))
+                {
+                    set.Rays.Add(new RayCast() { Hit = true, Depth=depth, Origin = origin, End = end });
+                }
+                else if (a[0].Equals("miss"))
+                {
+                    set.Rays.Add(new RayCast() { Hit = false, Depth=depth, Origin = origin, End = end });
+                }
+                else
+                {
+                    throw new Exception("Error parsing file.");
+                }
             }
 
             return set;

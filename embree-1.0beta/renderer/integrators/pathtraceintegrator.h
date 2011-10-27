@@ -64,10 +64,10 @@ namespace embree
     void requestSamples(Ref<SamplerFactory>& samplerFactory, const Ref<BackendScene>& scene);
 
     /*! Function that is recursively called to compute the path. */
-    Col3f Li(const LightPath& lightPath, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays);
+    Col3f Li(const LightPath& lightPath, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays, int depth);
 
     /*! Computes the radiance arriving at the origin of the ray from the ray direction. */
-    Col3f Li(const Ray& ray, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays);
+    Col3f Li(const Ray& ray, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays, int depth);
 
     /* Configuration. */
   private:

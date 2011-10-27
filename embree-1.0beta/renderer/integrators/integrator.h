@@ -40,7 +40,8 @@ namespace embree
     virtual Col3f Li(const Ray&               ray,     /*!< Ray to compute the radiance along.                */
                      const Ref<BackendScene>& scene,   /*!< Scene geometry and lights.                        */
                      Sampler*                 sampler, /*!< Sampler used to generate (pseudo) random numbers. */
-                     size_t&                  numRays  /*!< Used to count the number of rays shot.            */) = 0;
+                     size_t&                  numRays,  /*!< Used to count the number of rays shot.            */
+					 int depth) = 0;
   };
 }
 

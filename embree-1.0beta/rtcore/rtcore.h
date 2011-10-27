@@ -35,7 +35,8 @@ namespace embree
     /*! Intersects the ray with the geometry and returns the hit
      *  information. */
     virtual void intersect(const Ray& ray,   /*!< Ray to shoot. */
-                           Hit& hit          /*!< Hit result.   */) const = 0;
+                           Hit& hit          /*!< Hit result.   */,
+						   int depth) const = 0;
 
     /*! Tests the ray for occlusion with the scene. */
     virtual bool occluded (const Ray& ray    /*!< Ray to test occlusion for. */) const = 0;

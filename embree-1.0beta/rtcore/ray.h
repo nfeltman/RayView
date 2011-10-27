@@ -31,7 +31,9 @@ namespace embree
     /*! Constructs a ray from origin, direction, and ray segment. Near
      *  has to be smaller than far. */
     __forceinline Ray(const Vec3f& org, const Vec3f& dir, const float& near = zero, const float& far = inf)
-      : org(org), dir(dir), rdir(1.0f/dir), near(near), far(far) {}
+      : org(org), dir(dir), rdir(1.0f/dir), near(near), far(far) {
+	
+	}
 
   public:
     Vec3f org;     //!< Ray origin

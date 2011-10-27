@@ -77,7 +77,7 @@ namespace embree
       while (!sampler->finished()) {
         Vec2f rasterPos = sampler->proceed();
         Ray primary; camera->ray(rasterPos*Vec2f(rcpWidth,rcpHeight), sampler->getLens(), primary);
-        Col3f L = integrator->Li(primary, scene, sampler, numRays);
+        Col3f L = integrator->Li(primary, scene, sampler, numRays, 0);
         if (!finite(L.r+L.g+L.b) || L.r < 0 || L.g < 0 || L.b < 0) L = zero;
         film->accumulate(sampler->getIntegerRaster(), start, end, L, 1.0f);
       }

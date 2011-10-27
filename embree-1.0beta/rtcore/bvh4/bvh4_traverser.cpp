@@ -19,7 +19,7 @@
 
 namespace embree
 {
-  void BVH4Traverser::intersect(const Ray& ray, Hit& hit) const
+  void BVH4Traverser::intersect(const Ray& ray, Hit& hit, int depth) const
   {
     /*! stack state */
     size_t stackPtr = 1;                             //!< current stack pointer

@@ -13,7 +13,7 @@ namespace embree
 	public:
 		PrintingTraverser(const Ref<Intersector >& sub, const FileName& file);
 		~PrintingTraverser();
-		void intersect(const Ray& ray, Hit& hit) const;
+		void intersect(const Ray& ray, Hit& hit, int depth) const;
 		bool occluded (const Ray& ray) const;
 	
 	private:

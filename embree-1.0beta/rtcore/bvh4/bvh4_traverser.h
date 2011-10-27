@@ -30,7 +30,7 @@ namespace embree
     /*! Constructs the traverser from a BVH. */
     BVH4Traverser (const Ref<BVH4<Triangle4> >& bvh) : bvh(bvh) {}
 
-    void intersect(const Ray& ray, Hit& hit) const;
+    void intersect(const Ray& ray, Hit& hit, int depth) const;
     bool occluded (const Ray& ray) const;
 
   private:

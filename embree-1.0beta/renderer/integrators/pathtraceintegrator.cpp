@@ -41,7 +41,7 @@ namespace embree
     firstScatterTypeSampleID = samplerFactory->request1D((int)maxDepth);
   }
 
-  Col3f PathTraceIntegrator::Li(const LightPath& lightPath, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays)
+  Col3f PathTraceIntegrator::Li(const LightPath& lightPath, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays, int depth)
   {
     BRDFType directLightingBRDFTypes = (BRDFType)(DIFFUSE);
     BRDFType giBRDFTypes = (BRDFType)(ALL);
@@ -53,7 +53,7 @@ namespace embree
 
     /*! Traverse ray. */
     DifferentialGeometry dg;
-    scene->accel->intersect(lightPath.lastRay,dg);
+    scene->accel->intersect(lightPath.lastRay,dg,depth);
     scene->postIntersect(lightPath.lastRay,dg);
     const Vec3f wo = -lightPath.lastRay.dir;
     numRays++;
@@ -119,7 +119,7 @@ namespace embree
 
         /*! Continue the path. */
         const LightPath scatteredPath = lightPath.extended(Ray(dg.P, wi, dg.error*epsilon, inf), nextMedium, c, (type & directLightingBRDFTypes) != NONE);
-        L += c * Li(scatteredPath, scene, sampler, numRays) * rcp(wi.pdf);
+        L += c * Li(scatteredPath, scene, sampler, numRays, depth+1) * rcp(wi.pdf);
       }
     }
 
@@ -154,8 +154,8 @@ namespace embree
     return L;
   }
 
-  Col3f PathTraceIntegrator::Li(const Ray& ray, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays) {
-    return Li(LightPath(ray),scene,sampler,numRays);
+  Col3f PathTraceIntegrator::Li(const Ray& ray, const Ref<BackendScene>& scene, Sampler* sampler, size_t& numRays, int depth) {
+    return Li(LightPath(ray),scene,sampler,numRays, depth);
   }
 }
 

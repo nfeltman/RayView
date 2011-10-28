@@ -82,6 +82,18 @@ namespace RayVisualizer{
                 this.Exit();
                 return;
             }
+            if (Keyboard[Key.Number1])
+            {
+                state = new ExploreState(new NullCrossplane());
+            }
+            if (Keyboard[Key.Number2])
+            {
+                state = new ExploreState(new IntersectionsCrossplane());
+            }
+            if (Keyboard[Key.Number3])
+            {
+                state = new ExploreState(new TrafficCrossplane());
+            }
 
             state.OnUpdateFrame(scene, this, e);
         }

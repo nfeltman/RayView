@@ -100,6 +100,7 @@ namespace RayVisualizer
             if (keyboard[Key.G])
             {
                 scene.CrossPlaneFrozen = true;
+                cross.UpdateCrossPlane(scene);
             }
             if (keyboard[Key.H])
             {

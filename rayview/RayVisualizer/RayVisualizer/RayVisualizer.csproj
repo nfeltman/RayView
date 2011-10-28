@@ -55,8 +55,10 @@
     <Compile Include="CrossplaneBehavior.cs" />
     <Compile Include="ExploreState.cs" />
     <Compile Include="MyExtensions.cs" />
+    <Compile Include="NullCrossplane.cs" />
     <Compile Include="SceneData.cs" />
     <Compile Include="IntersectionsCrossplane.cs" />
+    <Compile Include="TrafficCrossplane.cs" />
     <Compile Include="ViewerState.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

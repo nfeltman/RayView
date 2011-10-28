@@ -33,7 +33,7 @@ namespace RayVisualizer{
         {
             base.OnLoad(e);
 
-            state = new ExploreState();
+            state = new ExploreState(new IntersectionsCrossplane());
 
             scene = new SceneData();
 
@@ -49,8 +49,8 @@ namespace RayVisualizer{
                 scene.Location = new Vector3(-4, 0, -4);
                 scene.ForwardVec = new Vector3(1, 0, 0);
                 scene.RightVec = new Vector3(0, 0, 1);
+                scene.CrossPlaneDist = 100;
             }
-
             scene.Rays = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\hugeTrace.txt", FileMode.Open, FileAccess.Read));
 
             GL.ClearColor(Color.LightGray);
@@ -90,13 +90,12 @@ namespace RayVisualizer{
         {
             base.OnRenderFrame(e);
 
-            state.OnRenderFrame(scene, this, e);
-
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-
+            state.OnRenderFrame(scene, this, e);
+           
+            SwapBuffers();
             
-
             Thread.Sleep(10);
         }
 

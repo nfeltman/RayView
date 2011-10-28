@@ -6,10 +6,6 @@ using System.IO;
 
 namespace RayVisualizer.Common
 {
-    public struct CVector3
-    {
-        public float x, y, z;
-    }
     public class RayCast
     {
         public bool Hit { get; set; }

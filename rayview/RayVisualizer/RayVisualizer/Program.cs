@@ -23,13 +23,8 @@ namespace RayVisualizer{
 
     public class Program : GameWindow
     {
-        Vector3[] rayArray;
-        Vector3 location;
-        Vector3 forward, right;
-        const float TURNSPEED = .03f;
-        Matrix4 leftTransform = Matrix4.CreateRotationY(TURNSPEED);
-        Matrix4 rightTransform = Matrix4.CreateRotationY(-TURNSPEED);
-        const float MOVESPEED = 5f;
+        private SceneData scene;
+        private ViewerState state;
 
         public Program() : base(800, 600, new GraphicsMode(16, 16))
 		{ } 
@@ -38,17 +33,25 @@ namespace RayVisualizer{
         {
             base.OnLoad(e);
 
-            RaySet rays = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\hugeTrace.txt", FileMode.Open, FileAccess.Read));
-            rayArray = new Vector3[rays.Rays.Count * 2];
-            for(int k=0;k<rays.Rays.Count;k++)
+            state = new ExploreState();
+
+            scene = new SceneData();
+
+            if(File.Exists("..\\..\\..\\..\\..\\autostatesave.init"))
             {
-                rayArray[k * 2 + 0] = new Vector3(rays.Rays[k].Origin.x, rays.Rays[k].Origin.y, rays.Rays[k].Origin.z);
-                rayArray[k * 2 + 1] = new Vector3(rays.Rays[k].End.x, rays.Rays[k].End.y, rays.Rays[k].End.z)+rayArray[k*2];
+                using (FileStream st = new FileStream("..\\..\\..\\..\\..\\autostatesave.init", FileMode.Open, FileAccess.Read))
+                {
+                    scene.RecoverState(new StreamReader(st));
+                }
+            }
+            else
+            {
+                scene.Location = new Vector3(-4, 0, -4);
+                scene.ForwardVec = new Vector3(1, 0, 0);
+                scene.RightVec = new Vector3(0, 0, 1);
             }
 
-            location = new Vector3(-4, 0, -4);
-            forward = new Vector3(1, 0, 0);
-            right = new Vector3(0, 0, 1);
+            scene.Rays = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\hugeTrace.txt", FileMode.Open, FileAccess.Read));
 
             GL.ClearColor(Color.LightGray);
             //GL.Enable(EnableCap.DepthTest);
@@ -73,63 +76,27 @@ namespace RayVisualizer{
 
             if (Keyboard[Key.Escape])
             {
+                FileStream st = new FileStream("..\\..\\..\\..\\..\\autostatesave.init", FileMode.OpenOrCreate, FileAccess.Write);
+                scene.SaveState(new StreamWriter(st));
+                st.Close();
                 this.Exit();
                 return;
             }
-            if(Keyboard[Key.Left])
-            {
-                forward = Vector3.Transform(forward, leftTransform);
-                right = Vector3.Transform(right, leftTransform);
-            }
-            if (Keyboard[Key.Right])
-            {
-                forward = Vector3.Transform(forward, rightTransform);
-                right = Vector3.Transform(right, rightTransform);
-            }
-            if (Keyboard[Key.Up])
-            {
-                forward = Vector3.Transform(forward,Matrix4.CreateFromAxisAngle(right,TURNSPEED));
-            }
-            if (Keyboard[Key.Down])
-            {
-                forward = Vector3.Transform(forward, Matrix4.CreateFromAxisAngle(right, -TURNSPEED));
-            }
-            if (Keyboard[Key.W])
-            {
-                location += forward*MOVESPEED;
-            }
-            if (Keyboard[Key.S])
-            {
-                location -= forward * MOVESPEED;
-            }
-            if (Keyboard[Key.A])
-            {
-                location -= right * MOVESPEED;
-            }
-            if (Keyboard[Key.D])
-            {
-                location += right * MOVESPEED;
-            }
+
+            state.OnUpdateFrame(scene, this, e);
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
 
+            state.OnRenderFrame(scene, this, e);
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+
             
-            Matrix4 lookat = Matrix4.LookAt(location,location+forward,Vector3.Cross(right,forward));
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref lookat);
 
-            GL.Color4(.3,0,0,.1);
-            GL.Begin(BeginMode.Lines);
-            foreach(Vector3 v in rayArray)
-                GL.Vertex3(v);
-            GL.End();
-
-            this.SwapBuffers();
             Thread.Sleep(10);
         }
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Intel C++ Project"
+	Version="12.0"
+	Name="common"
+	ProjectGUID="{49310A58-F9A3-4FAA-9F03-3552F9A940C5}"
+	VCNestedProjectGUID="{ED848C9A-C161-4036-8DF7-DB169BCB81BC}"
+	VCNestedProjectFileName="common.vcproj"
+	>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+	</Configurations>
+	<Files/>
+</VisualStudioProject>

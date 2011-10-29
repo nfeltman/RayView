@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Intel C++ Project"
+	Version="12.0"
+	Name="renderer"
+	ProjectGUID="{EF3ECB4F-C7BD-4EA0-A117-FAB0417F20A0}"
+	VCNestedProjectGUID="{ED848C9A-C161-4036-8DF7-EB169BCB81BC}"
+	VCNestedProjectFileName="renderer.vcproj"
+	>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			>
+			<Tool
+				Name="CppCmplrTool"
+				InterproceduralOptimization="0"
+				UseProcessorExtensions="6"
+			/>
+		</Configuration>
+	</Configurations>
+	<Files/>
+</VisualStudioProject>

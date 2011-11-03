@@ -40,8 +40,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Box3.cs" />
+    <Compile Include="BVH2.cs" />
     <Compile Include="CVector3.cs" />
+    <Compile Include="Interval.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RayCast.cs" />
     <Compile Include="RaySet.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

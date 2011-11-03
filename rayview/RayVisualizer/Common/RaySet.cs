@@ -3,20 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Collections;
 
 namespace RayVisualizer.Common
 {
-    public class RayCast
+    
+    public class RaySet : IEnumerable<RayCast>
     {
-        public bool Hit { get; set; }
-        public int Depth { get; set; }
-        public int ObjID { get; set; }
-        public CVector3 Origin { get; set; }
-        public CVector3 End { get; set; } //unit vector if no hit
-    }
-    public class RaySet
-    {
-        public RayCast[] Rays { get { return rays; } }
+        private RayCast[] Rays { get { return rays; } }
 
         private RayCast[] rays;
 
@@ -43,13 +37,21 @@ namespace RayVisualizer.Common
                                                 z = float.Parse(a[7]) + origin.z };
                 int depth = int.Parse(a[1]);
                 RayCast cast; 
-                if (a[0].Equals("hit"))
+                if (a[0].Equals("i-hit") )
                 {
-                    cast = new RayCast() { Hit = true, Depth=depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.IntersectionHit, Depth = depth, Origin = origin, End = end };
                 }
-                else if (a[0].Equals("miss"))
+                else if (a[0].Equals("i-mis"))
                 {
-                    cast = new RayCast() { Hit = false, Depth=depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.IntersectionMiss, Depth = depth, Origin = origin, End = end };
+                }
+                else if (a[0].Equals("o-con"))
+                {
+                    cast = new RayCast() { Kind = RayKind.OcclusionConnect, Depth = depth, Origin = origin, End = end };
+                }
+                else if (a[0].Equals("o-bro"))
+                {
+                    cast = new RayCast() { Kind = RayKind.OcclusionBroken, Depth = depth, Origin = origin, End = end };
                 }
                 else
                 {
@@ -76,6 +78,16 @@ namespace RayVisualizer.Common
             }
 
             return ret;
+        }
+
+        public IEnumerator<RayCast> GetEnumerator()
+        {
+            return ((IEnumerable<RayCast>)Rays).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Rays.GetEnumerator();
         }
     }
 }

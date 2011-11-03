@@ -29,7 +29,7 @@ namespace RayVisualizer
             GL.Color4(.3, 0, 0, .1);
             GL.Begin(BeginMode.Lines);
             //foreach(RaySet set in scene.Rays)
-            foreach (RayCast c in scene.Rays[1].Rays)
+            foreach (RayCast c in scene.ActiveSet)
             {
                 GL.Vertex3(c.Origin.x, c.Origin.y, c.Origin.z);
                 GL.Vertex3(c.End.x, c.End.y, c.End.z);

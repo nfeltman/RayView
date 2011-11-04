@@ -110,7 +110,7 @@ namespace embree
     return texture_map[fileName.str()] = texture;
   }
 
-  Ref<Device::RTScene> createScene(const Ref<Scene>& root, const FileName traceFile)
+  Ref<Device::RTScene> createScene(const Ref<Scene>& root, const TraceData traceFile)
   {
     std::vector<Ref<Device::RTPrimitive> > prims;
     for (Scene::iterator i=root->begin(); i!=root->end(); i++)
@@ -184,7 +184,7 @@ namespace embree
 
     OrthonormalSpace camSpace = OrthonormalSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp);
     float speed = 0.02f * length(g_camLookAt-g_camPos);
-    GLUTDisplay(camSpace,speed,createScene(g_scene.cast<Scene>(), FileName("")));
+    GLUTDisplay(camSpace,speed,createScene(g_scene.cast<Scene>(), TraceData(FileName(""),FileName(""))));
     g_rendered = true;
   }
 
@@ -194,7 +194,7 @@ namespace embree
 
     /* render */
     Ref<Device::RTCamera> camera = createCamera(AffineSpace::lookAtPoint(g_camPos,g_camLookAt,g_camUp));
-    Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>(), FileName(""));
+    Ref<Device::RTScene> scene = createScene(g_scene.cast<Scene>(), TraceData(FileName(""),FileName("")));
     g_device->rtRenderFrame(g_renderer,camera,scene,g_frameBuffer);
 
     /* store to disk */
@@ -206,7 +206,7 @@ namespace embree
     g_rendered = true;
   }
 
-  static void traceMode(const FileName& fileName)
+  static void traceMode(TraceData fileName)
   {
     if (!g_renderer) throw std::runtime_error("no renderer set");
 
@@ -393,10 +393,15 @@ namespace embree
       /* render frame */
       else if (tag == "-o")
         outputMode(path + cin->getFileName());
-	  	  
+          
       /* save ray traces */
       else if (tag == "-savetrace")
-        traceMode(path + cin->getFileName());
+      {
+        FileName raysFile = cin->getFileName();
+        FileName bvhFile = cin->getFileName();
+        TraceData d = TraceData(FileName(path + raysFile),FileName(FileName(path + bvhFile)));
+        traceMode(d);
+      }
 
       /* display image */
       else if (tag == "-display")

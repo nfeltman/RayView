@@ -440,9 +440,9 @@ namespace embree
   RT_API_SYMBOL void rtInit() {
     Lock<MutexSys> lock(*mutex);
     if (initialized) throw std::runtime_error("embree already initialized");
-    //TaskScheduler::init(1); std::cout << "Using only one thread !!!!!!!" << std::endl;
+    TaskScheduler::init(1); std::cout << "Using only one thread !!!!!!!" << std::endl;
     //TaskScheduler::init(2); std::cout << "Using only two threads !!!!!!!" << std::endl;
-    TaskScheduler::init();
+    //TaskScheduler::init();
     initialized = true;
   }
 
@@ -563,7 +563,7 @@ namespace embree
     return (RTPrimitive) new PrimitiveHandle(light->instance,space);
   }
 
-  RT_API_SYMBOL RTScene rtNewScene(const char* type, const FileName& traceFile, RTPrimitive* prims, size_t size)
+  RT_API_SYMBOL RTScene rtNewScene(const char* type, TraceData traceFile, RTPrimitive* prims, size_t size)
   {
     Lock<MutexSys> lock(*mutex);
     verifyInitialized();

@@ -39,7 +39,7 @@ namespace embree
 						   int depth) const = 0;
 
     /*! Tests the ray for occlusion with the scene. */
-    virtual bool occluded (const Ray& ray    /*!< Ray to test occlusion for. */) const = 0;
+    virtual bool occluded (const Ray& ray    /*!< Ray to test occlusion for. */, int depth) const = 0;
   };
 
   /*! Triangle interface structure to the builder. The builders get an
@@ -76,7 +76,7 @@ namespace embree
   };
 
   /*! Creates acceleration structure of specified type. */
-  Intersector* rtcCreateAccel(const char* type, const FileName& traceFile, const BuildTriangle* triangles, size_t numTriangles);
+  Intersector* rtcCreateAccel(const char* type, TraceData traceFile, const BuildTriangle* triangles, size_t numTriangles);
 }
 
 #endif

@@ -167,7 +167,7 @@ namespace embree
    *  \param prims is a pointer to an array of primitives
    *  \param size is the number of primitives in that array \returns
    *  scene handle */
-  RT_API_SYMBOL RTScene rtNewScene(const char* type, const FileName& traceFile, RTPrimitive* prims, size_t size);
+  RT_API_SYMBOL RTScene rtNewScene(const char* type, TraceData traceFile, RTPrimitive* prims, size_t size);
 
   /*! Creates a new renderer. \param type is the type of renderer to
    *  create (e.g. "debug", "pathtracer"). \returns renderer handle */

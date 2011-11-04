@@ -80,6 +80,16 @@ namespace embree
     std::string filename;
   };
 
+  
+
+	struct TraceData
+	{
+	public:
+		FileName rayTraceFile;
+		FileName bvhOutputFile;
+		TraceData(FileName& rayTraceFile0, FileName& bvhOutputFile0) : rayTraceFile(rayTraceFile0), bvhOutputFile(bvhOutputFile0) {}
+	};
+
 }
 
 #endif

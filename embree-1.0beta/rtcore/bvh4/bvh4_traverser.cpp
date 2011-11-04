@@ -131,7 +131,7 @@ namespace embree
     }
   }
 
-  bool BVH4Traverser::occluded(const Ray& ray) const
+  bool BVH4Traverser::occluded(const Ray& ray, int depth) const
   {
     /*! stack state */
     size_t stackPtr = 1;                       //!< current stack pointer

@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RayVisualizer", "RayVisuali
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{C0DC81B0-1F29-4624-B045-697EE067E64C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisEngine", "AnalysisEngine\AnalysisEngine.csproj", "{B3582AAB-8531-4F18-9004-A6544405717E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{C0DC81B0-1F29-4624-B045-697EE067E64C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C0DC81B0-1F29-4624-B045-697EE067E64C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C0DC81B0-1F29-4624-B045-697EE067E64C}.Release|x86.ActiveCfg = Release|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{B3582AAB-8531-4F18-9004-A6544405717E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

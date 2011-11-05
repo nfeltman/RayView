@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    struct ClosedInterval
+    public struct ClosedInterval
     {
         private float _min, _max;
         public static readonly ClosedInterval ALL = new ClosedInterval(float.NegativeInfinity, float.PositiveInfinity);
@@ -80,7 +80,7 @@ namespace RayVisualizer.Common
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <returns></returns>
-        public static bool operator <<(ClosedInterval i1, ClosedInterval i2)
+        public static bool operator <(ClosedInterval i1, ClosedInterval i2)
         {
             return (i1._max < i2._min || i1.IsEmpty || i2.IsEmpty);
         }
@@ -91,7 +91,7 @@ namespace RayVisualizer.Common
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <returns></returns>
-        public static bool operator >>(ClosedInterval i1, ClosedInterval i2)
+        public static bool operator >(ClosedInterval i1, ClosedInterval i2)
         {
             return (i1._min > i2._max || i1.IsEmpty || i2.IsEmpty);
         }

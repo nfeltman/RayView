@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{C0DC81B0-1F29-4624-B045-697EE067E64C}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{B3582AAB-8531-4F18-9004-A6544405717E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RayVisualizer.Common</RootNamespace>
-    <AssemblyName>RVCommon</AssemblyName>
+    <RootNamespace>AnalysisEngine</RootNamespace>
+    <AssemblyName>AnalysisEngine</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,6 +30,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -40,16 +43,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Box3.cs" />
-    <Compile Include="BVH2.cs" />
-    <Compile Include="BVH2Visitors\BVH2Visitor.cs" />
-    <Compile Include="BVH2Visitors\RayOrderOpCounter.cs" />
-    <Compile Include="CVector3.cs" />
-    <Compile Include="Interval.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RayCast.cs" />
-    <Compile Include="RaySet.cs" />
-    <Compile Include="Triangle.cs" />
+    <Compile Include="RunAnalysis.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{C0DC81B0-1F29-4624-B045-697EE067E64C}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

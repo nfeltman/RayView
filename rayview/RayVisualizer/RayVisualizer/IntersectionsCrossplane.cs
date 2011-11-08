@@ -29,9 +29,9 @@ namespace RayVisualizer
             foreach (RayCast c in scene.ActiveSet)
             {
                 float a1 = (c.Origin - p) * n;
-                CVector3 d = c.End - c.Origin;
+                CVector3 d = c.Direction;
                 //test if the start and end are strictly on opposite sides of the plane
-                if ((c.Kind == RayKind.IntersectionHit && a1 * ((c.End - p) * n) < 0) || (c.Kind == RayKind.IntersectionMiss && a1 * (d * n) < 0))
+                if ((c.Kind == RayKind.IntersectionHit && a1 * ((d + c.Origin - p) * n) < 0) || (c.Kind == RayKind.IntersectionMiss && a1 * (d * n) < 0))
                 {
                     //compute plane-line intersection
                     float t = ((p - c.Origin) * n) / (d * n);

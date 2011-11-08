@@ -11,14 +11,16 @@ namespace RayVisualizer.Common
         public int Depth { get; set; }
         //public int ObjID { get; set; }
         public CVector3 Origin { get; set; }
-        public CVector3 End { get; set; } // |End-Origin| == 1 if Kind == IntersectionMiss
+        public CVector3 Direction { get; set; } // |Direction| == 1 if Kind == IntersectionMiss
 
+        /*
         public bool BoxIntersect(Box3 b)
         {
             if (Kind == RayKind.IntersectionMiss)
-                return b.IntersectRay(Origin, End);
-            return b.IntersectSegment(Origin, End);
+                return !b.IntersectRay(Origin, End).IsEmpty;
+            return !b.IntersectSegment(Origin, End).IsEmpty;
         }
+        */
     }
 
     public enum RayKind

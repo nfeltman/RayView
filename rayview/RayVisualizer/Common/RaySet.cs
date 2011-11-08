@@ -10,7 +10,7 @@ namespace RayVisualizer.Common
     
     public class RaySet : IEnumerable<RayCast>
     {
-        private RayCast[] Rays { get { return rays; } }
+        public RayCast[] Rays { get { return rays; } }
 
         private RayCast[] rays;
 
@@ -22,36 +22,42 @@ namespace RayVisualizer.Common
         {
             List<RayCast>[] sets = new List<RayCast>[0];
 
-            StreamReader read = new StreamReader(file);
-            string line;
+            BinaryReader reader = new BinaryReader(file);
 
-            int count = 0;
-            while ((line = read.ReadLine())!=null)
+            while (file.CanRead)
             {
-                if ((count++ & 7) != 0)
-                    continue;
-                string[] a = line.Split(' ');
-                CVector3 origin = new CVector3() { x = float.Parse(a[2]), y = float.Parse(a[3]), z = float.Parse(a[4]) };
-                CVector3 end = new CVector3() { x = float.Parse(a[5]) + origin.x, 
-                                                y = float.Parse(a[6]) + origin.y, 
-                                                z = float.Parse(a[7]) + origin.z };
-                int depth = int.Parse(a[1]);
+                int type = reader.ReadInt32();
+                if (type == 9215) // the end of file sentinel, mostly for debugging
+                    break;
+                int depth = reader.ReadInt32();
+                CVector3 origin = new CVector3() 
+                { 
+                    x = reader.ReadSingle(), 
+                    y = reader.ReadSingle(), 
+                    z = reader.ReadSingle(), 
+                };
+                CVector3 dir = new CVector3()
+                {
+                    x = reader.ReadSingle(), 
+                    y = reader.ReadSingle(), 
+                    z = reader.ReadSingle(), 
+                };
                 RayCast cast; 
-                if (a[0].Equals("i-hit") )
+                if (type == 0)
                 {
-                    cast = new RayCast() { Kind = RayKind.IntersectionHit, Depth = depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.IntersectionHit, Depth = depth, Origin = origin, Direction = dir };
                 }
-                else if (a[0].Equals("i-mis"))
+                else if (type == 1)
                 {
-                    cast = new RayCast() { Kind = RayKind.IntersectionMiss, Depth = depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.IntersectionMiss, Depth = depth, Origin = origin, Direction = dir };
                 }
-                else if (a[0].Equals("o-con"))
+                else if (type == 2)
                 {
-                    cast = new RayCast() { Kind = RayKind.OcclusionConnect, Depth = depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.OcclusionBroken, Depth = depth, Origin = origin, Direction = dir };
                 }
-                else if (a[0].Equals("o-bro"))
+                else if (type == 3)
                 {
-                    cast = new RayCast() { Kind = RayKind.OcclusionBroken, Depth = depth, Origin = origin, End = end };
+                    cast = new RayCast() { Kind = RayKind.OcclusionConnect, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else
                 {

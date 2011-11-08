@@ -43,9 +43,12 @@
     <Compile Include="Box3.cs" />
     <Compile Include="BVH2.cs" />
     <Compile Include="BVH2Visitors\BVH2Visitor.cs" />
+    <Compile Include="BVH2Visitors\CollectTrianglesVisitor.cs" />
     <Compile Include="BVH2Visitors\RayOrderOpCounter.cs" />
     <Compile Include="CVector3.cs" />
+    <Compile Include="ExternalCode\PriorityQueue.cs" />
     <Compile Include="Interval.cs" />
+    <Compile Include="LanguageUtilities.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RayCast.cs" />
     <Compile Include="RaySet.cs" />

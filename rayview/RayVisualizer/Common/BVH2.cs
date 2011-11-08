@@ -9,6 +9,7 @@ namespace RayVisualizer.Common
     public class BVH2
     {
         private BVH2Node root;
+        public BVH2Node Root { get { return root; } }
 
         private BVH2() { }
 
@@ -17,44 +18,53 @@ namespace RayVisualizer.Common
             return root.Accept(visitor);
         }
 
-        public static BVH2 ReadFromFile(StreamReader s)
+        public static BVH2 ReadFromFile(Stream stream)
         {
-            return new BVH2() { root = ParseNode(s) };
+            BinaryReader reader = new BinaryReader(stream);
+            BVH2Node root = ParseNode(reader);
+            int endSentinel = reader.ReadInt32();
+            if (endSentinel != 9215) throw new IOException("Sentinel not found!");
+            return new BVH2() { root = root };
         }
 
-        private static BVH2Node ParseNode(StreamReader s)
+        private static BVH2Node ParseNode(BinaryReader reader)
         {
-            String[] a = s.ReadLine().Split(' ');
-            if (a.Length == 0)
+            int type = reader.ReadInt32();
+            if (type == 0) //branch type
             {
-                throw new IOException("Error reading file: encountered empty line.");
-            }
-            else if (a[0].Equals("bran"))
-            {
-                Box3 bbox = new Box3(float.Parse(a[4]), float.Parse(a[5]), float.Parse(a[6]), float.Parse(a[7]), float.Parse(a[8]), float.Parse(a[9]));
-                BVH2Node left = ParseNode(s);
-                BVH2Node right = ParseNode(s);
+                Box3 bbox = new Box3(reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle());
+                BVH2Node left = ParseNode(reader);
+                BVH2Node right = ParseNode(reader);
                 return new BVH2Branch() { BBox = bbox, Left = left, Right = right };
             }
-            else if (a[0].Equals("leaf"))
+            else if (type == 1) //leaf type
             {
-                Box3 bbox = new Box3(float.Parse(a[3]), float.Parse(a[4]), float.Parse(a[5]), float.Parse(a[6]), float.Parse(a[7]), float.Parse(a[8]));
-                int numTriangles = int.Parse(a[2]);
+                int numTriangles = reader.ReadInt32();
+                Box3 bbox = new Box3(reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle());
                 Triangle[] tris = new Triangle[numTriangles];
                 for (int k = 0; k < numTriangles; k++)
                 {
-                    String[] r = s.ReadLine().Split(' ');
-                    if (!r[0].Equals("tri")) throw new IOException("Expected tri, got: "+r[0]);
-                    tris[k] = new Triangle() { 
-                        p1= new CVector3(float.Parse(r[1]),float.Parse(a[2]), float.Parse(r[3])),
-                        p2= new CVector3(float.Parse(r[4]),float.Parse(a[5]), float.Parse(r[6])),
-                        p3= new CVector3(float.Parse(r[7]),float.Parse(a[8]), float.Parse(r[9]))};
+                    tris[k] = new Triangle() {
+                        p1 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()),
+                        p2= new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()),
+                        p3 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle())
+                    };
                 }
                 return new BVH2Leaf() { BBox = bbox, Primitives = tris };
             }
             else
             {
-                throw new IOException("Unexpected line header: " + a[0]);
+                throw new IOException("Unexpected block header: " + type);
             }
         }
     }
@@ -63,6 +73,7 @@ namespace RayVisualizer.Common
     {
         Box3 BBox { get; set; }
         Ret Accept<Ret>(BVH2Visitor<Ret> visitor);
+        Ret Accept<Ret>(Func<BVH2Branch, Ret> forBranch, Func<BVH2Leaf, Ret> forLeaf);
     }
 
     public class BVH2Branch : BVH2Node
@@ -75,6 +86,10 @@ namespace RayVisualizer.Common
         {
             return visitor.ForBranch(this);
         }
+        public Ret Accept<Ret>(Func<BVH2Branch, Ret> forBranch, Func<BVH2Leaf, Ret> forLeaf)
+        {
+            return forBranch(this);
+        }
     }
 
     public class BVH2Leaf : BVH2Node
@@ -85,6 +100,27 @@ namespace RayVisualizer.Common
         public Ret Accept<Ret>(BVH2Visitor<Ret> visitor)
         {
             return visitor.ForLeaf(this);
+        }
+        public Ret Accept<Ret>(Func<BVH2Branch, Ret> forBranch, Func<BVH2Leaf, Ret> forLeaf)
+        {
+            return forLeaf(this);
+        }
+
+        public Tuple<float, int> FindClosestPositiveIntersection(CVector3 origin, CVector3 direction)
+        {
+            float closestIntersection = float.PositiveInfinity;
+            int closestIndex = -1;
+            Triangle[] triangles = Primitives;
+            for (int k = 0; k < triangles.Length; k++)
+            {
+                float intersection = triangles[k].IntersectRay(origin, direction);
+                if (intersection != -1 && intersection < closestIntersection)
+                {
+                    closestIntersection = intersection;
+                    closestIndex = k;
+                }
+            }
+            return new Tuple<float, int>(closestIntersection, closestIndex);
         }
     }
 

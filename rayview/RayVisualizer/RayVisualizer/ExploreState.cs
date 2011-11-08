@@ -6,6 +6,8 @@ using OpenTK;
 using OpenTK.Input;
 using OpenTK.Graphics.OpenGL;
 using RayVisualizer.Common;
+using System.IO;
+using RayVisualizer.Common.BVH2Visitors;
 
 namespace RayVisualizer
 {
@@ -13,9 +15,12 @@ namespace RayVisualizer
     {
         private CrossplaneBehavior cross;
 
+        BVH2 bvh;
+
         public ExploreState(CrossplaneBehavior cb)
         {
             cross = cb;
+            bvh = BVH2.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\bvhTrace.txt", FileMode.Open, FileAccess.Read));
         }
 
         public virtual void OnRenderFrame(SceneData scene, GameWindow w, FrameEventArgs e)
@@ -25,14 +30,30 @@ namespace RayVisualizer
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref lookat);
 
+            //TRIANGLE GEOMETRY
+            GL.Enable(EnableCap.DepthTest);
+            GL.Begin(BeginMode.Triangles);
+            bvh.Accept(new CollectTrianglesVisitor(t=>
+            {
+                CVector3  v= 100*(t.p1+t.p2+t.p3);
+                GL.Color4(.5, (Math.Sin(v.x+v.y+v.z)+1)/2, 1, 1);
+                GL.Vertex3(t.p1.ToGL());
+                GL.Vertex3(t.p2.ToGL());
+                GL.Vertex3(t.p3.ToGL());
+            }));
+            GL.End();
+
             //RAYS
             GL.Color4(.3, 0, 0, .1);
             GL.Begin(BeginMode.Lines);
             //foreach(RaySet set in scene.Rays)
+            int counter = 0;
             foreach (RayCast c in scene.ActiveSet)
             {
+                if ((counter++ & 15) != 0) continue;
                 GL.Vertex3(c.Origin.x, c.Origin.y, c.Origin.z);
-                GL.Vertex3(c.End.x, c.End.y, c.End.z);
+                CVector3 end = c.Origin + c.Direction;
+                GL.Vertex3(end.x, end.y, end.z);
             }
             GL.End();
 

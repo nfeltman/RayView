@@ -1,0 +1,16 @@
+## FORMAT ##
+RayFile   := RayList
+RayList   := RayCast RayList | Sentinel
+RayCast   := FHitRay | FMisRay | AConRay | ABrkRay
+FHitRay   := FHitID depth:int origin:Vec3 difference:Vec3    # FirstHit-Hit (intersection was found)
+FMisRay   := FMisID depth:int origin:Vec3 direction:Vec3     # FirstHit-Miss (intersection not found)
+ABrkRay   := ABrkID depth:int origin:Vec3 difference:Vec3    # AnyHit-Broken (intersection was found)
+AConRay   := AConID depth:int origin:Vec3 difference:Vec3    # AnyHit-Connected (intersection not found)
+Vec3      := x:float y:float z:float
+
+## CONSTANTS ##
+FHitID    := 0:int
+FMisID    := 1:int
+ABrkID    := 2:int
+AConID    := 3:int
+Sentinel  := 9215:int

@@ -6,76 +6,87 @@ using Common;
 
 namespace RayVisualizer.Common
 {
+    // alias, because Union<...,...> is too long
+    using QueueItem = Union<BVH2Node, HitRecord>;
+    
     public class RayOrderOpCounter 
     {
-        public static void RunOpCounter(BVH2 bvh, RayCast ray, RayOrderOperations ops)
+        public static HitRecord RunOpCounter(BVH2 bvh, RayCast ray, RayOrderOperations ops)
         {
-            PriorityQueue<float, Union<BVH2Node, Triangle>> q = new PriorityQueue<float, Union<BVH2Node, Triangle>>();
 
+            if (!(ray.Kind == RayKind.FirstHit_Hit || ray.Kind == RayKind.FirstHit_Miss))
+                throw new Exception("Only for first-hit rays! Not any-hit!");
+
+            PriorityQueue<float, QueueItem> q = new PriorityQueue<float, QueueItem>();
+            
             ops.rayCasts++;
             ops.boundingBoxTests++;
             ClosedInterval rootInterval = bvh.Root.BBox.IntersectRay(ray.Origin,ray.Direction);
             if (!rootInterval.IsEmpty)
             {
                 ops.boundingBoxHits++;
-                q.Enqueue(rootInterval.Min, new Union<BVH2Node, Triangle>(bvh.Root));
+                q.Enqueue(rootInterval.Min, new QueueItem(bvh.Root));
             }
             
             CVector3 origin = ray.Origin;
-            CVector3 direction;
-            if (ray.Kind == RayKind.IntersectionHit || ray.Kind == RayKind.IntersectionMiss)
-                direction = ray.Direction;
-            else
-                throw new Exception("Only for first-hit rays! Not any-hit!");
+            CVector3 direction = ray.Direction;
 
             while(!q.IsEmpty)
             {
-                KeyValuePair<float, Union<BVH2Node, Triangle>> pair = q.Dequeue();
-                if (pair.Value.Run(n => n.Accept(
-                    branch =>
+                KeyValuePair<float, QueueItem> pair = q.Dequeue();
+                HitRecord intersection = pair.Value.Run(n => n.Accept(
+                    // pattern match based on the type of queue item
+                    (BVH2Branch branch) =>
                     {
                         ops.branchNodeInspections++;
 
                         ClosedInterval leftIntersection = branch.Left.BBox.IntersectRay(origin, direction);
                         ClosedInterval rightIntersection = branch.Right.BBox.IntersectRay(origin, direction);
-                        ops.boundingBoxTests+=2;
+                        ops.boundingBoxTests += 2;
 
                         if (!leftIntersection.IsEmpty)
                         {
                             ops.boundingBoxHits++;
-                            q.Enqueue(leftIntersection.Min, new Union<BVH2Node, Triangle>(branch.Left));
+                            q.Enqueue(leftIntersection.Min, new QueueItem(branch.Left));
                         }
                         if (!rightIntersection.IsEmpty)
                         {
                             ops.boundingBoxHits++;
-                            q.Enqueue(rightIntersection.Min, new Union<BVH2Node, Triangle>(branch.Right));
+                            q.Enqueue(rightIntersection.Min, new QueueItem(branch.Right));
                         }
-                        return false; //do not stop queueing
+                        return (HitRecord)null; //do not stop queue processing
                     },
-                    leaf =>
+                    (BVH2Leaf leaf) =>
                     {
                         ops.primitiveNodeInspections++;
                         Tuple<float, int> closestIntersection = leaf.FindClosestPositiveIntersection(origin, direction);
                         if (closestIntersection.Item2 != -1)
                         {
-                            CVector3 point = (direction * closestIntersection.Item1) + origin;
-                            Triangle t = leaf.Primitives[closestIntersection.Item2];
-                            float de = (point-t.p1) * ((t.p1-t.p2)^(t.p3-t.p2));
-                          //  if (ray.Kind != RayKind.IntersectionHit)
-                          //     Console.WriteLine("AHAHAHAH");
-                            leaf.FindClosestPositiveIntersection(origin, direction);
+                            if (ray.Kind != RayKind.FirstHit_Hit)
+                                Console.WriteLine("AHAHAHAH " + closestIntersection.Item1);
                             ops.primitiveNodePrimitiveHits++;
-                            q.Enqueue(closestIntersection.Item1, new Union<BVH2Node, Triangle>(leaf.Primitives[closestIntersection.Item2]));
+                            q.Enqueue(closestIntersection.Item1, new QueueItem(new HitRecord(leaf.Primitives[closestIntersection.Item2], 0)));
                         }
-                        return false; //do not stop queueing
-                    }), 
-                    triangle => 
+                        return (HitRecord)null; //do not stop queue processing
+                    }),
+                    (HitRecord hitRecord) =>
                     {
-                        ops.primitiveIntersectionReached++;
-                        return true; //stop queueing
-                    })) break;
+                        ops.rayHitFound++;
+                        return hitRecord; //we've found outr hit; stop queue processing
+                    });
+                if (intersection != null) return intersection;
             }
+
+            return null; // no hit was found!
         }
+    }
+
+    public class HitRecord
+    {
+        public Triangle triangle;
+        public float t_value;
+
+        public HitRecord(Triangle tri, float t) { triangle = tri; t_value = t; }
     }
 
     public class RayOrderOperations
@@ -86,6 +97,6 @@ namespace RayVisualizer.Common
         public int primitiveNodeInspections;
         public int primitiveNodePrimitiveHits;
         public int branchNodeInspections;
-        public int primitiveIntersectionReached;
+        public int rayHitFound;
     }
 }

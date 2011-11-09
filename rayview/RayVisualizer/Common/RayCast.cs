@@ -25,9 +25,9 @@ namespace RayVisualizer.Common
 
     public enum RayKind
     {
-        IntersectionHit,
-        IntersectionMiss,
-        OcclusionConnect,
-        OcclusionBroken
+        FirstHit_Hit,
+        FirstHit_Miss,
+        AnyHit_Connected,
+        AnyHit_Broken
     }
 }

@@ -32,12 +32,7 @@ namespace RayVisualizer.Common
             int type = reader.ReadInt32();
             if (type == 0) //branch type
             {
-                Box3 bbox = new Box3(reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle());
+                Box3 bbox = ReadBoundingBox(reader);
                 BVH2Node left = ParseNode(reader);
                 BVH2Node right = ParseNode(reader);
                 return new BVH2Branch() { BBox = bbox, Left = left, Right = right };
@@ -45,18 +40,14 @@ namespace RayVisualizer.Common
             else if (type == 1) //leaf type
             {
                 int numTriangles = reader.ReadInt32();
-                Box3 bbox = new Box3(reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle(),
-                    reader.ReadSingle());
+                Box3 bbox = ReadBoundingBox(reader);
                 Triangle[] tris = new Triangle[numTriangles];
                 for (int k = 0; k < numTriangles; k++)
                 {
-                    tris[k] = new Triangle() {
+                    tris[k] = new Triangle()
+                    {
                         p1 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()),
-                        p2= new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()),
+                        p2 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()),
                         p3 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle())
                     };
                 }
@@ -66,6 +57,16 @@ namespace RayVisualizer.Common
             {
                 throw new IOException("Unexpected block header: " + type);
             }
+        }
+
+        private static Box3 ReadBoundingBox(BinaryReader reader)
+        {
+            return new Box3(reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle(),
+                    reader.ReadSingle());
         }
     }
 
@@ -108,13 +109,15 @@ namespace RayVisualizer.Common
 
         public Tuple<float, int> FindClosestPositiveIntersection(CVector3 origin, CVector3 direction)
         {
+            // TODO : have it take in a c vector
+
             float closestIntersection = float.PositiveInfinity;
             int closestIndex = -1;
             Triangle[] triangles = Primitives;
             for (int k = 0; k < triangles.Length; k++)
             {
                 float intersection = triangles[k].IntersectRay(origin, direction);
-                if (intersection != -1 && intersection < closestIntersection)
+                if (intersection != -1 && intersection>0.0005 && intersection < closestIntersection)
                 {
                     closestIntersection = intersection;
                     closestIndex = k;

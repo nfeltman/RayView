@@ -24,10 +24,8 @@ namespace RayVisualizer.Common
             RayCast[] firstGen = allrays[1].Rays;
             for (int k = 0; k < firstGen.Length; k++)
             {
-                if (firstGen[k].Kind == RayKind.IntersectionHit) myOwnCount++;
-                if (firstGen[k].Kind == RayKind.OcclusionBroken || firstGen[k].Kind == RayKind.OcclusionConnect) continue; 
-                if ((int)(10 * k / firstGen.Length) != (int)(10 * (k - 1) / firstGen.Length))
-                    Console.WriteLine((int)(100 * k / firstGen.Length) + "%");
+                if (firstGen[k].Kind == RayKind.FirstHit_Hit) myOwnCount++;
+                if (firstGen[k].Kind == RayKind.AnyHit_Broken || firstGen[k].Kind == RayKind.AnyHit_Connected) continue; 
                 RayOrderOpCounter.RunOpCounter(bvh, firstGen[k], ops);
             }
 

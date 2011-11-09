@@ -27,7 +27,7 @@ namespace RayVisualizer.Common
             while (file.CanRead)
             {
                 int type = reader.ReadInt32();
-                if (type == 9215) // the end of file sentinel, mostly for debugging
+                if (type == 9215) // the end of file sentinel
                     break;
                 int depth = reader.ReadInt32();
                 CVector3 origin = new CVector3() 
@@ -45,19 +45,19 @@ namespace RayVisualizer.Common
                 RayCast cast; 
                 if (type == 0)
                 {
-                    cast = new RayCast() { Kind = RayKind.IntersectionHit, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayCast() { Kind = RayKind.FirstHit_Hit, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 1)
                 {
-                    cast = new RayCast() { Kind = RayKind.IntersectionMiss, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayCast() { Kind = RayKind.FirstHit_Miss, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 2)
                 {
-                    cast = new RayCast() { Kind = RayKind.OcclusionBroken, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayCast() { Kind = RayKind.AnyHit_Broken, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 3)
                 {
-                    cast = new RayCast() { Kind = RayKind.OcclusionConnect, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayCast() { Kind = RayKind.AnyHit_Connected, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else
                 {

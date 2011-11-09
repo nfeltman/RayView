@@ -29,7 +29,7 @@ namespace RayVisualizer
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Direction;
-                if ((c.Kind==RayKind.IntersectionHit && a1 * ((d+c.Origin - p) * n) < 0 ) || (c.Kind == RayKind.IntersectionMiss && a1 * (d * n) < 0))
+                if ((c.Kind==RayKind.FirstHit_Hit && a1 * ((d+c.Origin - p) * n) < 0 ) || (c.Kind == RayKind.FirstHit_Miss && a1 * (d * n) < 0))
                 {
                     //compute plane-line intersection
                     float t = -a1 / (d * n);

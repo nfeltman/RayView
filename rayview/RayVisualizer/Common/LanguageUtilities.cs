@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public struct Union <T1, T2>
+    public class Union <T1, T2>
     {
         private T1 _asT1;
         private T2 _asT2;

@@ -24,16 +24,12 @@ namespace RayVisualizer.Common
             
             // if any pair of dotproducts have opposite sign, it misses
             if (val1 * val2 < 0 || val2 * val3 < 0 || val3 * val1 < 0)
-                return -1;
+                return float.NaN;
 
             // find the actual intersection location
             CVector3 norm = (p1 - p3) ^ (p2 - p3);
             float t = ((p1 - origin) * norm) / (direction * norm);
-            
-            // behind the ray is a miss
-            if (t < 0)
-                return -1;
-            
+                        
             return t;
         }
     }

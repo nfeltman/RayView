@@ -14,6 +14,7 @@ namespace RayVisualizer.Common
         public static readonly ClosedInterval NEGATIVES = new ClosedInterval(float.NegativeInfinity, 0);
         public float Min { get { return _min; } }
         public float Max { get { return _max; } }
+        public float Size { get { return _min > _max ? 0 : (_max - _min); } }
         public bool IsEmpty { get { return _min > _max; } }
 
         public ClosedInterval(float min, float max)

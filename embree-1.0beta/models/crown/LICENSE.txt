@@ -1,0 +1,10 @@
+The model of the crown and the HDR light are licensed under the 
+Creative Commons Attribution 3.0 license 
+(http://creativecommons.org/licenses/by/3.0/legalcode).
+
+Whenever used, the work must be attributed to the authors as follows:
+
+Model courtesy of Martin Lubich, www.loramel.net
+HDR light courtesy of Lightmap Ltd, www.lightmap.co.uk
+
+When possible the links to the websites have to be implemented as hyperlinks.

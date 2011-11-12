@@ -14,6 +14,18 @@ namespace RayVisualizer.Common
             y = y0;
             z = z0;
         }
+        public CVector3 Normalized()
+        {
+            return this / Length();
+        }
+        public float Length()
+        {
+            return (float)Math.Sqrt(x * x + y * y + z * z);
+        }
+        public float LengthSq()
+        {
+            return x * x + y * y + z * z;
+        }
         public static CVector3 operator +(CVector3 v1, CVector3 v2)
         {
             return new CVector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);

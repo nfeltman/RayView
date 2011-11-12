@@ -51,7 +51,7 @@ namespace RayVisualizer{
                 scene.RightVec = new Vector3(0, 0, 1);
                 scene.CrossPlaneDist = 100;
             }
-            scene.Generations = RaySet.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\castTrace.txt", FileMode.Open, FileAccess.Read));
+            scene.Generations = RayFileParser.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\castTrace.txt", FileMode.Open, FileAccess.Read));
             scene.ActiveSet = scene.Generations[1];
 
             GL.ClearColor(Color.LightGray);

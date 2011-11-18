@@ -52,6 +52,7 @@
     <Compile Include="ExternalCode\PriorityQueue.cs" />
     <Compile Include="Interval.cs" />
     <Compile Include="LanguageUtilities.cs" />
+    <Compile Include="NodeMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RayCast.cs" />
     <Compile Include="RaySet.cs" />

@@ -12,11 +12,16 @@ namespace RayVisualizer.Common
         public float SurfaceArea { get { return _surfaceArea; } }
 
         public Box3(float minX, float maxX, float minY, float maxY, float minZ, float maxZ)
+            : this(new ClosedInterval(minX, maxX), new ClosedInterval(minY, maxY),new ClosedInterval(minZ, maxZ))
         {
-            _xRange = new ClosedInterval(minX, maxX);
-            _yRange = new ClosedInterval(minY, maxY);
-            _zRange = new ClosedInterval(minZ, maxZ);
-            
+        }
+
+        public Box3(ClosedInterval xRange, ClosedInterval yRange, ClosedInterval zRange)
+        {
+            _xRange = xRange;
+            _yRange = yRange;
+            _zRange = zRange;
+
             float x = _xRange.Size;
             float y = _yRange.Size;
             float z = _zRange.Size;
@@ -45,6 +50,11 @@ namespace RayVisualizer.Common
             t_interval = t_interval & ((_yRange - orig.y) / dir.y);
             if (t_interval.IsEmpty) return t_interval;
             return t_interval & ((_zRange - orig.z) / dir.z);
+        }
+
+        public static Box3 operator |(Box3 a, Box3 b)
+        {
+            return new Box3(a._xRange | b._xRange, a._yRange | b._yRange, a._zRange | b._zRange);
         }
     }
 }

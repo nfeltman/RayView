@@ -48,17 +48,23 @@ namespace RayVisualizer.Common
         private static BVH2Node ParseNode(BinaryReader reader, int depth, ref int branchCounter, ref int leafCounter)
         {
             int type = reader.ReadInt32();
-            if (type == 0) //branch type
+            if (type == 0 || type == 2) //branch type
             {
-                Box3 bbox = ReadBoundingBox(reader);
+                Box3? bbox = null;
+                if(type == 0) // explicit branch
+                    bbox = ReadBoundingBox(reader);
                 BVH2Node left = ParseNode(reader, depth+1, ref branchCounter, ref leafCounter);
                 BVH2Node right = ParseNode(reader, depth+1, ref branchCounter, ref leafCounter);
-                return new BVH2Branch() { BBox = bbox, Left = left, Right = right, ID = branchCounter++, Depth = depth };
+                if (!bbox.HasValue) // implicit branch
+                    bbox = left.BBox | right.BBox;
+                return new BVH2Branch() { BBox = bbox.Value, Left = left, Right = right, ID = branchCounter++, Depth = depth };
             }
-            else if (type == 1) //leaf type
+            else if (type == 1 || type == 3) // leaf type
             {
                 int numTriangles = reader.ReadInt32();
-                Box3 bbox = ReadBoundingBox(reader);
+                Box3? bbox = null;
+                if(type == 1) // explicit leaf
+                    bbox = ReadBoundingBox(reader);
                 Triangle[] tris = new Triangle[numTriangles];
                 for (int k = 0; k < numTriangles; k++)
                 {
@@ -69,7 +75,9 @@ namespace RayVisualizer.Common
                         p3 = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle())
                     };
                 }
-                return new BVH2Leaf() { BBox = bbox, Primitives = tris, ID = leafCounter++, Depth = depth };
+                if (!bbox.HasValue) // implicit leaf
+                    throw new Exception("can't handle implicit leaves just yet");
+                return new BVH2Leaf() { BBox = bbox.Value, Primitives = tris, ID = leafCounter++, Depth = depth };
             }
             else
             {

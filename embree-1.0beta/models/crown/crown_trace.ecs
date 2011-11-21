@@ -7,6 +7,6 @@
 -radius 5
 -angle 10.1592
 -hdrilight 1 1 1 light_tent_by_lightmapltd.pfm
--accel bvh4.spatial
+-accel bvh2
 -renderer pt { spp = 1 depth = 20 backplate = background.ppm }
--display
+-savetrace ../../../traces/crown/casts.txt ../../../traces/crown/bvh.txt

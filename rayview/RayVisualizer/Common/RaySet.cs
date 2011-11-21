@@ -24,6 +24,11 @@ namespace RayVisualizer.Common
             return new UnionRaySet() { r1 = set1, r2 = set2 };
         }
 
+        public RaySet Filter(Func<RayCast, bool> filter)
+        {
+            return new FilterSet() { _filter = filter, r1 = this };
+        }
+
         private class UnionRaySet : RaySet
         {
             public RaySet r1, r2;
@@ -37,6 +42,23 @@ namespace RayVisualizer.Common
             {
                 // Concat is deferred
                 return r1.Concat(r2).GetEnumerator();
+            }
+        }
+
+        private class FilterSet : RaySet
+        {
+            public RaySet r1;
+            public Func<RayCast,bool> _filter;
+
+            public override int Length
+            {
+                get { return r1.Length; }
+            }
+
+            public override IEnumerator<RayCast> GetEnumerator()
+            {
+                // filter is deferred
+                return r1.Where(_filter).GetEnumerator();
             }
         }
     }

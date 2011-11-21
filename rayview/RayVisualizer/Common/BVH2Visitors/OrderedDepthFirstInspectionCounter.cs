@@ -5,49 +5,47 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class OrderedDepthFirstOpCounter : RayOrderOperations
+    public class OrderedDepthFirstInspectionCounter : OrderedDepthFirstOperations
     {
-        public int rayCasts;
-        public int boundingBoxTests;
-        public int boundingBoxHits;
-        public int primitiveNodeInspections;
-        public int primitiveNodePrimitiveHits;
-        public int branchNodeInspections;
-        public int rayHitFound;
+        private int[] _branchInspections;
+        private int[] _leafInspections;
+        public int[] BranchInspections { get { return _branchInspections; } }
+        public int[] LeafInspections { get { return _leafInspections; } }
+
+        public OrderedDepthFirstInspectionCounter(int numBranches)
+        {
+            _branchInspections = new int[numBranches];
+            _leafInspections = new int[numBranches+1];
+        }
 
         public void RayCast(RayCast cast)
         {
-            rayCasts++;
         }
 
         public void BoundingBoxTest(BVH2Node node)
         {
-            boundingBoxTests++;
         }
 
         public void BoundingBoxHit(BVH2Node node)
         {
-            boundingBoxHits++;
         }
 
         public void PrimitiveNodeInspection(BVH2Leaf leaf)
         {
-            primitiveNodeInspections++;
+            _leafInspections[leaf.ID]++;
         }
 
         public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit)
         {
-            primitiveNodePrimitiveHits++;
         }
 
         public void BranchNodeInspection(BVH2Branch branch)
         {
-            branchNodeInspections++;
+            _branchInspections[branch.ID]++;
         }
 
         public void RayHitFound(HitRecord hit)
         {
-            rayHitFound++;
         }
     }
 }

@@ -33,6 +33,15 @@ namespace RayVisualizer.Common
             return new ClosedInterval(Math.Max(i1._min, i2._min), Math.Min(i1._max, i2._max));
         }
 
+        public static ClosedInterval operator |(ClosedInterval i1, ClosedInterval i2)
+        {
+            if (i2.IsEmpty)
+                return i1;
+            if (i1.IsEmpty)
+                return i2;
+            return new ClosedInterval(Math.Min(i1._min, i2._min), Math.Max(i1._max, i2._max));
+        }
+
         public static ClosedInterval operator +(ClosedInterval i1, float m)
         {
             return new ClosedInterval(i1._min + m, i1._max + m);

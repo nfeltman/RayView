@@ -1,14 +1,18 @@
 ## FORMAT ##
-BVHFile   := BVHNode Sentinel                                    # the node is a single tree plus a sentinel
-BVHNode   := BVHBranch | BVHLeaf                                 # a node is either a leaf or a branch
-BVHBranch := BranchID bounds:BBox left:BVHNode right:BVHNode     # pre-order printing of the tree
-BVHLeaf   := LeafID bounds:BBox numNode:int Tri*                 # number of Tri entries == numNode
-Tri       := p1:Point p2:Point p3:Point                          # three points of the triangle
-Point     := x:float y:float z:float
-BBox      := x:Range y:Range z:Range
-Range     := min:float max:float                                 # note: bounds might be infinite
+BVHFile    := BVHNode Sentinel                                    # the node is a single tree plus a sentinel
+BVHNode    := EBVHBranch | EBVHLeaf | IBVHBranch | IBVHLeaf       # a node is either a leaf or a branch, implicit or explicit
+IBVHBranch := IBranchID left:BVHNode right:BVHNode                # pre-order printing of the tree
+EBVHBranch := EBranchID bounds:BBox left:BVHNode right:BVHNode    # pre-order printing of the tree
+IBVHLeaf   := ILeafID numNode:int Tri*                            # number of Tri entries == numNode
+EBVHLeaf   := ELeafID bounds:BBox numNode:int Tri*                # number of Tri entries == numNode
+Tri        := p1:Point p2:Point p3:Point                          # three points of the triangle
+Point      := x:float y:float z:float
+BBox       := x:Range y:Range z:Range
+Range      := min:float max:float                                 # note: bounds might be infinite
 
 ## CONSTANTS ##
-BranchID  := 0:int
-LeafID    := 1:int
-Sentinel  := 9215:int
+EBranchID   := 0:int
+ELeafID     := 1:int
+IBranchID   := 2:int
+ILeafID     := 3:int
+Sentinel    := 9215:int

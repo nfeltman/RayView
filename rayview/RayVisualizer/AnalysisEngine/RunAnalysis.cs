@@ -11,12 +11,29 @@ namespace RayVisualizer.Common
         public static void Main()
         {
             string tracesPath="..\\..\\..\\..\\..\\traces\\";
-            Full_TU_vs_PU_nu(tracesPath);
+            RunTraversalComparerSuite(tracesPath);
+        }
+
+        public static void RunBVHSuite(string tracesPath)
+        {
+            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
+            StreamWriter writer = new StreamWriter(tracesPath + "crown\\Full_TU_vs_PU_nu.txt");
+            Full_TU_vs_PU_nu(bvh, writer);
+            writer.Close();
+        }
+
+        public static void RunTraversalComparerSuite(string tracesPath)
+        {
+            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
+            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
+            StreamWriter writer = new StreamWriter(tracesPath + "crown\\RayOrder_vs_ODF_per_node.txt");
+            RayOrderAdvantageQuantifier(bvh, allrays[1].Filter(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss), writer);
+            writer.Close();
         }
 
         public static void SizeRatioFinder(string tracesPath)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
             NodeMap<float> sizeRatios = new NodeMap<float>(bvh.NumBranch);
             // this looks incorrect; consider redoing
             bvh.PrefixEnumerate(
@@ -26,26 +43,8 @@ namespace RayVisualizer.Common
             DumpToFile(sizeRatios.Leaves, tracesPath + "crown\\lRatios.txt");
         }
 
-        public static void LeftRight_Psi_U_nu_U(string tracesPath)
+        public static void Full_TU_vs_PU_nu(BVH2 bvh, StreamWriter writer)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
-            StreamWriter writer = new StreamWriter(tracesPath + "crown\\SAvsSubsum.txt");
-            // rolls over the tuple (surface area subsum, leaf count)
-            bvh.RollUp(
-                (b, leftSum, rightSum) =>
-                {
-                    float subSAsum = leftSum.Item1 + rightSum.Item1 + b.BBox.SurfaceArea;
-                    int subLeafSum = leftSum.Item2 + rightSum.Item2;
-                    return new Tuple<float, int>(subSAsum, subLeafSum);
-                },
-                l => new Tuple<float,int>(0,1) );
-            writer.Close();
-        }
-
-        public static void Full_TU_vs_PU_nu(string tracesPath)
-        {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
-            StreamWriter writer = new StreamWriter(tracesPath + "crown\\Full_TU_vs_PU_nu.txt");
             // rolls over the tuple (surface area subsum, leaf count)
             bvh.RollUp(
                 (b, leftSum, rightSum) =>
@@ -59,7 +58,6 @@ namespace RayVisualizer.Common
                     return new Tuple<float, int>(subSAsum, subLeafSum);
                 },
                 l => new Tuple<float, int>(0, 1));
-            writer.Close();
         }
 
         public static void TraversalAmountOverSA(string tracesPath)
@@ -67,7 +65,7 @@ namespace RayVisualizer.Common
             BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
             RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\crownCasts.txt", FileMode.Open, FileAccess.Read));
             RayOrderInspectionCounter ops = new RayOrderInspectionCounter(bvh.NumBranch);
-            foreach (RayCast ray in allrays[1].Where(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss))
+            foreach (RayCast ray in allrays[1].Filter(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss))
             {
                 RayOrderTraverser.RunTraverser(bvh, ray, ops);
             }
@@ -80,57 +78,17 @@ namespace RayVisualizer.Common
             DumpToFile(branchQuotients, tracesPath + "crown\\branchTravPerSA.txt");
         }
 
-        public static void RayOrderAdvantageQuantifier(string tracesPath)
+        public static void RayOrderAdvantageQuantifier(BVH2 bvh, RaySet rays, StreamWriter writer)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
-            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\crownCasts.txt", FileMode.Open, FileAccess.Read));
             RayOrderInspectionCounter ops = new RayOrderInspectionCounter(bvh.NumBranch);
-            foreach (RayCast ray in allrays[1].Where(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss))
+            OrderedDepthFirstInspectionCounter ops2 = new OrderedDepthFirstInspectionCounter(bvh.NumBranch);
+            foreach (RayCast ray in rays)
             {
                 RayOrderTraverser.RunTraverser(bvh, ray, ops);
+                OrderedDepthFirstTraverser.RunTraverser(bvh,ray,ops2);
             }
-
-            // TODO: Run ODF traversal method and print off difference.
-
-            DumpToFile(ops.LeafInspections, tracesPath + "crown\\leafInspections.txt");
-            DumpToFile(ops.BranchInspections, tracesPath + "crown\\branchInspections.txt");
-        }
-
-        public static void TestIntersections(string tracesPath)
-        {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
-            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\crownCasts.txt", FileMode.Open, FileAccess.Read));
-
-            RayOrderOpCounter roOps = new RayOrderOpCounter();
-            OrderedDepthFirstOperations odfOps = new OrderedDepthFirstOperations();
-            int myOwnCount = 0;
-
-            int[] leafIntersectionCount = new int[bvh.NumLeaves];
-
-            int k = -1;
-            foreach (RayCast ray in allrays[1].Where(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss))
-            {
-                k++;
-                if ((k * 100 / allrays[1].Length) != (k - 1) * 100 / allrays[1].Length)
-                    Console.WriteLine(k * 100 / allrays[1].Length);
-
-                if (ray.Kind == RayKind.FirstHit_Hit)
-                    myOwnCount++;
-                HitRecord closestIntersection = RayOrderTraverser.RunTraverser(bvh, ray, roOps);
-                //HitRecord closestIntersection2 = OrderedDepthFirstOpCounter.RunTraverser(bvh, ray, odfOps);
-                
-                if(closestIntersection!=null)
-                    leafIntersectionCount[closestIntersection.leafID]++;
-
-            //    if (closestIntersection != null && firstGen[k].Kind != RayKind.FirstHit_Hit)
-            //        Console.WriteLine("AHAHAHAH " + closestIntersection.t_value);
-            //    if (closestIntersection2 != null && firstGen[k].Kind != RayKind.FirstHit_Hit)
-            //        Console.WriteLine("HEHEHEHE " + closestIntersection.t_value);
-            }
-
-            DumpToFile(leafIntersectionCount, tracesPath + "crown\\leafPopularity.txt");
-            int[] histogram = FormExactHistogram(leafIntersectionCount, 0, leafIntersectionCount.Max());
-            DumpToFile(histogram, tracesPath + "crown\\leafPopularityHisto.txt");
+            for (int k = 0; k < bvh.NumBranch; k++)
+                writer.WriteLine(ops.BranchInspections[k] + " " + ops2.BranchInspections[k]);
         }
 
         public static int[] GetClosedSubSums(BVH2 bvh, Func<BVH2Branch, int> forBranch, Func<BVH2Leaf, int> forLeaf)

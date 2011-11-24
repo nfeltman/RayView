@@ -1,5 +1,5 @@
 -i powerplant.xml
--size 1920 1080
+-size 400 300
 -gamma 1.7
 -vp -17071 13198.4 -57152.9
 -vi -12266.6 13137.2 -62260.1
@@ -8,5 +8,5 @@
 -ambientlight 0.87 0.87 0.93
 -distantlight 0.343543 -0.818176 -0.46105 1 0.89 0.57 0.5
 -accel bvh2
--renderer pt { spp = 1024 depth = 4 }
+-renderer pt { spp = 16 depth = 4 }
 -savetrace ../../../traces/powerplant/casts.txt ../../../traces/powerplant/bvh.txt

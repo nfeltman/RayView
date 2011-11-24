@@ -7,21 +7,27 @@ namespace RayVisualizer.Common
 {
     public class NodeMap<T>
     {
-        private T[] branches, leaves;
+        private T[] _branches, _leaves;
 
         public NodeMap(int numBranches)
         {
-            branches = new T[numBranches];
-            leaves = new T[numBranches + 1];
+            _branches = new T[numBranches];
+            _leaves = new T[numBranches + 1];
         }
 
-        public T[] Branches { get { return branches; } }
-        public T[] Leaves { get { return leaves; } }
+        public NodeMap(T[] branches, T[] leaves)
+        {
+            _branches = branches;
+            _leaves = leaves;
+        }
+
+        public T[] Branches { get { return _branches; } }
+        public T[] Leaves { get { return _leaves; } }
 
         public T this[BVH2Node index]
         {
-            get { return index.Accept(b => branches[b.ID], l => leaves[l.ID]);}
-            set { index.Accept(b => branches[b.ID] = value, l => leaves[l.ID] = value); }
+            get { return index.Accept(b => _branches[b.ID], l => _leaves[l.ID]);}
+            set { index.Accept(b => _branches[b.ID] = value, l => _leaves[l.ID] = value); }
         }
     }
 }

@@ -10,7 +10,8 @@ namespace RayVisualizer.Common
         private int[] _branchInspections;
         private int[] _leafInspections;
         public int[] BranchInspections { get { return _branchInspections; } }
-        public int[] LeafInspections { get { return _leafInspections; } } 
+        public int[] LeafInspections { get { return _leafInspections; } }
+        public NodeMap<int> Inspections { get { return new NodeMap<int>(_branchInspections, _leafInspections); } }
 
         public RayOrderInspectionCounter(int numBranches)
         {

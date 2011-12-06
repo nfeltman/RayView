@@ -1,0 +1,12 @@
+-i crown_by_martin_lubich.xml
+-size 800 960
+-gamma 1.7
+-vp 61.4156 102.11 -1325.25 
+-vi 3.72811 87.9981 -82.1874 
+-vu -0.000525674 0.999936 0.0113274 
+-radius 5
+-angle 10.1592
+-hdrilight 1 1 1 light_tent_by_lightmapltd.pfm
+-accel bvh2
+-renderer pt { spp = 1 depth = 20 backplate = background.ppm }
+-savetrace ../../../traces/crown/casts.txt ../../../traces/crown/bvh.txt

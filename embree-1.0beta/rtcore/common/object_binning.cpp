@@ -33,7 +33,6 @@ namespace embree
       binCount[i] = 0;
       binBounds[i][0] = binBounds[i][1] = binBounds[i][2] = empty;
     }
-
     /*! map geometry to bins, unrolled once */
     {
       index_t i;
@@ -55,19 +54,18 @@ namespace embree
         int b11 = extract<1>(bin1); binCount[b11][1]++; binBounds[b11][1].grow(prim1);
         int b12 = extract<2>(bin1); binCount[b12][2]++; binBounds[b12][2].grow(prim1);
       }
-
       /*! for uneven number of primitives */
       if (i < index_t(size()))
       {
         /*! map primitive to bin */
         Box prim0 = prims[start()+i]; ssei bin0 = getBin(prim0);
-
         /*! increase bounds of bins */
         int b00 = extract<0>(bin0); binCount[b00][0]++; binBounds[b00][0].grow(prim0);
         int b01 = extract<1>(bin0); binCount[b01][1]++; binBounds[b01][1].grow(prim0);
         int b02 = extract<2>(bin0); binCount[b02][2]++; binBounds[b02][2].grow(prim0);
       }
     }
+
 
     /*! sweep from right to left and compute parallel prefix of merged bounds */
     ssef rArea[maxBins];       //!< area of bounds of primitives on the right
@@ -80,6 +78,11 @@ namespace embree
       bx = merge(bx,binBounds[i][0]); rArea[i][0] = halfArea(bx);
       by = merge(by,binBounds[i][1]); rArea[i][1] = halfArea(by);
       bz = merge(bz,binBounds[i][2]); rArea[i][2] = halfArea(bz);
+    }
+
+	float xSAH1[maxBins];
+	for (size_t i=0; i<numBins; i++) {
+		xSAH1[i] = 2*rArea[i][0];
     }
 
     /*! sweep from left to right and compute SAH */

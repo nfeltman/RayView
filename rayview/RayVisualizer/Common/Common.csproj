@@ -40,9 +40,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CVector3.cs" />
+    <Compile Include="BVHBuild\BVH2Builder.cs" />
+    <Compile Include="BVHBuild\BVH2Parser.cs" />
+    <Compile Include="Primitives\Box3.cs" />
+    <Compile Include="BVH2.cs" />
+    <Compile Include="BVH2Visitors\BVH2Visitor.cs" />
+    <Compile Include="BVH2Visitors\CollectTrianglesVisitor.cs" />
+    <Compile Include="BVH2Visitors\OrderedDepthFirstInspectionCounter.cs" />
+    <Compile Include="BVH2Visitors\OrderedDepthFirstOpCounter.cs" />
+    <Compile Include="BVH2Visitors\OrderedDepthFirstTraverser.cs" />
+    <Compile Include="BVH2Visitors\RayOrderInspectionCounter.cs" />
+    <Compile Include="BVH2Visitors\RayOrderOpCounter.cs" />
+    <Compile Include="BVH2Visitors\RayOrderTraverser.cs" />
+    <Compile Include="Primitives\CVector3.cs" />
+    <Compile Include="ExternalCode\PriorityQueue.cs" />
+    <Compile Include="Primitives\Interval.cs" />
+    <Compile Include="LanguageUtilities.cs" />
+    <Compile Include="NodeMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RaySet.cs" />
+    <Compile Include="Primitives\RayCast.cs" />
+    <Compile Include="Primitives\RaySet.cs" />
+    <Compile Include="Primitives\Triangle.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

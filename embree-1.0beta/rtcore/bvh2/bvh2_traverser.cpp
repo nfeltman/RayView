@@ -85,7 +85,7 @@ pop_node:
     }
   }
 
-  bool BVH2Traverser::occluded(const Ray& ray) const
+  bool BVH2Traverser::occluded(const Ray& ray, int depth) const
   {
     /*! stack state */
     int stackPtr = 0;                         //!< current stack pointer

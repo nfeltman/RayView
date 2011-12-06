@@ -19,6 +19,7 @@
 #include "bvh2/bvh2_builder_spatial.h"
 #include "bvh2/bvh2_to_bvh4.h"
 #include "bvh2/bvh2_traverser.h"
+#include "BVH2Printer.h"
 #include "bvh4/bvh4_builder.h"
 #include "bvh4/bvh4_traverser.h"
 #include "PrintingTraverser.h"
@@ -27,26 +28,40 @@
 
 namespace embree
 {
-  Intersector* rtcCreateAccelNoTrace(const char* type, const BuildTriangle* triangles, size_t numTriangles)
+	void printBVH2ToFile(Ref<BVH2<Triangle4> > bvh, FileName& bvhOutput);
+
+  Intersector* rtcCreateAccelNoTrace(const char* type, const BuildTriangle* triangles, size_t numTriangles, FileName& bvhOutput)
   {
-    if      (!strcmp(type,"default"     )) return new BVH4Traverser(BVH4Builder::build(triangles,numTriangles));
-    else if (!strcmp(type,"bvh2"        )) return new BVH2Traverser(BVH2Builder::build(triangles,numTriangles));
-    else if (!strcmp(type,"bvh2.spatial")) return new BVH2Traverser(BVH2BuilderSpatial::build(triangles,numTriangles));
-    else if (!strcmp(type,"bvh4"        )) return new BVH4Traverser(BVH4Builder::build(triangles,numTriangles));
-    else if (!strcmp(type,"bvh4.spatial")) {
-      Ref<BVH2<Triangle4> > bvh2 = BVH2BuilderSpatial::build(triangles,numTriangles);
-      return new BVH4Traverser(BVH2ToBVH4::convert(bvh2));
+    if (!strcmp(type,"bvh2"        )) 	{
+		Ref<BVH2<Triangle4> > bvh = BVH2Builder::build(triangles,numTriangles);
+		BVH2Printer::printBVH2ToFile(bvh,bvhOutput);
+		return new BVH2Traverser(bvh);
+	}
+    else if (!strcmp(type,"bvh2.spatial"))	{
+		Ref<BVH2<Triangle4> > bvh = BVH2BuilderSpatial::build(triangles,numTriangles);
+		BVH2Printer::printBVH2ToFile(bvh,bvhOutput);
+		return new BVH2Traverser(bvh);
+	}
+    else if (!strcmp(type,"bvh4") || !strcmp(type,"default"))	{
+		Ref<BVH4<Triangle4> > bvh = BVH4Builder::build(triangles,numTriangles);
+		return new BVH4Traverser(bvh);
+	}
+    else if (!strcmp(type,"bvh4.spatial")) 	{
+	  Ref<BVH4<Triangle4> > bvh = BVH2ToBVH4::convert(BVH2BuilderSpatial::build(triangles,numTriangles));
+      return new BVH4Traverser(bvh);
     }
     else {
       throw std::runtime_error("invalid acceleration structure: "+std::string(type));
       return NULL;
     }
   }
-  Intersector* rtcCreateAccel(const char* type, const FileName& traceFile, const BuildTriangle* triangles, size_t numTriangles)
+  Intersector* rtcCreateAccel(const char* type, TraceData traceFile, const BuildTriangle* triangles, size_t numTriangles)
   {
-	  Intersector *sansTracer = rtcCreateAccelNoTrace(type,triangles,numTriangles);
-	  if(traceFile.str().length()==0)
-		  return sansTracer;
-	  return new PrintingTraverser(sansTracer, traceFile);
+      Intersector *sansTracer = rtcCreateAccelNoTrace(type,triangles,numTriangles, traceFile.bvhOutputFile);
+      if(traceFile.rayTraceFile.str().length()==0)
+          return sansTracer;
+      return new PrintingTraverser(sansTracer, traceFile.rayTraceFile);
   }
+
+  
 }

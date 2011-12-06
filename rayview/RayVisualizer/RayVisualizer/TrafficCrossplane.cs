@@ -25,11 +25,11 @@ namespace RayVisualizer
             up = right ^ n;
 
             //foreach(RaySet set in scene.Rays)
-            foreach (RayCast c in scene.Rays[1].Rays)
+            foreach (RayCast c in scene.ActiveSet)
             {
                 float a1 = (c.Origin - p) * n;
-                CVector3 d = c.End - c.Origin;
-                if ((c.Hit && a1 * ((c.End - p) * n) < 0 ) || (!c.Hit && a1 * (d * n) < 0))
+                CVector3 d = c.Direction;
+                if ((c.Kind==RayKind.FirstHit_Hit && a1 * ((d+c.Origin - p) * n) < 0 ) || (c.Kind == RayKind.FirstHit_Miss && a1 * (d * n) < 0))
                 {
                     //compute plane-line intersection
                     float t = -a1 / (d * n);
@@ -45,6 +45,11 @@ namespace RayVisualizer
                         bins[bin] = 1;
                 }
             }
+
+            //Dictionary<Tuple<int,int>,int> bins2;
+            //foreach (KeyValuePair<Tuple<int, int>, int> kv in bins)
+            //{
+            //}
         }
 
         public void DrawResults(SceneData scene)
@@ -57,7 +62,7 @@ namespace RayVisualizer
                 {
                     Tuple<int, int> key = kv.Key;
                     float val = Math.Min(kv.Value / 10f, 1);
-                    GL.Color4(val, 1-val, 0, .4);
+                    GL.Color4(0, 1-val, val, .4);
                     GL.Vertex3((((key.Item1) * BINSIZE * right) + ((key.Item2) * BINSIZE * up) + p).ToGL());
                     GL.Vertex3((((key.Item1) * BINSIZE * right) + ((key.Item2-1) * BINSIZE * up) + p).ToGL());
                     GL.Vertex3((((key.Item1-1) * BINSIZE * right) + ((key.Item2-1) * BINSIZE * up) + p).ToGL());

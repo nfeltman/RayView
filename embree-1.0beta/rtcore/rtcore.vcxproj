@@ -206,6 +206,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BVH2Printer.h" />
     <ClInclude Include="bvh2\bvh2.h" />
     <ClInclude Include="bvh2\bvh2_builder.h" />
     <ClInclude Include="bvh2\bvh2_builder_spatial.h" />
@@ -229,6 +230,7 @@
     <ClInclude Include="rtcore.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BVH2Printer.cpp" />
     <ClCompile Include="bvh2\bvh2.cpp" />
     <ClCompile Include="bvh2\bvh2_builder.cpp" />
     <ClCompile Include="bvh2\bvh2_builder_spatial.cpp" />

@@ -1,0 +1,10 @@
+-i xyz_dragon.xml
+-size 2400 2000
+-gamma 1.7
+-vp 2038.34 603.117 -2272.95 
+-vi 585.497 423.178 -440.409 
+-vu 0.147644 0.966072 0.211912 
+-angle 26.9915
+-radius 20
+-hdrilight 2.2244 1.46125 1.02156 ../textures/salzburg_hangar7_int.pfm
+-renderer pt { spp = 16 depth = 4 backplate = ../textures/white.ppm }

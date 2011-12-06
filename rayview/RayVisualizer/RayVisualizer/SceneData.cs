@@ -10,7 +10,8 @@ namespace RayVisualizer
 {
     public class SceneData
     {
-        public RaySet[] Rays { get; set; }
+        public RaySet ActiveSet { get; set; }
+        public RaySet[] Generations { get; set; }
         public Vector3 Location { get; set; }
         public Vector3 ForwardVec { get; set; }
         public Vector3 RightVec { get; set; }

@@ -1,0 +1,9 @@
+-i stanford.xml
+-size 1920 1080
+-gamma 1.7
+-vp -149.977 280 -541.346
+-vi -118.647 96.9838 56.46
+-vu 0.0153014 0.956306 0.291968
+-angle 26.9915
+-hdrilight 2.2244 1.46125 1.02156 ../textures/salzburg_hangar7_int.pfm
+-renderer pt { spp = 16 depth = 20 backplate = ../textures/white.ppm }

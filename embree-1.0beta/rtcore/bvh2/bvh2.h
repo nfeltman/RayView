@@ -38,6 +38,7 @@ namespace embree
     friend class BVH2BuilderSpatial;
     friend class BVH2ToBVH4;
     friend class BVH2Traverser;
+    friend class BVH2Printer;
 
   public:
 

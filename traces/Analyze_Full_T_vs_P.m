@@ -35,6 +35,7 @@ nu = left_nu + right_nu;
 PredictorAccuracyGraphs(T,nu.*P,left_T./(left_nu.*left_P),right_T./(right_nu.*right_P),T_char,E_char,'\nu',sprintf('%s-N',label),depths);
 PredictorAccuracyGraphs(T,(nu-1).*P,left_T./((left_nu-1).*left_P),right_T./((right_nu-1).*right_P),T_char,E_char,'\mu',sprintf('%s-M',label),depths);
 PredictorAccuracyGraphs(T,log(nu).*P,left_T./(log(left_nu).*left_P),right_T./(log(right_nu).*right_P),T_char,E_char,'\lambda',sprintf('%s-L',label),depths);
+PredictorAccuracyGraphs(T,((nu-1).^(1/3)).*P,left_T./(((left_nu-1).^(1/3)).*left_P),right_T./(((right_nu-1).^(1/3)).*right_P),T_char,E_char,'\rho',sprintf('%s-R',label),depths);
 end
 
 function PredictorAccuracyGraphs(actual,predictor,phi1,phi2,T_char,E_char,gl,label,depths)
@@ -63,8 +64,8 @@ end
 
 function PlotMultiColor(x, y, depths)
     max_depth = max(depths);
-    colors = hsv(max_depth);
-    for k = 1:max_depth,
+    colors = jet(max_depth);
+    for k = max_depth:-1:1,
         plot(x(depths==k,:),y(depths==k,:),'.','Color',colors(k,:));
         hold on
     end
@@ -73,8 +74,8 @@ end
 
 function PlotMultiColorLoglog(x, y, depths)
     max_depth = max(depths);
-    colors = hsv(max_depth);
-    for k = 1:max_depth,
+    colors = jet(max_depth);
+    for k = max_depth:-1:1,
         loglog(x(depths==k,:),y(depths==k,:),'.','Color',colors(k,:));
         hold on
     end

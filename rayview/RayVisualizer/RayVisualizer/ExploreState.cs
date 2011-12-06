@@ -20,7 +20,7 @@ namespace RayVisualizer
         public ExploreState(CrossplaneBehavior cb)
         {
             cross = cb;
-            bvh = BVH2.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\bvhTrace.txt", FileMode.Open, FileAccess.Read));
+            bvh = BVH2Parser.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\bvhTrace.txt", FileMode.Open, FileAccess.Read));
         }
 
         public virtual void OnRenderFrame(SceneData scene, GameWindow w, FrameEventArgs e)

@@ -63,7 +63,7 @@ namespace embree
     scheduler->go();
 
     /*! rotate top part of tree */
-    for (int i=0; i<5; i++) bvh->rotate(bvh->root,4);
+    //for (int i=0; i<5; i++) bvh->rotate(bvh->root,4);
 
     /*! free temporary memory again */
     bvh->nodes     = (BVH2<Triangle4>::Node*) alignedRealloc(bvh->nodes    ,atomicNextNode     *sizeof(BVH2<Triangle4>::Node));

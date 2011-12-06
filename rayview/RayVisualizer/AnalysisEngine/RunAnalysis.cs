@@ -11,12 +11,22 @@ namespace RayVisualizer.Common
         public static void Main()
         {
             string tracesPath="..\\..\\..\\..\\..\\traces\\";
-            RunFullSAHAnalysis(tracesPath);
+            DoBVHBuild(tracesPath);
+        }
+
+        public static void DoBVHBuild(string tracesPath)
+        {
+            Console.WriteLine("Reading BVH");
+            BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
+            Console.WriteLine("Collecting Primitives");
+            BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
+            Console.WriteLine("Building New BVH");
+            BVH2 created = BVH2Builder.BuildBVHSAH(tris);
         }
 
         public static void RunSAHAnalysisNoRays(string tracesPath)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
             StreamWriter writer = new StreamWriter(tracesPath + "crown\\Full_TU_vs_PU.txt");
             Full_TU_vs_PU(bvh, writer);
             writer.Close();
@@ -26,7 +36,7 @@ namespace RayVisualizer.Common
         {
             StreamWriter writer = new StreamWriter(tracesPath + "powerplant\\Full_T_vs_P.txt");
             Console.WriteLine("Reading BVH");
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "powerplant\\bvh.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\bvh.txt", FileMode.Open, FileAccess.Read));
             Console.WriteLine("Reading Casts");
             RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
             RaySet rays = allrays[1].Filter(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss);
@@ -37,7 +47,7 @@ namespace RayVisualizer.Common
 
         public static void RunTraversalComparerSuite(string tracesPath)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
             RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
             StreamWriter writer = new StreamWriter(tracesPath + "crown\\RayOrder_vs_ODF_per_node.txt");
             RayOrderAdvantageQuantifier(bvh, allrays[1].Filter(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss), writer);
@@ -46,7 +56,7 @@ namespace RayVisualizer.Common
 
         public static void SizeRatioFinder(string tracesPath)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
             NodeMap<float> sizeRatios = new NodeMap<float>(bvh.NumBranch);
             // this looks incorrect; consider redoing
             bvh.PrefixEnumerate(
@@ -100,7 +110,7 @@ namespace RayVisualizer.Common
 
         public static void TraversalAmountOverSA(string tracesPath)
         {
-            BVH2 bvh = BVH2.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
+            BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\crownBVH.txt", FileMode.Open, FileAccess.Read));
             RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\crownCasts.txt", FileMode.Open, FileAccess.Read));
             RayOrderInspectionCounter ops = new RayOrderInspectionCounter(bvh.NumBranch);
             foreach (RayCast ray in allrays[1].Filter(r => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss))

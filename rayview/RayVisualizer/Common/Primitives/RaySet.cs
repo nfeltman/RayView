@@ -10,8 +10,6 @@ namespace RayVisualizer.Common
     
     public abstract class RaySet : IEnumerable<RayCast>
     {
-        public abstract int Length { get; }
-
         public abstract IEnumerator<RayCast> GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() 
@@ -29,14 +27,16 @@ namespace RayVisualizer.Common
             return new FilterSet() { _filter = filter, r1 = this };
         }
 
+        public RayCast[] FlattenAndCopy()
+        {
+            List<RayCast> newset = new List<RayCast>();
+            newset.AddRange(this);
+            return newset.ToArray();
+        }
+
         private class UnionRaySet : RaySet
         {
             public RaySet r1, r2;
-
-            public override int Length
-            {
-                get { return r1.Length + r2.Length; }
-            }
 
             public override IEnumerator<RayCast> GetEnumerator()
             {
@@ -49,11 +49,6 @@ namespace RayVisualizer.Common
         {
             public RaySet r1;
             public Func<RayCast,bool> _filter;
-
-            public override int Length
-            {
-                get { return r1.Length; }
-            }
 
             public override IEnumerator<RayCast> GetEnumerator()
             {
@@ -130,21 +125,16 @@ namespace RayVisualizer.Common
             }
 
             return ret;
-        }
+        }        
+    }
 
-        private class SimpleRaySet : RaySet
+    public class SimpleRaySet : RaySet
+    {
+        public RayCast[] rays;
+
+        public override IEnumerator<RayCast> GetEnumerator()
         {
-            public RayCast[] rays;
-
-            public override int Length
-            {
-                get { return rays.Length; }
-            }
-
-            public override IEnumerator<RayCast> GetEnumerator()
-            {
-                return ((IEnumerable<RayCast>)rays).GetEnumerator();
-            }
+            return ((IEnumerable<RayCast>)rays).GetEnumerator();
         }
     }
 }

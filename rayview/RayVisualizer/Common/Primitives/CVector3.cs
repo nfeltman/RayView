@@ -54,5 +54,10 @@ namespace RayVisualizer.Common
         {
             return new CVector3(v.x / c, v.y / c, v.z / c);
         }
+
+        public override string ToString()
+        {
+            return String.Format("({0}, {1:0.0000000000}, {2})", x, y, z);
+        }
     }
 }

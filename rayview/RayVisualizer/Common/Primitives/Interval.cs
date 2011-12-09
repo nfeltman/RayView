@@ -112,5 +112,12 @@ namespace RayVisualizer.Common
         {
             return (i1._min > i2._max || i1.IsEmpty || i2.IsEmpty);
         }
+
+        public override string ToString()
+        {
+            if (IsEmpty)
+                return "[E]";
+            return String.Format("[{0}, {1}]",_min,_max);
+        }
     }
 }

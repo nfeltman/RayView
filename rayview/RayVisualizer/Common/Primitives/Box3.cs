@@ -116,5 +116,25 @@ namespace RayVisualizer.Common
         {
             return new Box3(a._xRange | b.x, a._yRange | b.y, a._zRange | b.z);
         }
+
+        public override bool Equals(Object obj)
+        {
+            if (!(obj is Box3))
+                return false;
+            Box3 b = (Box3)obj;
+            return _xRange.Min == b._xRange.Min && _xRange.Max == b._xRange.Max &&
+                _yRange.Min == b._yRange.Min && _yRange.Max == b._yRange.Max &&
+                _zRange.Min == b._zRange.Min && _zRange.Max == b._zRange.Max;
+        }
+
+        public override int GetHashCode()
+        {
+            return (int)((_xRange.Min + _xRange.Max + _yRange.Min + _yRange.Max + _zRange.Min + _zRange.Max)*int.MaxValue);
+        }
+
+        public override string ToString()
+        {
+            return String.Format("<{0}x{1}x{2}>",_xRange,_yRange,_zRange);
+        }
     }
 }

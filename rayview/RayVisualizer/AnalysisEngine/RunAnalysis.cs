@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
+using RayVisualizer.Common;
 
-namespace RayVisualizer.Common
+namespace AnalysisEngine
 {
     class RunAnalysis
     {
         public static void Main()
         {
-            string tracesPath="..\\..\\..\\..\\..\\traces\\";
+            string tracesPath="traces\\";
             DoBVHBuild(tracesPath);
         }
 
@@ -18,10 +20,36 @@ namespace RayVisualizer.Common
         {
             Console.WriteLine("Reading BVH");
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            Console.WriteLine("Collecting Primitives");
-            BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
-            Console.WriteLine("Building New BVH");
-            BVH2 created = BVH2Builder.BuildBVHSAH(tris);
+            PrintBVHReport(given, "given");
+            Console.WriteLine("Exponent | T_U | constr_time | consistent(2)");
+            for (int k = 0; k <= 50; k++)
+            {
+                BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
+                float exponent = (k / 30f) * (2f / 3f) + 1f / 3f;
+                Stopwatch s = new Stopwatch();
+                s.Start();
+                BVH2 created = BVH2Builder.BuildFullBVH(tris, createCostEstimator(exponent));
+                s.Stop();
+                Console.WriteLine("{0} {1} {2:.00} {3}", exponent, created.BranchSurfaceArea(), s.Elapsed.TotalSeconds, given.IsConsistentWith(created, 2));
+                //PrintBVHReport(created, "created");
+            }
+            Console.ReadLine();
+        }
+
+        public static Func<int, Box3, int, Box3, float> createCostEstimator(float sizeExpo)
+        {
+            return (left_nu, left_box, right_nu, right_box) => (float)(Math.Pow(left_nu,sizeExpo) * left_box.SurfaceArea + Math.Pow(right_nu,sizeExpo) * right_box.SurfaceArea);
+        }
+
+        public static void PrintBVHReport(BVH2 bvh, string name)
+        {
+            Console.WriteLine("Printing BVH \"{0}\" with {1} leaves.", name, bvh.NumLeaves);
+            Console.WriteLine("\t             NumPrims = {0}", bvh.NumPrims());
+            Console.WriteLine("\t          MaxLeafSize = {0}", bvh.MaxLeafSize());
+            Console.WriteLine("\t             MaxDepth = {0}", bvh.MaxDepth());
+            Console.WriteLine("\t    BranchSurfaceArea = {0}", bvh.BranchSurfaceArea());
+            Console.WriteLine("\t      LeafSurfaceArea = {0}", bvh.LeafSurfaceArea());
+            Console.WriteLine("\tScaledLeafSurfaceArea = {0}", bvh.ScaledLeafSurfaceArea());
         }
 
         public static void RunSAHAnalysisNoRays(string tracesPath)

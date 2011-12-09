@@ -1,5 +1,16 @@
+@article{ Boulos08,
+  author = {Boulos, Solomon and Ingo Wald and Carsten Benthin},
+  title = {Adaptive Ray Packet Reordering},
+  journal ={Symposium on Interactive Ray Tracing},
+  volume = {0},
+  year = {2008},
+  isbn = {978-1-4244-2741-3},
+  pages = {131-138},
+  publisher = {IEEE Computer Society},
+  address = {Los Alamitos, CA, USA},
+}
 
-@article{Wald07,
+@article{ Wald07,
  author = {Wald, Ingo and Boulos, Solomon and Shirley, Peter},
  title = {Ray tracing deformable scenes using dynamic bounding volume hierarchies},
  journal = {ACM Trans. Graph.},
@@ -16,8 +27,14 @@
  address = {New York, NY, USA},
 } 
 
+@InProceedings{Wald08,
+	title	= { {Getting} {Rid} {of} {Packets} {--} {Efficient} {SIMD} {Single-Ray} {Traversal} {using} {Multi-Branching} {BVHs}},
+	author	= { Ingo Wald and Carsten Benthin and Solomon Boulos },
+	year	= { 2008 },
+	booktitle	= { {Proceedings} {of} {IEEE} {Symposium} {on} {Interactive} {Ray} {Tracing} {2008} }
+}
 
-@PhdThesis{Havran00,
+@PhdThesis{ Havran00,
  author = "Vlastimil Havran",
  title  = "Heuristic Ray Shooting Algorithms",
  school = "Department of Computer Science and Engineering,
@@ -27,60 +44,39 @@
  year   = "2000",
  month  = "November",
  url    = "http://www.cgg.cvut.cz/~havran/phdthesis.html",
- annote = "Global illumination research aiming at the photo-realistic
-    image synthesis pushes forward research in computer graphics as a
-    whole. The computation of visually plausible images is
-    time-consuming and far from being realtime at present. A significant
-    part of computation in global illumination algorithms involves
-    repetitive computing of visibility queries.
-      In the thesis, we describe our results in ray shooting, which is
-    a well-known problem in the field of visibility. The problem is
-    difficult in spite of its simple definition: For a given oriented
-    half-line and a set of objects, find out the first object
-    intersected by the half-line if such an object exists. A
-    na\"{\i}ve algorithm has the time complexity $O(N)$, where $N$
-    is the number of objects. The na\"{\i}ve algorithm is practically
-    inapplicable in global illumination applications for a scene with
-    a high number of objects, due its huge time requirements. In this
-    thesis we deal with heuristic ray shooting algorithms that use
-    additional spatial data structures. We put stress on average-case
-    complexity and we particularly investigate the ray shooting
-    algorithms based on spatial hierarchies. In the thesis we deal
-    with two major topics.
-      In the first part of the thesis, we introduce a ray shooting
-    computation model and performance model. Based on these two models
-    we develop a methodology for comparing various ray shooting
-    algorithms for a set of experiments performed on a set of
-    scenes. Consecutively, we compare common heuristic ray shooting
-    algorithms based on BSP trees, kd-trees, octrees, bounding volume
-    hierarchies, uniform grids, and three types of hierarchical grids
-    using a set of 30 scenes from Standard Procedural Database. We
-    show that for this set of scenes the ray shooting algorithm based
-    on the kd-tree is the winning candidate among all tested ray
-    shooting algorithms.
-      The second and major part of the thesis presents several
-    techniques for decreasing the time and space complexity for ray
-    shooting algorithms based on kd-tree. We deal with both kd-tree
-    construction and ray traversal algorithms. In the context of kd-tree
-    construction, we present new methods for adaptive construction of
-    the kd-tree using empty spatial regions in the scene, termination
-    criteria, general cost model for the kd-tree, and modified surface
-    area heuristics for a restricted set of rays. Further, we describe
-    a new version of the recursive ray traversal algorithm. In context
-    of the recursive ray traversal algorithm based on the kd-tree, we
-    develop the concept of the largest common traversal sequence. This
-    reduces the number of hierarchical traversal steps in the kd-tree
-    for certain ray sets. We also describe one technique closely related
-    to computer architecture, namely mapping kd-tree nodes to memory to
-    increase the cache hit ratio for processors with a large cache
-    line. Most of the techniques proposed in the thesis can be used in
-    combination. In practice, the average time complexity of the ray
-    shooting algorithms based on the kd-tree, as presented in this thesis,
-    is about $O(log N)$, where the hidden multiplicative factor
-    depends on the input data. However, at present it is not known
-    to have been proved theoretically for scenes with general
-    distribution of objects. For these reasons our findings are
-    supported by a set of experiments for the above-mentioned set of
-    30 scenes.",
 }
 
+@inproceedings{ Bittner09,
+ author = {Bittner, Ji\v{r}\'{\i} and Havran, Vlastimil},
+ title = {RDH: ray distribution heuristics for construction of spatial data structures},
+ booktitle = {Proceedings of the 2009 Spring Conference on Computer Graphics},
+ series = {SCCG '09},
+ year = {2009},
+ isbn = {978-1-4503-0769-7},
+ location = {Budmerice, Slovakia},
+ pages = {51--58},
+ numpages = {8},
+ url = {http://doi.acm.org/10.1145/1980462.1980475},
+ doi = {http://doi.acm.org/10.1145/1980462.1980475},
+ acmid = {1980475},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+@InProceedings{ Kensler08,
+    title      = { {T}ree {R}otations for {I}mproving {B}ounding {V}olume {H}ierarchies },
+    author     = { Andrew Kensler },
+    booktitle  = { Proceedings of the 2008 IEEE Symposium on Interactive Ray Tracing },
+    month      = { Aug },
+    year       = { 2008 },
+    pages      = { 73--76 },
+}
+
+@TECHREPORT{Kopta11,
+  AUTHOR =        {Daniel Kopta and  Andrew Kensler and Thiago Ize and Josef Spjut and Erik Brunvand and Al Davis},
+  TITLE =         {Fast, Effective BVH Updates for Dynamic Ray-Traced Scenes Using Tree Rotations},
+  NUMBER =        {UUCS-11-002},
+  INSTITUTION =   {University of Utah},
+  MONTH =         {July},
+  YEAR  =         {2011},
+}

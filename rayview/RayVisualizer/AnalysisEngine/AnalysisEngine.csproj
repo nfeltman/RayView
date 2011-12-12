@@ -86,9 +86,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildAnalysis.cs" />
     <Compile Include="BVHMetrics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RunAnalysis.cs" />
+    <Compile Include="StaticEstimatorAnalysis.cs" />
+    <Compile Include="TraversalAnalysis.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

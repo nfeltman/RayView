@@ -83,9 +83,9 @@ namespace RayVisualizer.Common
             return new CVector3(_xRange.Min, _yRange.Min, _zRange.Min);
         }
 
-        public ClosedInterval IntersectSegment(CVector3 orig, CVector3 end)
+        public ClosedInterval IntersectSegment(CVector3 orig, CVector3 diff)
         {
-            return IntersectInterval(orig, end-orig, new ClosedInterval(0, 1));
+            return IntersectInterval(orig, diff, new ClosedInterval(0, 1));
         }
 
         public ClosedInterval IntersectRay(CVector3 orig, CVector3 dir)
@@ -98,13 +98,91 @@ namespace RayVisualizer.Common
             return IntersectInterval(orig, dir, ClosedInterval.ALL);
         }
 
-        public ClosedInterval IntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
+        /*
+         //This is 10x slower than the other implementation BECAUSE THE COMPILER IS BAD
+        public ClosedInterval SlowIntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
         {
             t_interval = t_interval & ((_xRange - orig.x) / dir.x);
             if (t_interval.IsEmpty) return t_interval;
             t_interval = t_interval & ((_yRange - orig.y) / dir.y);
             if (t_interval.IsEmpty) return t_interval;
             return t_interval & ((_zRange - orig.z) / dir.z);
+        }
+        
+
+        public  ClosedInterval IntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
+        {
+            ClosedInterval c1 = SlowIntersectInterval(orig, dir, t_interval);
+            ClosedInterval c2 = FastIntersectInterval(orig, dir, t_interval);
+            if ((c1.IsEmpty && c2.IsEmpty) || (c1.Min == c2.Min && c1.Max == c2.Max))
+                return c1;
+            SlowIntersectInterval(orig, dir, t_interval);
+            FastIntersectInterval(orig, dir, t_interval);
+            throw new Exception("asdflkjaslkf");
+        }*/
+
+        public ClosedInterval IntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
+        {
+            float min=t_interval.Min, max=t_interval.Max;
+            float pmin, pmax; //potential
+
+            pmin = _xRange.Min - orig.x;
+            pmax = _xRange.Max - orig.x;
+            if (dir.x == 0 && (pmin > 0 || pmax < 0))
+                return ClosedInterval.EMPTY;
+            if (dir.x != 0)
+            {
+                pmin /= dir.x;
+                pmax /= dir.x;
+                if (dir.x < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+                if (pmin > pmax) return ClosedInterval.EMPTY;
+            }
+
+            pmin = _yRange.Min - orig.y;
+            pmax = _yRange.Max - orig.y;
+            if (dir.y == 0 && (pmin > 0 || pmax < 0))
+                return ClosedInterval.EMPTY;
+            if (dir.y != 0)
+            {
+                pmin /= dir.y;
+                pmax /= dir.y;
+                if (dir.y < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+                if (pmin > pmax) return ClosedInterval.EMPTY;
+            }
+
+            pmin = _zRange.Min - orig.z;
+            pmax = _zRange.Max - orig.z;
+            if (dir.z == 0 && (pmin > 0 || pmax < 0))
+                return ClosedInterval.EMPTY;
+            if (dir.z != 0)
+            {
+                pmin /= dir.z;
+                pmax /= dir.z;
+                if (dir.z < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+            }
+
+            return new ClosedInterval(min,max);
         }
 
         public static Box3 operator |(Box3 a, Box3 b)

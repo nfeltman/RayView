@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RayCast
+    public class RayQuery
     {
         public RayKind Kind { get; set; }
         public int Depth { get; set; }
@@ -21,6 +21,17 @@ namespace RayVisualizer.Common
             return !b.IntersectSegment(Origin, End).IsEmpty;
         }
         */
+    }
+
+    public class FHRayHit
+    {
+        public CVector3 Origin { get; set; }
+        public CVector3 Difference { get; set; }
+    }
+    public class FHRayMiss
+    {
+        public CVector3 Origin { get; set; }
+        public CVector3 Direction { get; set; }
     }
 
     public enum RayKind

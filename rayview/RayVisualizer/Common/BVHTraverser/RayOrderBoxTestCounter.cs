@@ -5,25 +5,27 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class OrderedDepthFirstInspectionCounter : OrderedDepthFirstOperations
+    public class RayOrderBoxTestCounter : RayOrderOperations
     {
         private int[] _branchInspections;
         private int[] _leafInspections;
         public int[] BranchInspections { get { return _branchInspections; } }
         public int[] LeafInspections { get { return _leafInspections; } }
+        public NodeMap<int> Inspections { get { return new NodeMap<int>(_branchInspections, _leafInspections); } }
 
-        public OrderedDepthFirstInspectionCounter(int numBranches)
+        public RayOrderBoxTestCounter(int numBranches)
         {
             _branchInspections = new int[numBranches];
             _leafInspections = new int[numBranches+1];
         }
 
-        public void RayCast(RayCast cast)
+        public void RayCast(RayQuery cast)
         {
         }
 
         public void BoundingBoxTest(BVH2Node node)
         {
+            node.Accept(b => ++_branchInspections[b.ID], l=> ++_leafInspections[l.ID]);
         }
 
         public void BoundingBoxHit(BVH2Node node)
@@ -32,7 +34,6 @@ namespace RayVisualizer.Common
 
         public void PrimitiveNodeInspection(BVH2Leaf leaf)
         {
-            _leafInspections[leaf.ID]++;
         }
 
         public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit)
@@ -41,7 +42,6 @@ namespace RayVisualizer.Common
 
         public void BranchNodeInspection(BVH2Branch branch)
         {
-            _branchInspections[branch.ID]++;
         }
 
         public void RayHitFound(HitRecord hit)

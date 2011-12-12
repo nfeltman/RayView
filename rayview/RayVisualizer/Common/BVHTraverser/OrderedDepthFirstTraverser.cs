@@ -8,14 +8,13 @@ namespace RayVisualizer.Common
     // if we've made it into the visitor, the ray intersects with the bounding box
     public class OrderedDepthFirstTraverser
     {
-
         private class ODFVisitor : BVH2Visitor<HitRecord>
         {
             private OrderedDepthFirstOperations _ops;
-            private RayCast _ray;
+            private RayQuery _ray;
             private ClosedInterval _c;
 
-            public ODFVisitor(OrderedDepthFirstOperations ops, RayCast ray)
+            public ODFVisitor(OrderedDepthFirstOperations ops, RayQuery ray)
             {
                 _ops = ops;
                 _ray = ray;
@@ -94,7 +93,7 @@ namespace RayVisualizer.Common
             }
         }
 
-        public static HitRecord RunTraverser(BVH2 bvh, RayCast ray, OrderedDepthFirstOperations ops)
+        public static HitRecord RunTooledTraverser(BVH2 bvh, RayQuery ray, OrderedDepthFirstOperations ops)
         {
             if (!(ray.Kind == RayKind.FirstHit_Hit || ray.Kind == RayKind.FirstHit_Miss))
                 throw new Exception("Only for first-hit rays! Not any-hit!");
@@ -116,12 +115,22 @@ namespace RayVisualizer.Common
 
     public interface OrderedDepthFirstOperations
     {
-        void RayCast(RayCast cast);
+        void RayCast(RayQuery cast);
         void BoundingBoxTest(BVH2Node node);
         void BoundingBoxHit(BVH2Node node);
         void PrimitiveNodeInspection(BVH2Leaf leaf);
         void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit);
         void BranchNodeInspection(BVH2Branch branch);
         void RayHitFound(HitRecord hit);
+    }
+    public class NullOrderedDepthFirstOperations : OrderedDepthFirstOperations
+    {
+        public void RayCast(RayQuery cast) { }
+        public void BoundingBoxTest(BVH2Node node) { }
+        public void BoundingBoxHit(BVH2Node node) { }
+        public void PrimitiveNodeInspection(BVH2Leaf leaf) { }
+        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit) { }
+        public void BranchNodeInspection(BVH2Branch branch) { }
+        public void RayHitFound(HitRecord hit) { }
     }
 }

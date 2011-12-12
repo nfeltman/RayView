@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RayVisualizer.Common;
+using System.IO;
 
 namespace AnalysisEngine
 {
@@ -15,6 +16,22 @@ namespace AnalysisEngine
         public static float LeafSurfaceArea(this BVH2 bvh)
         {
             return bvh.RollUp((b, s1, s2) => s1 + s2, l => l.BBox.SurfaceArea);
+        }
+        public static int BranchTraversalCost(this BVH2 bvh, FHRayResults res)
+        {
+            RayHitCostVisitor cost1 = new RayHitCostVisitor();
+            RayMissCostVisitor cost2 = new RayMissCostVisitor();
+            for (int k = 0; k < res.Hits.Length; k++)
+            {
+                cost1.ToTest = res.Hits[k];
+                bvh.Accept(cost1);
+            }
+            for (int k = 0; k < res.Misses.Length; k++)
+            {
+                cost2.ToTest = res.Misses[k];
+                bvh.Accept(cost2);
+            }
+            return cost1.IntersectionCount + cost2.IntersectionCount;
         }
         public static float ScaledLeafSurfaceArea(this BVH2 bvh)
         {

@@ -11,9 +11,8 @@ namespace RayVisualizer.Common
     
     public class RayOrderTraverser 
     {
-        public static HitRecord RunTraverser(BVH2 bvh, RayCast ray, RayOrderOperations ops)
+        public static HitRecord RunTooledTraverser(BVH2 bvh, RayQuery ray, RayOrderOperations ops)
         {
-
             if (!(ray.Kind == RayKind.FirstHit_Hit || ray.Kind == RayKind.FirstHit_Miss))
                 throw new Exception("Only for first-hit rays! Not any-hit!");
 
@@ -32,10 +31,12 @@ namespace RayVisualizer.Common
                 q.Enqueue(rootInterval.Min, new QueueItem(bvh.Root));
             }
 
+            //float t_found = float.PositiveInfinity; //use this to skip past nodes when a 
             while(!q.IsEmpty)
             {
                 KeyValuePair<float, QueueItem> pair = q.Dequeue();
-                HitRecord intersection = pair.Value.Run(n => n.Accept(
+                //if (pair.Key > t_found) throw new Exception("Somehow we skipped past the found intersection.");
+                HitRecord intersection = pair.Value.Run(n => /*pair.Key == t_found ? null :*/ n.Accept(
                     // pattern match based on the type of queue item
                     (BVH2Branch branch) =>
                     {
@@ -64,7 +65,8 @@ namespace RayVisualizer.Common
                         HitRecord closestIntersection = leaf.FindClosestPositiveIntersection(origin, direction, ClosedInterval.POSITIVES);
                         if (closestIntersection != null)
                         {
-                            ops.PrimitiveNodePrimitiveHit(leaf,closestIntersection);
+                            ops.PrimitiveNodePrimitiveHit(leaf, closestIntersection);
+                            //t_found = closestIntersection.t_value;
                             q.Enqueue(closestIntersection.t_value, new QueueItem(closestIntersection));
                         }
                         return (HitRecord)null; //do not stop queue processing
@@ -92,12 +94,23 @@ namespace RayVisualizer.Common
 
     public interface RayOrderOperations
     {
-        void RayCast(RayCast cast);
+        void RayCast(RayQuery cast);
         void BoundingBoxTest(BVH2Node node);
         void BoundingBoxHit(BVH2Node node);
         void PrimitiveNodeInspection(BVH2Leaf leaf);
         void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit);
         void BranchNodeInspection(BVH2Branch branch);
         void RayHitFound(HitRecord hit);
+    }
+
+    public class NullRayOrderOperations : RayOrderOperations
+    {
+        public void RayCast(RayQuery cast) { }
+        public void BoundingBoxTest(BVH2Node node) { }
+        public void BoundingBoxHit(BVH2Node node) { }
+        public void PrimitiveNodeInspection(BVH2Leaf leaf) { }
+        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit) { }
+        public void BranchNodeInspection(BVH2Branch branch) { }
+        public void RayHitFound(HitRecord hit) { }
     }
 }

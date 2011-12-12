@@ -30,7 +30,7 @@ namespace RayVisualizer.Common
 
         public static ClosedInterval operator &(ClosedInterval i1, ClosedInterval i2)
         {
-            return new ClosedInterval(Math.Max(i1._min, i2._min), Math.Min(i1._max, i2._max));
+            return new ClosedInterval(i1._min > i2._min ? i1._min : i2._min, i1._max < i2._max ? i1._max : i2._max);
         }
 
         public static ClosedInterval operator |(ClosedInterval i1, ClosedInterval i2)

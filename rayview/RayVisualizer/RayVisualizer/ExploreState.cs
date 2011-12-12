@@ -48,7 +48,7 @@ namespace RayVisualizer
             GL.Begin(BeginMode.Lines);
             //foreach(RaySet set in scene.Rays)
             int counter = 0;
-            foreach (RayCast c in scene.ActiveSet)
+            foreach (RayQuery c in scene.ActiveSet)
             {
                 if ((counter++ & 15) != 0) continue;
                 GL.Vertex3(c.Origin.x, c.Origin.y, c.Origin.z);

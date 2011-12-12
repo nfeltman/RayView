@@ -15,7 +15,7 @@ namespace RayVisualizer.Common
         public int branchNodeInspections;
         public int rayHitFound;
 
-        public void RayCast(RayCast cast)
+        public void RayCast(RayQuery cast)
         {
             rayCasts++;
         }

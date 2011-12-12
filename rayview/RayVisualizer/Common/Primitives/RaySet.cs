@@ -8,9 +8,9 @@ using System.Collections;
 namespace RayVisualizer.Common
 {
     
-    public abstract class RaySet : IEnumerable<RayCast>
+    public abstract class RaySet : IEnumerable<RayQuery>
     {
-        public abstract IEnumerator<RayCast> GetEnumerator();
+        public abstract IEnumerator<RayQuery> GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() 
         {
@@ -22,14 +22,14 @@ namespace RayVisualizer.Common
             return new UnionRaySet() { r1 = set1, r2 = set2 };
         }
 
-        public RaySet Filter(Func<RayCast, bool> filter)
+        public RaySet Filter(Func<RayQuery, int, bool> filter)
         {
             return new FilterSet() { _filter = filter, r1 = this };
         }
 
-        public RayCast[] FlattenAndCopy()
+        public RayQuery[] FlattenAndCopy()
         {
-            List<RayCast> newset = new List<RayCast>();
+            List<RayQuery> newset = new List<RayQuery>();
             newset.AddRange(this);
             return newset.ToArray();
         }
@@ -38,7 +38,7 @@ namespace RayVisualizer.Common
         {
             public RaySet r1, r2;
 
-            public override IEnumerator<RayCast> GetEnumerator()
+            public override IEnumerator<RayQuery> GetEnumerator()
             {
                 // Concat is deferred
                 return r1.Concat(r2).GetEnumerator();
@@ -48,9 +48,9 @@ namespace RayVisualizer.Common
         private class FilterSet : RaySet
         {
             public RaySet r1;
-            public Func<RayCast,bool> _filter;
+            public Func<RayQuery,int,bool> _filter;
 
-            public override IEnumerator<RayCast> GetEnumerator()
+            public override IEnumerator<RayQuery> GetEnumerator()
             {
                 // filter is deferred
                 return r1.Where(_filter).GetEnumerator();
@@ -62,7 +62,7 @@ namespace RayVisualizer.Common
     {
         public static RaySet[] ReadFromFile(Stream file)
         {
-            List<RayCast>[] sets = new List<RayCast>[0];
+            List<RayQuery>[] sets = new List<RayQuery>[0];
 
             BinaryReader reader = new BinaryReader(file);
 
@@ -84,22 +84,22 @@ namespace RayVisualizer.Common
                     y = reader.ReadSingle(),
                     z = reader.ReadSingle(),
                 };
-                RayCast cast;
+                RayQuery cast;
                 if (type == 0)
                 {
-                    cast = new RayCast() { Kind = RayKind.FirstHit_Hit, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayQuery() { Kind = RayKind.FirstHit_Hit, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 1)
                 {
-                    cast = new RayCast() { Kind = RayKind.FirstHit_Miss, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayQuery() { Kind = RayKind.FirstHit_Miss, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 2)
                 {
-                    cast = new RayCast() { Kind = RayKind.AnyHit_Broken, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayQuery() { Kind = RayKind.AnyHit_Broken, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else if (type == 3)
                 {
-                    cast = new RayCast() { Kind = RayKind.AnyHit_Connected, Depth = depth, Origin = origin, Direction = dir };
+                    cast = new RayQuery() { Kind = RayKind.AnyHit_Connected, Depth = depth, Origin = origin, Direction = dir };
                 }
                 else
                 {
@@ -108,10 +108,10 @@ namespace RayVisualizer.Common
 
                 if (sets.Length <= cast.Depth)
                 {
-                    List<RayCast>[] sets2 = new List<RayCast>[cast.Depth + 1];
+                    List<RayQuery>[] sets2 = new List<RayQuery>[cast.Depth + 1];
                     Array.Copy(sets, sets2, sets.Length);
                     for (int k = sets.Length; k < sets2.Length; k++)
-                        sets2[k] = new List<RayCast>();
+                        sets2[k] = new List<RayQuery>();
                     sets = sets2;
                 }
 
@@ -130,11 +130,11 @@ namespace RayVisualizer.Common
 
     public class SimpleRaySet : RaySet
     {
-        public RayCast[] rays;
+        public RayQuery[] rays;
 
-        public override IEnumerator<RayCast> GetEnumerator()
+        public override IEnumerator<RayQuery> GetEnumerator()
         {
-            return ((IEnumerable<RayCast>)rays).GetEnumerator();
+            return ((IEnumerable<RayQuery>)rays).GetEnumerator();
         }
     }
 }

@@ -82,18 +82,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BVH2Visitors\RayCostVisitor.cs" />
     <Compile Include="BVHBuild\BVH2Builder.cs" />
     <Compile Include="BVHBuild\BVH2Parser.cs" />
+    <Compile Include="BVHBuild\RayCostEvaluator.cs" />
+    <Compile Include="BVHBuild\RayCompiler.cs" />
+    <Compile Include="BVHBuild\SplitEvaluator.cs" />
+    <Compile Include="BVHTraverser\RayOrderBoxTestCounter.cs" />
     <Compile Include="Primitives\Box3.cs" />
     <Compile Include="BVH2.cs" />
     <Compile Include="BVH2Visitors\BVH2Visitor.cs" />
     <Compile Include="BVH2Visitors\CollectTrianglesVisitor.cs" />
-    <Compile Include="BVH2Visitors\OrderedDepthFirstInspectionCounter.cs" />
-    <Compile Include="BVH2Visitors\OrderedDepthFirstOpCounter.cs" />
-    <Compile Include="BVH2Visitors\OrderedDepthFirstTraverser.cs" />
-    <Compile Include="BVH2Visitors\RayOrderInspectionCounter.cs" />
-    <Compile Include="BVH2Visitors\RayOrderOpCounter.cs" />
-    <Compile Include="BVH2Visitors\RayOrderTraverser.cs" />
+    <Compile Include="BVHTraverser\OrderedDepthFirstInspectionCounter.cs" />
+    <Compile Include="BVHTraverser\OrderedDepthFirstOpCounter.cs" />
+    <Compile Include="BVHTraverser\OrderedDepthFirstTraverser.cs" />
+    <Compile Include="BVHTraverser\RayOrderInspectionCounter.cs" />
+    <Compile Include="BVHTraverser\RayOrderOpCounter.cs" />
+    <Compile Include="BVHTraverser\RayOrderTraverser.cs" />
     <Compile Include="Primitives\CVector3.cs" />
     <Compile Include="ExternalCode\PriorityQueue.cs" />
     <Compile Include="Primitives\Interval.cs" />

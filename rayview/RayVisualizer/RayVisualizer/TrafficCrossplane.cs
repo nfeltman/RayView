@@ -25,7 +25,7 @@ namespace RayVisualizer
             up = right ^ n;
 
             //foreach(RaySet set in scene.Rays)
-            foreach (RayCast c in scene.ActiveSet)
+            foreach (RayQuery c in scene.ActiveSet)
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Direction;

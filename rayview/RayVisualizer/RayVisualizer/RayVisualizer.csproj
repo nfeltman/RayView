@@ -89,14 +89,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CrossplaneBehavior.cs" />
-    <Compile Include="ExploreState.cs" />
+    <Compile Include="Crossplane\CrossplaneBehavior.cs" />
+    <Compile Include="MyKeyboard.cs" />
+    <Compile Include="ViewerStates\BVHExploreState.cs" />
+    <Compile Include="ViewerStates\CrossplaneState.cs" />
+    <Compile Include="ViewerStates\ExploreState.cs" />
     <Compile Include="MyExtensions.cs" />
-    <Compile Include="NullCrossplane.cs" />
+    <Compile Include="Crossplane\NullCrossplane.cs" />
     <Compile Include="SceneData.cs" />
-    <Compile Include="IntersectionsCrossplane.cs" />
-    <Compile Include="TrafficCrossplane.cs" />
-    <Compile Include="ViewerState.cs" />
+    <Compile Include="Crossplane\IntersectionsCrossplane.cs" />
+    <Compile Include="Crossplane\TrafficCrossplane.cs" />
+    <Compile Include="Viewable.cs" />
+    <Compile Include="ViewerStates\ViewerState.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

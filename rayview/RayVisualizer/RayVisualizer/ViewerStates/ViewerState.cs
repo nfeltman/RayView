@@ -8,7 +8,7 @@ namespace RayVisualizer
 {
     interface ViewerState
     {
-        void OnRenderFrame(SceneData scene, GameWindow w, FrameEventArgs e);
-        void OnUpdateFrame(SceneData scene, GameWindow w, FrameEventArgs e);
+        IEnumerable<Viewable> CollectViewables(SceneData scene);
+        void OnUpdateFrame(SceneData scene, MyKeyboard keyboard);
     }
 }

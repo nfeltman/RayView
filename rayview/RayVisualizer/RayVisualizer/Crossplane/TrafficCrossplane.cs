@@ -25,11 +25,11 @@ namespace RayVisualizer
             up = right ^ n;
 
             //foreach(RaySet set in scene.Rays)
-            foreach (RayQuery c in scene.ActiveSet)
+            foreach (CastHitQuery c in scene.ActiveSet.CastHitQueries)
             {
                 float a1 = (c.Origin - p) * n;
-                CVector3 d = c.Direction;
-                if ((c.Kind==RayKind.FirstHit_Hit && a1 * ((d+c.Origin - p) * n) < 0 ) || (c.Kind == RayKind.FirstHit_Miss && a1 * (d * n) < 0))
+                CVector3 d = c.Difference;
+                if (a1 * ((d+c.Origin - p) * n) < 0)
                 {
                     //compute plane-line intersection
                     float t = -a1 / (d * n);
@@ -39,6 +39,27 @@ namespace RayVisualizer
                     int ubin = (int)(u / BINSIZE + .5);
                     int vbin = (int)(v / BINSIZE + .5);
                     Tuple<int,int> bin = new Tuple<int,int>(ubin,vbin);
+                    if (bins.ContainsKey(bin))
+                        bins[bin] = bins[bin] + 1;
+                    else
+                        bins[bin] = 1;
+                }
+            }
+
+            foreach (CastMissQuery c in scene.ActiveSet.CastMissQueries)
+            {
+                float a1 = (c.Origin - p) * n;
+                CVector3 d = c.Direction;
+                if (a1 * (d * n) < 0)
+                {
+                    //compute plane-line intersection
+                    float t = -a1 / (d * n);
+                    CVector3 q = d * t + c.Origin;
+                    float u = (q - p) * right;
+                    float v = (q - p) * up;
+                    int ubin = (int)(u / BINSIZE + .5);
+                    int vbin = (int)(v / BINSIZE + .5);
+                    Tuple<int, int> bin = new Tuple<int, int>(ubin, vbin);
                     if (bins.ContainsKey(bin))
                         bins[bin] = bins[bin] + 1;
                     else

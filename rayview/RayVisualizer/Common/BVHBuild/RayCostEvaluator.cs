@@ -23,7 +23,7 @@ namespace RayVisualizer.Common
             int missPart = 0;
             for (int k = 0; k < parentState.hitMax; k++)
             {
-                if (!toBeSplit.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty)
+                if (toBeSplit.DoesIntersectSegment(hits[k].Origin, hits[k].Difference))
                 {
                     if (hitPart != k)
                     {
@@ -36,7 +36,7 @@ namespace RayVisualizer.Common
             } 
             for (int k = 0; k < parentState.missMax; k++)
             {
-                if (!toBeSplit.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty)
+                if (toBeSplit.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
                 {
                     if (hitPart != k)
                     {
@@ -64,13 +64,13 @@ namespace RayVisualizer.Common
             int right_collisions = 10;
             for (int k = 0; k < state.hitMax; k++)
             {
-                if (!leftBox.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty) ++left_collisions;
-                if (!rightBox.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty) ++right_collisions;
+                if (leftBox.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++left_collisions;
+                if (rightBox.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++right_collisions;
             }
             for (int k = 0; k < state.missMax; k++)
             {
-                if (!leftBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty) ++left_collisions;
-                if (!rightBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty) ++right_collisions;
+                if (leftBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++left_collisions;
+                if (rightBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++right_collisions;
             }
             /*
             for (int k = state.hitMax; k < hits.Length; k++)
@@ -87,6 +87,12 @@ namespace RayVisualizer.Common
         {
             public int missMax;
             public int hitMax;
+
+            public RayShuffleState(FHRayResults res)
+            {
+                missMax = res.Misses.Length;
+                hitMax = res.Hits.Length;
+            }
         }
     }
 }

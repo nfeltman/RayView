@@ -11,17 +11,22 @@ namespace RayVisualizer.Common
     
     public class RayOrderTraverser 
     {
-        public static HitRecord RunTooledTraverser(BVH2 bvh, RayQuery ray, RayOrderOperations ops)
+        public static void RunTooledTraverser(BVH2 bvh, RaySet set, RayOrderOperations ops)
         {
-            if (!(ray.Kind == RayKind.FirstHit_Hit || ray.Kind == RayKind.FirstHit_Miss))
-                throw new Exception("Only for first-hit rays! Not any-hit!");
-
+            foreach (CastHitQuery hit in set.CastHitQueries)
+            {
+                RunTooledTraverser(bvh,hit.Origin,hit.Difference,ops);
+            }
+            foreach (CastMissQuery hit in set.CastMissQueries)
+            {
+                RunTooledTraverser(bvh, hit.Origin, hit.Direction, ops);
+            }
+        }
+        public static HitRecord RunTooledTraverser(BVH2 bvh, CVector3 origin, CVector3 direction, RayOrderOperations ops)
+        {
             PriorityQueue<float, QueueItem> q = new PriorityQueue<float, QueueItem>();
 
-            CVector3 origin = ray.Origin;
-            CVector3 direction = ray.Direction;//.Normalized();
-
-            ops.RayCast(ray);
+            ops.RayCast(origin,direction);
             ops.BoundingBoxTest(bvh.Root);
 
             ClosedInterval rootInterval = bvh.Root.BBox.IntersectRay(origin, direction);
@@ -94,7 +99,7 @@ namespace RayVisualizer.Common
 
     public interface RayOrderOperations
     {
-        void RayCast(RayQuery cast);
+        void RayCast(CVector3 origin, CVector3 direction);
         void BoundingBoxTest(BVH2Node node);
         void BoundingBoxHit(BVH2Node node);
         void PrimitiveNodeInspection(BVH2Leaf leaf);
@@ -105,7 +110,7 @@ namespace RayVisualizer.Common
 
     public class NullRayOrderOperations : RayOrderOperations
     {
-        public void RayCast(RayQuery cast) { }
+        public void RayCast(CVector3 origin, CVector3 direction) { }
         public void BoundingBoxTest(BVH2Node node) { }
         public void BoundingBoxHit(BVH2Node node) { }
         public void PrimitiveNodeInspection(BVH2Leaf leaf) { }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer
 {
-    interface CrossplaneBehavior
+    public interface CrossplaneBehavior
     {
         void UpdateCrossPlane(SceneData scene);
         void DrawResults(SceneData scene);

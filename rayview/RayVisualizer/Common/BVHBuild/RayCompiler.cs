@@ -7,14 +7,26 @@ namespace RayVisualizer.Common
 {
     public class RayCompiler
     {
-        public static FHRayResults CompileQuerySet(RaySet set, BVH2 bvh)
+        public static FHRayResults CompileCasts(RaySet set, BVH2 bvh)
         {
             List<FHRayHit> hits = new List<FHRayHit>();
             List<FHRayMiss> misses = new List<FHRayMiss>();
             NullRayOrderOperations ops = new NullRayOrderOperations();
-            foreach (RayQuery ray in set)
+            foreach (CastHitQuery ray in set.CastHitQueries)
             {
-                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray, ops);
+                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops);
+                if (rec == null)
+                {
+                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Difference });
+                }
+                else
+                {
+                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Difference * rec.t_value });
+                }
+            }
+            foreach (CastMissQuery ray in set.CastMissQueries)
+            {
+                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
                 if (rec == null)
                 {
                     misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Direction });
@@ -27,19 +39,32 @@ namespace RayVisualizer.Common
             return new FHRayResults() { Hits = hits.ToArray(), Misses = misses.ToArray() };
         }
 
-        public static FHRayResults TooledCompileQuerySet(RaySet set, BVH2 bvh, int mod, Action<int> toCall)
+        public static FHRayResults TooledCompileCasts(RaySet set, BVH2 bvh, int mod, Action<int> toCall)
         {
             List<FHRayHit> hits = new List<FHRayHit>();
             List<FHRayMiss> misses = new List<FHRayMiss>();
             NullRayOrderOperations ops = new NullRayOrderOperations();
-            int k=0;
-            foreach (RayQuery ray in set)
+
+            int k = 0;
+            foreach (CastHitQuery ray in set.CastHitQueries)
             {
                 if (k % mod == 0)
                     toCall(k);
                 k++;
 
-                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray, ops);
+                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops);
+                if (rec == null)
+                {
+                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Difference });
+                }
+                else
+                {
+                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Difference * rec.t_value });
+                }
+            }
+            foreach (CastMissQuery ray in set.CastMissQueries)
+            {
+                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
                 if (rec == null)
                 {
                     misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Direction });

@@ -9,6 +9,13 @@ namespace RayVisualizer.Common
     {
         public CVector3 p1, p2, p3;
 
+        public Triangle(CVector3 point1, CVector3 point2, CVector3 point3)
+        {
+            p1 = point1;
+            p2 = point2;
+            p3 = point3;
+        }
+
         public float IntersectRay(CVector3 origin, CVector3 direction)
         {
             // form a tetrahedron with the triangle and the ray origin

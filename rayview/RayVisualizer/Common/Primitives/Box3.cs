@@ -98,6 +98,21 @@ namespace RayVisualizer.Common
             return IntersectInterval(orig, dir, ClosedInterval.ALL);
         }
 
+        public bool DoesIntersectSegment(CVector3 orig, CVector3 diff)
+        {
+            return DoesIntersectInterval(orig, diff, new ClosedInterval(0, 1));
+        }
+
+        public bool DoesIntersectRay(CVector3 orig, CVector3 dir)
+        {
+            return DoesIntersectInterval(orig, dir, ClosedInterval.POSITIVES);
+        }
+
+        public bool DoesIntersectLine(CVector3 orig, CVector3 dir)
+        {
+            return DoesIntersectInterval(orig, dir, ClosedInterval.ALL);
+        }
+
         /*
          //This is 10x slower than the other implementation BECAUSE THE COMPILER IS BAD
         public ClosedInterval SlowIntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
@@ -183,6 +198,70 @@ namespace RayVisualizer.Common
             }
 
             return new ClosedInterval(min,max);
+        }
+
+        public bool DoesIntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
+        {
+            float min = t_interval.Min, max = t_interval.Max;
+            float pmin, pmax; //potential
+
+            pmin = _xRange.Min - orig.x;
+            pmax = _xRange.Max - orig.x;
+            if (dir.x == 0 && (pmin > 0 || pmax < 0))
+                return false;
+            if (dir.x != 0)
+            {
+                pmin /= dir.x;
+                pmax /= dir.x;
+                if (dir.x < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+                if (pmin > pmax) return false;
+            }
+
+            pmin = _yRange.Min - orig.y;
+            pmax = _yRange.Max - orig.y;
+            if (dir.y == 0 && (pmin > 0 || pmax < 0))
+                return false;
+            if (dir.y != 0)
+            {
+                pmin /= dir.y;
+                pmax /= dir.y;
+                if (dir.y < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+                if (pmin > pmax) return false;
+            }
+
+            pmin = _zRange.Min - orig.z;
+            pmax = _zRange.Max - orig.z;
+            if (dir.z == 0 && (pmin > 0 || pmax < 0))
+                return false;
+            if (dir.z != 0)
+            {
+                pmin /= dir.z;
+                pmax /= dir.z;
+                if (dir.z < 0)
+                {
+                    float temp = pmin;
+                    pmin = pmax;
+                    pmax = temp;
+                }
+                if (pmin > min) min = pmin;
+                if (pmax < max) max = pmax;
+            }
+
+            return max >= min;
         }
 
         public static Box3 operator |(Box3 a, Box3 b)

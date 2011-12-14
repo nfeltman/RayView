@@ -23,8 +23,8 @@ namespace AnalysisEngine
             Console.WriteLine("Reading BVH");
             BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\bvh.txt", FileMode.Open, FileAccess.Read));
             Console.WriteLine("Reading Casts");
-            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
-            RaySet rays = allrays[1].Filter((r, i) => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss);
+            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet rays = allrays.CastOnlyFilter((r, i) => r.Depth>=1);
             Console.Write("Starting Analysis");
             Full_T_vs_P(bvh, rays, writer);
             writer.Close();
@@ -50,10 +50,7 @@ namespace AnalysisEngine
         public static void Full_T_vs_P(BVH2 bvh, RaySet rays, StreamWriter writer)
         {
             RayOrderInspectionCounter ops = new RayOrderInspectionCounter(bvh.NumBranch);
-            foreach (RayQuery ray in rays)
-            {
-                RayOrderTraverser.RunTooledTraverser(bvh, ray, ops);
-            }
+            RayOrderTraverser.RunTooledTraverser(bvh, rays, ops);
             NodeMap<int> p_r = ops.Inspections;
             // rolls over the tuple (nu, T_U, T_R)
             bvh.RollUp(

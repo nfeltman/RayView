@@ -13,9 +13,9 @@ namespace AnalysisEngine
         public static void RunTraversalComparerSuite(string tracesPath)
         {
             BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
             StreamWriter writer = new StreamWriter(tracesPath + "crown\\RayOrder_vs_ODF_per_node.txt");
-            RayOrderAdvantageQuantifier(bvh, allrays[1].Filter((r,i) => r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss), writer);
+            RayOrderAdvantageQuantifier(bvh, allrays.CastOnlyFilter((r,i) => r.Depth>=1), writer);
             writer.Close();
         }
 
@@ -23,10 +23,15 @@ namespace AnalysisEngine
         {
             RayOrderInspectionCounter ops = new RayOrderInspectionCounter(bvh.NumBranch);
             OrderedDepthFirstInspectionCounter ops2 = new OrderedDepthFirstInspectionCounter(bvh.NumBranch);
-            foreach (RayQuery ray in rays)
+            foreach (CastHitQuery ray in rays.CastHitQueries)
             {
-                RayOrderTraverser.RunTooledTraverser(bvh, ray, ops);
-                OrderedDepthFirstTraverser.RunTooledTraverser(bvh, ray, ops2);
+                RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops);
+                OrderedDepthFirstTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops2);
+            }
+            foreach (CastMissQuery ray in rays.CastMissQueries)
+            {
+                RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
+                OrderedDepthFirstTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops2);
             }
             for (int k = 0; k < bvh.NumBranch; k++)
                 writer.WriteLine(ops.BranchInspections[k] + " " + ops2.BranchInspections[k]);

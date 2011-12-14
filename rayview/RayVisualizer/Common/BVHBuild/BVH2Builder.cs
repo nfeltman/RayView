@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace RayVisualizer.Common
 {
-    public class BVH2Builder
+    public static class BVH2Builder
     {        
         public static BVH2 BuildBVHTest(BuildTriangle[] tri)
         {
@@ -294,7 +294,7 @@ namespace RayVisualizer.Common
             return partLoc;
         }
 
-        private struct BoundBuilder
+        public struct BoundBuilder
         {
             private float xMin, xMax, yMin, yMax, zMin, zMax;
             public BoundBuilder(bool b)
@@ -410,6 +410,16 @@ namespace RayVisualizer.Common
             if (counter != list.Length)
                 throw new Exception("This shouldn't have happened!");
             return list;
+        }
+
+        public static BuildTriangle[] GetTriangleList(this Triangle[] tris)
+        {
+            BuildTriangle[] res = new BuildTriangle[tris.Length];
+            for (int k = 0; k < res.Length; k++)
+            {
+                res[k] = new BuildTriangle(tris[k]);
+            }
+            return res;
         }
     }
 

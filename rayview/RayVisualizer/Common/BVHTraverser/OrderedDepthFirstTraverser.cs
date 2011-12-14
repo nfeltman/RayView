@@ -11,13 +11,14 @@ namespace RayVisualizer.Common
         private class ODFVisitor : BVH2Visitor<HitRecord>
         {
             private OrderedDepthFirstOperations _ops;
-            private RayQuery _ray;
+            private CVector3 origin;
+            private CVector3 direction;
             private ClosedInterval _c;
 
-            public ODFVisitor(OrderedDepthFirstOperations ops, RayQuery ray)
+            public ODFVisitor(OrderedDepthFirstOperations ops, CVector3 origin, CVector3 direction)
             {
-                _ops = ops;
-                _ray = ray;
+                this.origin = origin;
+                this.direction = direction;
                 _c = ClosedInterval.POSITIVES;
             }
 
@@ -27,8 +28,8 @@ namespace RayVisualizer.Common
                 _ops.BoundingBoxTest(branch.Left);
                 _ops.BoundingBoxTest(branch.Right);
 
-                ClosedInterval leftInterval = branch.Left.BBox.IntersectInterval(_ray.Origin, _ray.Direction, _c);
-                ClosedInterval rightInterval = branch.Right.BBox.IntersectInterval(_ray.Origin, _ray.Direction, _c);
+                ClosedInterval leftInterval = branch.Left.BBox.IntersectInterval(origin, direction, _c);
+                ClosedInterval rightInterval = branch.Right.BBox.IntersectInterval(origin, direction, _c);
 
                 if (leftInterval.IsEmpty && rightInterval.IsEmpty)
                 {
@@ -82,7 +83,7 @@ namespace RayVisualizer.Common
             public HitRecord ForLeaf(BVH2Leaf leaf)
             {
                 _ops.PrimitiveNodeInspection(leaf);
-                HitRecord res = leaf.FindClosestPositiveIntersection(_ray.Origin, _ray.Direction, _c);
+                HitRecord res = leaf.FindClosestPositiveIntersection(origin, direction, _c);
                 if (res != null)
                 {
                     _ops.PrimitiveNodePrimitiveHit(leaf, res);
@@ -93,21 +94,18 @@ namespace RayVisualizer.Common
             }
         }
 
-        public static HitRecord RunTooledTraverser(BVH2 bvh, RayQuery ray, OrderedDepthFirstOperations ops)
+        public static HitRecord RunTooledTraverser(BVH2 bvh, CVector3 origin, CVector3 direction, OrderedDepthFirstOperations ops)
         {
-            if (!(ray.Kind == RayKind.FirstHit_Hit || ray.Kind == RayKind.FirstHit_Miss))
-                throw new Exception("Only for first-hit rays! Not any-hit!");
-
-            ops.RayCast(ray);
+            ops.RayCast(origin, direction);
 
             //root bbox test
             ops.BoundingBoxTest(bvh.Root);
-            ClosedInterval interval = bvh.Root.BBox.IntersectRay(ray.Origin, ray.Direction);
+            ClosedInterval interval = bvh.Root.BBox.IntersectRay(origin, direction);
             if (interval.IsEmpty) return null;
             ops.BoundingBoxHit(bvh.Root);
             
             //descend
-            HitRecord result = bvh.Accept(new ODFVisitor(ops, ray));
+            HitRecord result = bvh.Accept(new ODFVisitor(ops, origin, direction));
             if (result != null) ops.RayHitFound(result);
             return result;
         }
@@ -115,7 +113,7 @@ namespace RayVisualizer.Common
 
     public interface OrderedDepthFirstOperations
     {
-        void RayCast(RayQuery cast);
+        void RayCast(CVector3 origin, CVector3 direction);
         void BoundingBoxTest(BVH2Node node);
         void BoundingBoxHit(BVH2Node node);
         void PrimitiveNodeInspection(BVH2Leaf leaf);
@@ -125,7 +123,7 @@ namespace RayVisualizer.Common
     }
     public class NullOrderedDepthFirstOperations : OrderedDepthFirstOperations
     {
-        public void RayCast(RayQuery cast) { }
+        public void RayCast(CVector3 origin, CVector3 direction) { }
         public void BoundingBoxTest(BVH2Node node) { }
         public void BoundingBoxHit(BVH2Node node) { }
         public void PrimitiveNodeInspection(BVH2Leaf leaf) { }

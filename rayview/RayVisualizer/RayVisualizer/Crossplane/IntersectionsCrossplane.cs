@@ -26,17 +26,30 @@ namespace RayVisualizer
             CVector3 p = scene.Location.ToC() + (n * scene.CrossPlaneDist);
 
             //foreach(RaySet set in scene.Rays)
-            foreach (RayQuery c in scene.ActiveSet)
+            foreach (CastHitQuery c in scene.ActiveSet.CastHitQueries)
             {
                 float a1 = (c.Origin - p) * n;
-                CVector3 d = c.Direction;
+                CVector3 d = c.Difference;
                 //test if the start and end are strictly on opposite sides of the plane
-                if ((c.Kind == RayKind.FirstHit_Hit && a1 * ((d + c.Origin - p) * n) < 0) || (c.Kind == RayKind.FirstHit_Miss && a1 * (d * n) < 0))
+                if (a1 * ((d + c.Origin - p) * n) < 0)
                 {
                     //compute plane-line intersection
                     float t = ((p - c.Origin) * n) / (d * n);
                     CVector3 q = d * t + c.Origin;
-                    (c.Kind == RayKind.FirstHit_Hit ? Hits : Misses).Add(q);
+                    Hits.Add(q);
+                }
+            }
+            foreach (CastMissQuery c in scene.ActiveSet.CastMissQueries)
+            {
+                float a1 = (c.Origin - p) * n;
+                CVector3 d = c.Direction;
+                //test if the start and end are strictly on opposite sides of the plane
+                if (a1 * (d * n) < 0)
+                {
+                    //compute plane-line intersection
+                    float t = ((p - c.Origin) * n) / (d * n);
+                    CVector3 q = d * t + c.Origin;
+                    Misses.Add(q);
                 }
             }
         }

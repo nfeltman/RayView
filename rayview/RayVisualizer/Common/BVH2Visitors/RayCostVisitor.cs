@@ -15,8 +15,7 @@ namespace RayVisualizer.Common
         public int ForBranch(BVH2Branch branch)
         {
             _intersectionCount++;
-            ClosedInterval intersectionInterval = branch.BBox.IntersectInterval(_toTest.Origin, _toTest.Difference, new ClosedInterval(-.00001f, 1.00001f));
-            if (!intersectionInterval.IsEmpty) 
+            if (branch.BBox.DoesIntersectInterval(_toTest.Origin, _toTest.Difference, new ClosedInterval(-.00001f, 1.00001f))) 
             {
                 branch.Left.Accept(this);
                 branch.Right.Accept(this);
@@ -40,8 +39,7 @@ namespace RayVisualizer.Common
         public int ForBranch(BVH2Branch branch)
         {
             _intersectionCount++;
-            ClosedInterval intersectionInterval = branch.BBox.IntersectInterval(_toTest.Origin, _toTest.Difference, new ClosedInterval(0.000001f, 0.999999f));
-            if (!intersectionInterval.IsEmpty)
+            if (branch.BBox.DoesIntersectInterval(_toTest.Origin, _toTest.Difference, new ClosedInterval(0.000001f, 0.999999f)))
             {
                 branch.Left.Accept(this);
                 branch.Right.Accept(this);
@@ -67,7 +65,7 @@ namespace RayVisualizer.Common
         public int ForBranch(BVH2Branch branch)
         {
             _intersectionCount++;
-            if (!branch.BBox.IntersectRay(_toTest.Origin, _toTest.Direction).IsEmpty)
+            if (branch.BBox.DoesIntersectRay(_toTest.Origin, _toTest.Direction))
             {
                 branch.Left.Accept(this);
                 branch.Right.Accept(this);

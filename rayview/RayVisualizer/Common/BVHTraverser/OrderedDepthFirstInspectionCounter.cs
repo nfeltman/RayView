@@ -18,7 +18,7 @@ namespace RayVisualizer.Common
             _leafInspections = new int[numBranches+1];
         }
 
-        public void RayCast(RayQuery cast)
+        public void RayCast(CVector3 origin, CVector3 direction)
         {
         }
 

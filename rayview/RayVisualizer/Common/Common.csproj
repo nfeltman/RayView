@@ -104,8 +104,9 @@
     <Compile Include="Primitives\Interval.cs" />
     <Compile Include="LanguageUtilities.cs" />
     <Compile Include="NodeMap.cs" />
+    <Compile Include="Primitives\Shapes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Primitives\RayCast.cs" />
+    <Compile Include="Primitives\RayQuery.cs" />
     <Compile Include="Primitives\RaySet.cs" />
     <Compile Include="Primitives\Triangle.cs" />
   </ItemGroup>

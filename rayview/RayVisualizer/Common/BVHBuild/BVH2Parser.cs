@@ -51,7 +51,11 @@ namespace RayVisualizer.Common
                     };
                 }
                 if (!bbox.HasValue) // implicit leaf
-                    throw new Exception("can't handle implicit leaves just yet");
+                {
+                    BVH2Builder.BoundBuilder builder = new BVH2Builder.BoundBuilder(true);
+                    foreach (Triangle tri in tris) builder.AddTriangle(tri);
+                    bbox = builder.GetBox();
+                }
                 return new BVH2Leaf() { BBox = bbox.Value, Primitives = tris, ID = leafCounter++, Depth = depth };
             }
             else

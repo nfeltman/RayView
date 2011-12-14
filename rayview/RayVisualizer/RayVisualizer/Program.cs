@@ -25,6 +25,10 @@ namespace RayVisualizer{
     {
         private SceneData scene;
         private ViewerState state;
+        private MyKeyboard keyboard;
+
+        private ExploreState explorerState;
+        private BVHExploreState bvhState;
 
         public Program() : base(800, 600, new GraphicsMode(16, 16))
 		{ } 
@@ -32,8 +36,6 @@ namespace RayVisualizer{
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-
-            state = new ExploreState(new IntersectionsCrossplane());
 
             scene = new SceneData();
 
@@ -51,12 +53,19 @@ namespace RayVisualizer{
                 scene.RightVec = new Vector3(0, 0, 1);
                 scene.CrossPlaneDist = 100;
             }
-            scene.Generations = RayFileParser.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\castTrace.txt", FileMode.Open, FileAccess.Read));
-            scene.ActiveSet = scene.Generations[1];
+            //scene.AllRays = RayFileParser.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\castTrace.txt", FileMode.Open, FileAccess.Read));
+            //scene.ActiveSet = scene.AllRays.Filter((CastHitQuery r,int i)=>r.Depth >= 1,null,null);
+            BVH2 bvh = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            //scene.BVHView = BVH2Builder.BuildFullBVH(Shapes.BuildParallelogram(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(20, 100, 0), 10, 10).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea).Root;
+
+            keyboard = new MyKeyboard(Keyboard);
+            explorerState = new ExploreState();
+            state = bvhState = new BVHExploreState(bvh);
 
             GL.ClearColor(Color.LightGray);
             //GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
         }
         protected override void OnResize(EventArgs e)
@@ -85,18 +94,28 @@ namespace RayVisualizer{
             }
             if (Keyboard[Key.Number1])
             {
-                state = new ExploreState(new NullCrossplane());
+                state = explorerState;
             }
             if (Keyboard[Key.Number2])
             {
-                state = new ExploreState(new IntersectionsCrossplane());
+                state = bvhState;
             }
             if (Keyboard[Key.Number3])
             {
-                state = new ExploreState(new TrafficCrossplane());
+                state = new CrossplaneState(new NullCrossplane());
+            }
+            if (Keyboard[Key.Number4])
+            {
+                state = new CrossplaneState(new IntersectionsCrossplane());
+            }
+            if (Keyboard[Key.Number5])
+            {
+                state = new CrossplaneState(new TrafficCrossplane());
             }
 
-            state.OnUpdateFrame(scene, this, e);
+            state.OnUpdateFrame(scene, keyboard);
+            keyboard.MarkKeysHandled();
+
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -105,8 +124,15 @@ namespace RayVisualizer{
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            state.OnRenderFrame(scene, this, e);
-           
+            Vector3 up = Vector3.Cross(scene.RightVec, scene.ForwardVec);
+            Matrix4 lookat = Matrix4.LookAt(scene.Location, scene.Location + scene.ForwardVec, up);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadMatrix(ref lookat);
+
+            IEnumerable<Viewable> viewables = state.CollectViewables(scene);
+            foreach(Viewable v in viewables) v.DrawOpaquePart();
+            foreach(Viewable v in viewables) v.DrawTransparentPart();
+
             SwapBuffers();
             
             Thread.Sleep(10);

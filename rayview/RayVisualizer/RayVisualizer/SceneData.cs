@@ -10,11 +10,13 @@ namespace RayVisualizer
 {
     public class SceneData
     {
+        public RaySet AllRays { get; set; }
         public RaySet ActiveSet { get; set; }
-        public RaySet[] Generations { get; set; }
         public Vector3 Location { get; set; }
         public Vector3 ForwardVec { get; set; }
         public Vector3 RightVec { get; set; }
+        public Vector3 UpwardVec { get { return Vector3.Cross(RightVec, ForwardVec); } }
+
         public float CrossPlaneDist { get; set; }
         public bool CrossPlaneFrozen { get; set; }
 
@@ -23,7 +25,7 @@ namespace RayVisualizer
         public Matrix4 RightTransform { get { return Matrix4.CreateRotationY(-TURNSPEED); } }
         public float MOVESPEED = 5f;
         public float CROSSPLANE_SPEED = 5f;
-
+        
         public void SaveState(StreamWriter w)
         {
             w.WriteLine("{0} {1} {2}", Location.X, Location.Y, Location.Z);

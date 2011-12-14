@@ -77,6 +77,14 @@
       <ProjName>AnalysisEngine</ProjName>
     </ProjBinary>
   </Binaries>
+  <Reports>
+    <Report>
+      <Path>C:\Users\nfeltman\Desktop\Graphics\RayView\rayview\RayVisualizer\AnalysisEngine111211.vsp</Path>
+    </Report>
+    <Report>
+      <Path>C:\Users\nfeltman\Desktop\Graphics\RayView\rayview\RayVisualizer\AnalysisEngine111211(1).vsp</Path>
+    </Report>
+  </Reports>
   <Launches>
     <ProjBinary>
       <Path>:PB:{B3582AAB-8531-4F18-9004-A6544405717E}|AnalysisEngine\AnalysisEngine.csproj</Path>

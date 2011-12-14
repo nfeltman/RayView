@@ -13,23 +13,20 @@ namespace AnalysisEngine
         public static void Main()
         {
             string tracesPath = "traces\\";
-            //BuildAnalysis.BasicBuildTest(tracesPath);
-            BuildAnalysis.BuildTreeWithRayData(tracesPath);
+            BuildAnalysis.ReadAndCompareMethods(tracesPath);
+            //BuildAnalysis.BuildTreeWithRayData(tracesPath);
             //SpeedTest(tracesPath);
         }
 
+        /*
         public static void SpeedTest(string tracesPath)
         {
             BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet[] allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
-            Console.WriteLine(allrays.Length);
-            RaySet set = allrays[1].Filter((r,i) => i%67==0 && (r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss));
-            for (int k = 2; k < allrays.Length; k++)
-                set = set + allrays[k].Filter((r,i) => i%67==0 && (r.Kind == RayKind.FirstHit_Hit || r.Kind == RayKind.FirstHit_Miss));
-            RayQuery[] rays = set.FlattenAndCopy();
+            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet set = allrays.CastOnlyFilter((r,i) => i%67==0 && r.Depth>=1);
 
             Console.WriteLine("Compiling...");
-            FHRayResults res = RayCompiler.TooledCompileQuerySet(set, bvh, 1000, (i) => Console.WriteLine("{0}/{1}", i, rays.Length));
+            FHRayResults res = RayCompiler.CompileCasts(set, bvh);
 
             Stopwatch st = new Stopwatch();
             st.Start();
@@ -70,5 +67,6 @@ namespace AnalysisEngine
             Console.WriteLine("Took {0} seconds.  Box tests from hits: {1}; Box tests from misses: {2}. Sum = {3}", st.Elapsed.TotalSeconds, cost1.IntersectionCount, cost3.IntersectionCount, cost1.IntersectionCount + cost3.IntersectionCount);
             Console.ReadLine();
         }
+        */
     }
 }

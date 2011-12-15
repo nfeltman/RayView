@@ -9,19 +9,19 @@ namespace RayVisualizer.Common
     {
         public static FHRayResults CompileCasts(RaySet set, BVH2 bvh)
         {
-            List<FHRayHit> hits = new List<FHRayHit>();
-            List<FHRayMiss> misses = new List<FHRayMiss>();
+            List<Segment3> hits = new List<Segment3>();
+            List<Ray3> misses = new List<Ray3>();
             NullRayOrderOperations ops = new NullRayOrderOperations();
             foreach (CastHitQuery ray in set.CastHitQueries)
             {
                 HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops);
                 if (rec == null)
                 {
-                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Difference });
+                    misses.Add(new Ray3(ray.Origin, ray.Difference));
                 }
                 else
                 {
-                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Difference * rec.t_value });
+                    hits.Add(new Segment3(ray.Origin, ray.Difference * rec.t_value));
                 }
             }
             foreach (CastMissQuery ray in set.CastMissQueries)
@@ -29,49 +29,31 @@ namespace RayVisualizer.Common
                 HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
                 if (rec == null)
                 {
-                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Direction });
+                    misses.Add(new Ray3(ray.Origin, ray.Direction));
                 }
                 else
                 {
-                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Direction * rec.t_value });
+                    hits.Add(new Segment3(ray.Origin, ray.Direction * rec.t_value));
                 }
             }
             return new FHRayResults() { Hits = hits.ToArray(), Misses = misses.ToArray() };
         }
 
-        public static FHRayResults TooledCompileCasts(RaySet set, BVH2 bvh, int mod, Action<int> toCall)
+        public static FHRayResults CompileCasts(IEnumerable<Ray3> allCasts, BVH2 bvh)
         {
-            List<FHRayHit> hits = new List<FHRayHit>();
-            List<FHRayMiss> misses = new List<FHRayMiss>();
+            List<Segment3> hits = new List<Segment3>();
+            List<Ray3> misses = new List<Ray3>();
             NullRayOrderOperations ops = new NullRayOrderOperations();
-
-            int k = 0;
-            foreach (CastHitQuery ray in set.CastHitQueries)
-            {
-                if (k % mod == 0)
-                    toCall(k);
-                k++;
-
-                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Difference, ops);
-                if (rec == null)
-                {
-                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Difference });
-                }
-                else
-                {
-                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Difference * rec.t_value });
-                }
-            }
-            foreach (CastMissQuery ray in set.CastMissQueries)
+            foreach (Ray3 ray in allCasts)
             {
                 HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
                 if (rec == null)
                 {
-                    misses.Add(new FHRayMiss() { Origin = ray.Origin, Direction = ray.Direction });
+                    misses.Add(new Ray3(ray.Origin, ray.Direction));
                 }
                 else
                 {
-                    hits.Add(new FHRayHit() { Origin = ray.Origin, Difference = ray.Direction * rec.t_value });
+                    hits.Add(new Segment3(ray.Origin, ray.Direction * rec.t_value));
                 }
             }
             return new FHRayResults() { Hits = hits.ToArray(), Misses = misses.ToArray() };
@@ -80,7 +62,7 @@ namespace RayVisualizer.Common
 
     public class FHRayResults
     {
-        public FHRayHit[] Hits { get; set; }
-        public FHRayMiss[] Misses { get; set; }
+        public Segment3[] Hits { get; set; }
+        public Ray3[] Misses { get; set; }
     }
 }

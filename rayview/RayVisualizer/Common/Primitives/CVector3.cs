@@ -60,4 +60,27 @@ namespace RayVisualizer.Common
             return String.Format("({0}, {1:0.0000000000}, {2})", x, y, z);
         }
     }
+
+    public class Segment3
+    {
+        public CVector3 Origin { get; set; }
+        public CVector3 Difference { get; set; }
+
+        public Segment3(CVector3 origin, CVector3 difference)
+        {
+            Origin = origin;
+            Difference = difference;
+        }
+    }
+    public class Ray3
+    {
+        public CVector3 Origin { get; set; }
+        public CVector3 Direction { get; set; }
+
+        public Ray3(CVector3 origin, CVector3 direction)
+        {
+            Origin = origin;
+            Direction = direction;
+        }
+    }
 }

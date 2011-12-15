@@ -8,7 +8,8 @@ namespace RayVisualizer
 {
     interface ViewerState
     {
-        IEnumerable<Viewable> CollectViewables(SceneData scene);
         void OnUpdateFrame(SceneData scene, MyKeyboard keyboard);
+        void HibernateState(SceneData scene);
+        void ActivateState(SceneData scene);
     }
 }

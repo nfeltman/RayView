@@ -31,15 +31,4 @@ namespace RayVisualizer.Common
         public CVector3 Origin { get; set; }
         public CVector3 Difference { get; set; }
     }
-
-    public class FHRayHit
-    {
-        public CVector3 Origin { get; set; }
-        public CVector3 Difference { get; set; }
-    }
-    public class FHRayMiss
-    {
-        public CVector3 Origin { get; set; }
-        public CVector3 Direction { get; set; }
-    }
 }

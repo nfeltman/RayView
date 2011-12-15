@@ -18,15 +18,15 @@ namespace RayVisualizer
             Misses = new List<CVector3>();
         }
 
-        public void UpdateCrossPlane(SceneData scene)
+        public void UpdateCrossPlane(SceneData scene, float crossPlaneDistance, RaySet intersectionSet)
         {
             Hits = new List<CVector3>();
             Misses = new List<CVector3>();
             CVector3 n = scene.ForwardVec.ToC();
-            CVector3 p = scene.Location.ToC() + (n * scene.CrossPlaneDist);
+            CVector3 p = scene.Location.ToC() + (n * crossPlaneDistance);
 
             //foreach(RaySet set in scene.Rays)
-            foreach (CastHitQuery c in scene.ActiveSet.CastHitQueries)
+            foreach (CastHitQuery c in intersectionSet.CastHitQueries)
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Difference;
@@ -39,7 +39,7 @@ namespace RayVisualizer
                     Hits.Add(q);
                 }
             }
-            foreach (CastMissQuery c in scene.ActiveSet.CastMissQueries)
+            foreach (CastMissQuery c in intersectionSet.CastMissQueries)
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Direction;

@@ -7,8 +7,8 @@ namespace RayVisualizer.Common
 {
     public class RayCostEvaluator : SplitEvaluator<RayCostEvaluator.RayShuffleState>
     {
-        FHRayHit[] hits;
-        FHRayMiss[] misses;
+        Segment3[] hits;
+        Ray3[] misses;
         float _expo;
 
         public RayCostEvaluator(FHRayResults res, float expo)
@@ -27,7 +27,7 @@ namespace RayVisualizer.Common
                 {
                     if (hitPart != k)
                     {
-                        FHRayHit temp = hits[k];
+                        Segment3 temp = hits[k];
                         hits[k] = hits[hitPart];
                         hits[hitPart] = temp;
                     }
@@ -40,7 +40,7 @@ namespace RayVisualizer.Common
                 {
                     if (hitPart != k)
                     {
-                        FHRayMiss temp = misses[k];
+                        Ray3 temp = misses[k];
                         misses[k] = misses[missPart];
                         misses[missPart] = temp;
                     }

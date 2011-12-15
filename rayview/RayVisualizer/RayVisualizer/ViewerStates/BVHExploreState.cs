@@ -10,38 +10,33 @@ namespace RayVisualizer
 {
     class BVHExploreState : ViewerState
     {
-        private BVH2Node _currentView;
         private Stack<BVH2Node> _ancestor;
+        private BVHTriangleViewer _viewer;
 
-        public BVHExploreState(BVH2 bvh)
+        public BVHExploreState(BVHTriangleViewer viewer)
         {
-            _currentView = bvh.Root;
             _ancestor = new Stack<BVH2Node>();
-        }
-
-        public IEnumerable<Viewable> CollectViewables(SceneData scene)
-        {
-            return new Viewable[] { new BVHTriangleViewer(_currentView) };
+            _viewer = viewer;
         }
 
         public void OnUpdateFrame(SceneData scene, MyKeyboard keyboard)
         {
             if (keyboard.IsFirstPress(Key.Left))
             {
-                _currentView.Accept(branch =>
+                _viewer.BVH.Accept(branch =>
                 {
-                    _ancestor.Push(_currentView);
-                    _currentView = branch.Left;
+                    _ancestor.Push(branch);
+                    _viewer.BVH = branch.Left;
                     return 0;
                 },
                 leaf => 0);
             }
             if (keyboard.IsFirstPress(Key.Right))
             {
-                _currentView.Accept(branch =>
+                _viewer.BVH.Accept(branch =>
                 {
-                    _ancestor.Push(_currentView);
-                    _currentView = branch.Right;
+                    _ancestor.Push(branch);
+                    _viewer.BVH = branch.Right;
                     return 0;
                 },
                 leaf => 0);
@@ -50,9 +45,18 @@ namespace RayVisualizer
             {
                 if (_ancestor.Count > 0)
                 {
-                    _currentView = _ancestor.Pop();
+                    _viewer.BVH = _ancestor.Pop();
                 }
             }
+        }
+
+
+        public void HibernateState(SceneData scene)
+        {
+        }
+
+        public void ActivateState(SceneData scene)
+        {
         }
     }
 }

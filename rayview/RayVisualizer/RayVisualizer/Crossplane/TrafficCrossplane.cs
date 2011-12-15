@@ -14,18 +14,18 @@ namespace RayVisualizer
 
         private const float BINSIZE = 10;
 
-        public void UpdateCrossPlane(SceneData scene)
+        public void UpdateCrossPlane(SceneData scene, float crossPlaneDistance, RaySet intersectionSet)
         {
             bins = new Dictionary<Tuple<int, int>, int>();
 
             CVector3 n = scene.ForwardVec.ToC();
-            p = scene.Location.ToC() + (n * scene.CrossPlaneDist);
+            p = scene.Location.ToC() + (n * crossPlaneDistance);
 
             right = scene.RightVec.ToC();
             up = right ^ n;
 
             //foreach(RaySet set in scene.Rays)
-            foreach (CastHitQuery c in scene.ActiveSet.CastHitQueries)
+            foreach (CastHitQuery c in intersectionSet.CastHitQueries)
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Difference;
@@ -46,7 +46,7 @@ namespace RayVisualizer
                 }
             }
 
-            foreach (CastMissQuery c in scene.ActiveSet.CastMissQueries)
+            foreach (CastMissQuery c in intersectionSet.CastMissQueries)
             {
                 float a1 = (c.Origin - p) * n;
                 CVector3 d = c.Direction;

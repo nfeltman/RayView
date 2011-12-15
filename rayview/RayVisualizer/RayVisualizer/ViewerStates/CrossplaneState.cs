@@ -4,21 +4,23 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTK.Input;
+using RayVisualizer.Common;
 
 namespace RayVisualizer
 {
     public class CrossplaneState : ViewerState
     {
-        private CrossplaneBehavior cross;
+        private RaySet _rays;
+        private CrossplaneBehavior _cross;
+        private float _crossPlaneDist;
+        private bool _crossPlaneFrozen;
 
-        public CrossplaneState(CrossplaneBehavior cb)
+        public CrossplaneState(CrossplaneBehavior cb, RaySet raySet)
         {
-            cross = cb;
-        }
-
-        public virtual IEnumerable<Viewable> CollectViewables(SceneData scene)
-        {
-            return new Viewable[] {};
+            _cross = cb;
+            _crossPlaneDist = 100;
+            _crossPlaneFrozen = false;
+            _rays = raySet;
         }
 
         public virtual void OnUpdateFrame(SceneData scene, MyKeyboard keyboard)
@@ -69,28 +71,37 @@ namespace RayVisualizer
             } 
             if (keyboard.IsDown(Key.K))
             {
-                scene.CrossPlaneDist += scene.CROSSPLANE_SPEED;
+                _crossPlaneDist += scene.CROSSPLANE_SPEED;
                 cameraMoved = true;
             } 
             if (keyboard.IsDown(Key.M))
             {
-                scene.CrossPlaneDist -= scene.CROSSPLANE_SPEED;
+                _crossPlaneDist -= scene.CROSSPLANE_SPEED;
                 cameraMoved = true;
             }
             if (keyboard.IsDown(Key.G))
             {
-                scene.CrossPlaneFrozen = true;
+                _crossPlaneFrozen = true;
             //    cross.UpdateCrossPlane(scene);
             }
             if (keyboard.IsDown(Key.H))
             {
-                scene.CrossPlaneFrozen = false;
+                _crossPlaneFrozen = false;
                 cameraMoved = true;
             }
-            if (cameraMoved && !scene.CrossPlaneFrozen)
+            if (cameraMoved && !_crossPlaneFrozen)
             {
-                cross.UpdateCrossPlane(scene);
+                _cross.UpdateCrossPlane(scene, _crossPlaneDist, _rays);
             }
+        }
+
+
+        public void HibernateState(SceneData scene)
+        {
+        }
+
+        public void ActivateState(SceneData scene)
+        {
         }
     }
 }

@@ -14,13 +14,18 @@ namespace RayVisualizer
         void DrawTransparentPart();
     }
 
-    public class CastHitsViewer : Viewable
+    public class RaysViewer : Viewable
     {
-        private IEnumerable<CastHitQuery> _queries;
+        private IEnumerable<Segment3> _queries;
 
-        public CastHitsViewer(IEnumerable<CastHitQuery> queries)
+        public RaysViewer(IEnumerable<Segment3> queries)
         {
             _queries = queries;
+        }
+
+        public RaysViewer(IEnumerable<Ray3> queries, float len)
+        {
+            _queries = queries.Select(ray => new Segment3(ray.Origin, ray.Direction * len));
         }
 
         public void DrawTransparentPart()
@@ -28,7 +33,7 @@ namespace RayVisualizer
             GL.Color4(.3, 0, 0, .1);
             GL.Begin(BeginMode.Lines);
             //int counter = 0;
-            foreach (CastHitQuery c in _queries)
+            foreach (Segment3 c in _queries)
             {
                // if ((counter++ & 15) != 0) continue;
                 GL.Vertex3(c.Origin.x, c.Origin.y, c.Origin.z);
@@ -43,22 +48,22 @@ namespace RayVisualizer
 
     public class BVHTriangleViewer : Viewable
     {
-        private BVH2Node _bvh;
+        public BVH2Node BVH { get; set; }
 
         public BVHTriangleViewer(BVH2 bvh)
         {
-            _bvh = bvh.Root;
+            BVH = bvh.Root;
         }
 
         public BVHTriangleViewer(BVH2Node bvh)
         {
-            _bvh = bvh;
+            BVH = bvh;
         }
 
         public void DrawOpaquePart()
         {
             GL.Begin(BeginMode.Triangles);
-            _bvh.Accept(new CollectTrianglesVisitor(t=>
+            BVH.Accept(new CollectTrianglesVisitor(t =>
             {
                 CVector3  v= 100*(t.p1+t.p2+t.p3);
                 GL.Color4(.5, (Math.Sin(v.x+v.y+v.z)+1)/2, 1, 1);

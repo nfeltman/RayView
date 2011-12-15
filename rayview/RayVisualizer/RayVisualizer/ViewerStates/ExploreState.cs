@@ -18,11 +18,6 @@ namespace RayVisualizer
         {
         }
 
-        public virtual IEnumerable<Viewable> CollectViewables(SceneData scene)
-        {
-            return new Viewable[] {};
-        }
-
         public virtual void OnUpdateFrame(SceneData scene, MyKeyboard keyboard)
         {
             if (keyboard.IsDown(Key.Left))
@@ -65,6 +60,15 @@ namespace RayVisualizer
             {
                 scene.Location += scene.RightVec * scene.MOVESPEED;
             } 
+        }
+
+
+        public void HibernateState(SceneData scene)
+        {
+        }
+
+        public void ActivateState(SceneData scene)
+        {
         }
     }
 }

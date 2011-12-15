@@ -8,9 +8,9 @@ namespace RayVisualizer.Common
     public class RayHitCostVisitor : BVH2Visitor<int>
     {
         private int _intersectionCount;
-        private FHRayHit _toTest;
+        private Segment3 _toTest;
         public int IntersectionCount { get { return _intersectionCount; } set { _intersectionCount = value; } }
-        public FHRayHit ToTest { get { return _toTest; } set { _toTest = value; } }
+        public Segment3 ToTest { get { return _toTest; } set { _toTest = value; } }
 
         public int ForBranch(BVH2Branch branch)
         {
@@ -32,9 +32,9 @@ namespace RayVisualizer.Common
     public class LowRayHitCostVisitor : BVH2Visitor<int>
     {
         private int _intersectionCount;
-        private FHRayHit _toTest;
+        private Segment3 _toTest;
         public int IntersectionCount { get { return _intersectionCount; } set { _intersectionCount = value; } }
-        public FHRayHit ToTest { get { return _toTest; } set { _toTest = value; } }
+        public Segment3 ToTest { get { return _toTest; } set { _toTest = value; } }
 
         public int ForBranch(BVH2Branch branch)
         {
@@ -57,9 +57,9 @@ namespace RayVisualizer.Common
     public class RayMissCostVisitor : BVH2Visitor<int>
     {
         private int _intersectionCount;
-        private FHRayMiss _toTest;
+        private Ray3 _toTest;
         public int IntersectionCount { get { return _intersectionCount; } set { _intersectionCount = value; } }
-        public FHRayMiss ToTest { get { return _toTest; } set { _toTest = value; } }
+        public Ray3 ToTest { get { return _toTest; } set { _toTest = value; } }
 
 
         public int ForBranch(BVH2Branch branch)

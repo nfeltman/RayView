@@ -102,7 +102,7 @@ namespace RayVisualizer.Common
                     y = reader.ReadSingle(),
                     z = reader.ReadSingle(),
                 };
-                RayQuery cast;
+
                 if (type == 0)
                 {
                     castHits.Add(new CastHitQuery() { Depth = depth, Origin = origin, Difference = dir });

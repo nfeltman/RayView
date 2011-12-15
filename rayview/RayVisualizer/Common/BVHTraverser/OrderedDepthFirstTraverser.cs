@@ -19,6 +19,7 @@ namespace RayVisualizer.Common
             {
                 this.origin = origin;
                 this.direction = direction;
+                _ops = ops;
                 _c = ClosedInterval.POSITIVES;
             }
 

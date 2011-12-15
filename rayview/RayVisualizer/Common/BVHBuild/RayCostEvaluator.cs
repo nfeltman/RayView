@@ -60,8 +60,8 @@ namespace RayVisualizer.Common
 
         public float EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state)
         {
-            int left_collisions = 10;
-            int right_collisions = 10;
+            int left_collisions = 0;
+            int right_collisions = 0;
             for (int k = 0; k < state.hitMax; k++)
             {
                 if (leftBox.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++left_collisions;

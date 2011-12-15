@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Crossplane\CrossplaneBehavior.cs" />
+    <Compile Include="InitializeRoutines.cs" />
     <Compile Include="MyKeyboard.cs" />
     <Compile Include="ViewerStates\BVHExploreState.cs" />
     <Compile Include="ViewerStates\CrossplaneState.cs" />

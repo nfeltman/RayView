@@ -37,8 +37,30 @@ namespace RayVisualizer.Common
         {
             Triangle[] tris = new Triangle[12 * a * a];
 
-            CVector3 v2 = (orientation^radius).Normalized() * radius.Length();
-            CVector3 v1 = (v2^radius).Normalized() * radius.Length();
+            HemisphereHelper(tris, center, radius, orientation, a);
+
+            // make the other half of the sphere by relfecting the triangles through the center
+            int halfNumTris = 6 * a *a;
+            CVector3 c2 = center * 2;
+            for (int k = 0; k < halfNumTris; k++)
+            {
+                tris[k + halfNumTris] = new Triangle(c2 - tris[k].p1, c2 - tris[k].p2, c2 - tris[k].p3);
+            }
+
+            return tris;
+        }
+
+        public static Triangle[] BuildHemisphere(CVector3 center, CVector3 radius, CVector3 orientation, int a)
+        {
+            Triangle[] tris = new Triangle[6 * a * a];
+            HemisphereHelper(tris, center, radius, orientation, a);
+            return tris;
+        }
+        private static void HemisphereHelper(Triangle[] tris, CVector3 center, CVector3 radius, CVector3 orientation, int a)
+        {
+
+            CVector3 v2 = (orientation ^ radius).Normalized() * radius.Length();
+            CVector3 v1 = (v2 ^ radius).Normalized() * radius.Length();
 
             //loop variants
             CVector3[] insideRing = new CVector3[] { center + radius, center + radius };
@@ -48,9 +70,9 @@ namespace RayVisualizer.Common
             {
                 cumuH -= (2f * k + 1f) / (a * a);
                 CVector3 circleCenter = radius * cumuH + center;
-                float d = (float)Math.Sqrt(1-cumuH*cumuH);
+                float d = (float)Math.Sqrt(1 - cumuH * cumuH);
                 int numPoints = 6 * (k + 1);
-                CVector3[] outsideRing = new CVector3[numPoints+1];
+                CVector3[] outsideRing = new CVector3[numPoints + 1];
                 for (int j = 0; j < numPoints; j++)
                 {
                     double theta = 2 * Math.PI * j / numPoints;
@@ -75,16 +97,6 @@ namespace RayVisualizer.Common
 
                 insideRing = outsideRing;
             }
-
-            // make the other half of the sphere by relfecting the triangles through the center
-            int halfNumTris = 6 * a *a;
-            CVector3 c2 = center * 2;
-            for (int k = 0; k < halfNumTris; k++)
-            {
-                tris[k + halfNumTris] = new Triangle(c2 - tris[k].p1, c2 - tris[k].p2, c2 - tris[k].p3);
-            }
-
-            return tris;
         }
     }
 }

@@ -6,7 +6,7 @@ using OpenTK;
 
 namespace RayVisualizer
 {
-    interface ViewerState
+    public interface ViewerState
     {
         void OnUpdateFrame(SceneData scene, MyKeyboard keyboard);
         void HibernateState(SceneData scene);

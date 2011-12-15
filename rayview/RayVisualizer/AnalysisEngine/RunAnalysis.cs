@@ -13,7 +13,7 @@ namespace AnalysisEngine
         public static void Main()
         {
             string tracesPath = "traces\\";
-            BuildAnalysis.ReadAndCompareMethods(tracesPath);
+            BuildAnalysis.HemisphereFocusExperiment(tracesPath);
             //BuildAnalysis.BuildTreeWithRayData(tracesPath);
             //SpeedTest(tracesPath);
         }

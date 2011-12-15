@@ -30,26 +30,8 @@ namespace RayVisualizer{
         private List<ViewerState> _statesList;
 
         public Program() : base(800, 600, new GraphicsMode(16, 16))
-		{ } 
+		{ }
 
-        private void InitializeStatesAndViews()
-        {
-            //scene.AllRays = RayFileParser.ReadFromFile(new FileStream("..\\..\\..\\..\\..\\traces\\castTrace.txt", FileMode.Open, FileAccess.Read));
-            //scene.ActiveSet = scene.AllRays.Filter((CastHitQuery r,int i)=>r.Depth >= 1,null,null);
-            //BVH2 bvh = BVH2Builder.BuildFullBVH(Shapes.BuildParallelogram(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(20, 100, 0), 10, 10).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
-            BVH2 bvh = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
-            Ray3[] rays = RayDistributions.AlignedCircularFrustrum(new CVector3(0, 0, 0), new CVector3(100, 0, 0), 50, 20, 3000);
-
-            BVHTriangleViewer bvhViewer = new BVHTriangleViewer(bvh);
-            _scene.Viewables.Add(bvhViewer);
-            _scene.Viewables.Add(new RaysViewer(rays,1));
-
-            // states
-            _statesList = new List<ViewerState>();
-            _statesList.Add(new ExploreState());
-            _statesList.Add(new BVHExploreState(bvhViewer));
-            _activeState = _statesList[0];
-        }
 
         protected override void OnLoad(EventArgs e)
         {
@@ -71,7 +53,8 @@ namespace RayVisualizer{
                 _scene.ForwardVec = new Vector3(1, 0, 0);
                 _scene.RightVec = new Vector3(0, 0, 1);
             }
-            InitializeStatesAndViews();
+            _statesList = new List<ViewerState>();
+            _activeState = InitializeRoutines.Initialize(_scene, _statesList); // INITIALIZE!!!
 
             GL.ClearColor(Color.LightGray);
             //GL.Enable(EnableCap.DepthTest);

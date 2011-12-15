@@ -182,5 +182,99 @@ namespace AnalysisEngine
             Console.WriteLine("\t      LeafSurfaceArea = {0}", bvh.LeafSurfaceArea());
             Console.WriteLine("\tScaledLeafSurfaceArea = {0}", bvh.ScaledLeafSurfaceArea());
         }
+
+        public static void SphereFocusExperiment(string tracesPath)
+        {
+            Random rng = new Random(19120623); // dinner for whoever figures out this constant
+            CVector3[] strangeVecs = new CVector3[10];
+            for( int k=0;k<strangeVecs.Length;k++)
+                 strangeVecs[k] = new CVector3((float)rng.NextDouble(),(float)rng.NextDouble(),(float)rng.NextDouble()).Normalized();
+
+            StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\SphereFocusExperiment.txt", false);
+            writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
+            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            
+            for (int k = 0; k <= 50; k++)
+            {
+                float focus = k / 50f;
+                writer.Write("{0}", focus);
+                foreach (CVector3 strangeVec in strangeVecs)
+                {
+                    Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 400, strangeVec * 100, 80, 80 * focus, 3000);
+                    FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+
+                    Console.Write(k+" ");
+                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                }
+                Console.WriteLine();
+                writer.WriteLine();
+            }
+            writer.Close();
+        }
+
+        public static void HemisphereFocusExperiment(string tracesPath)
+        {
+            Random rng = new Random(19120623); // dinner for whoever figures out this constant
+            CVector3[] strangeVecs = new CVector3[10];
+            for (int k = 0; k < strangeVecs.Length; k++)
+            {
+                float t = (float)(rng.NextDouble() * 2 * Math.PI);
+                float r = .5f * (float)Math.Sqrt(rng.NextDouble());
+                strangeVecs[k] = new CVector3(-(float)Math.Sqrt(1 - r * r), (float)Math.Cos(t) * r, (float)Math.Sin(t) * r);
+            }
+
+            StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\HemisphereFocusExperiment.txt", false);
+            writer.WriteLine("% focus of rays, (unspecialized cost, specialized cost)x"+strangeVecs.Length);
+            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildHemisphere(new CVector3(0, 0, 0), new CVector3(-100, 0, 0), new CVector3(0, 100, 0), 17).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+
+            for (int k = 0; k <= 50; k++)
+            {
+                float focus = k / 50f;
+                writer.Write("{0}", focus);
+                foreach (CVector3 strangeVec in strangeVecs)
+                {
+                    Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(new CVector3(300, 0, 0), strangeVec * 100, 80, 80 * focus, 3000);
+                    FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+
+                    Console.Write(k + " ");
+                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                }
+                Console.WriteLine();
+                writer.WriteLine();
+            }
+            writer.Close();
+        }
+
+        public static void PlaneFocusExperiment(string tracesPath)
+        {
+            Random rng = new Random(19120623); // dinner for whoever figures out this constant
+            CVector3[] strangeVecs = new CVector3[10];
+            for (int k = 0; k < strangeVecs.Length; k++)
+                strangeVecs[k] = new CVector3(0, (float)rng.NextDouble() * 2 - 1, (float)rng.NextDouble() * 2 - 1);
+
+            StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\PlaneFocusExperiment.txt", false);
+            writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
+            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildParallelogram(new CVector3(0, -200, -200), new CVector3(0, 400, 0), new CVector3(0, 0, 400), 29, 29).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+
+            for (int k = 0; k <= 50; k++)
+            {
+                float focus = k / 50f;
+                writer.Write("{0}", focus);
+                foreach (CVector3 strangeVec in strangeVecs)
+                {
+                    Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 120 + new CVector3(300, 0, 0), strangeVec * 120, 80, 80 * focus, 3000);
+                    FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+
+                    Console.Write(k + " ");
+                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                }
+                Console.WriteLine();
+                writer.WriteLine();
+            }
+            writer.Close();
+        }
     }
 }

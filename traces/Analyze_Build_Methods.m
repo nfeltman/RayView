@@ -12,23 +12,23 @@ function Analyze_Build_Methods( d )
 % 11 | T_E(build[P_U*mu^x]) 
 % 12 | T_E(build[(P_B+10)*nu^x]) 
 % 13 | T_E(build[(P_E+10)*nu^x])
+% 
+% figure();
+% plot(d(:,1),d(:,2:5));
+% xlabel('x');
+% ylabel('T_U(bvh)');
+% legend('P_U*nu^x','P_U*mu^x','(P_B+10)*nu^x','(P_E+10)*nu^x');
 
 figure();
-plot(d(:,1),d(:,2:5));
-xlabel('x');
-ylabel('T_U(bvh)');
-legend('P_U*nu^x','P_U*mu^x','(P_B+10)*nu^x','(P_E+10)*nu^x');
+plot(d(:,1),d(:,6:8));
+xlabel('$\alpha$','Interpreter','latex', 'FontSize', 18);
+ylabel('$T_B(bvh)$','Interpreter','latex', 'FontSize', 18);
+legend('P_U\nu^\alpha','P_U\mu^\alpha','(P_B+10)\nu^\alpha','(P_E+10)*nu^x');
 
-figure();
-plot(d(:,1),d(:,6:9));
-xlabel('x');
-ylabel('T_B(bvh)');
-legend('P_U*nu^x','P_U*mu^x','(P_B+10)*nu^x','(P_E+10)*nu^x');
-
-figure();
-plot(d(:,1),d(:,10:13));
-xlabel('x');
-ylabel('T_E(bvh)');
-legend('P_U*nu^x','P_U*mu^x','(P_B+10)*nu^x','(P_E+10)*nu^x');
+% figure();
+% plot(d(:,1),d(:,10:13));
+% xlabel('x');
+% ylabel('T_E(bvh)');
+% legend('P_U*nu^x','P_U*mu^x','(P_B+10)*nu^x','(P_E+10)*nu^x');
 
 end

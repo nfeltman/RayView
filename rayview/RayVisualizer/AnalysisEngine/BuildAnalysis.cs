@@ -55,7 +55,7 @@ namespace AnalysisEngine
                 float exponent = (k / 10f) * (.3f) + .7f;
                 BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
                 BinaryWriter writer = new BinaryWriter(new FileStream(tracesPath + "powerplant\\Built_BVHs\\WithRays\\eyerays_" + k, FileMode.CreateNew));
-                BVH2 created = BVH2Builder.BuildFullBVH(tris, new RayCostEvaluator(res, exponent), new RayCostEvaluator.RayShuffleState(res));
+                BVH2 created = BVH2Builder.BuildFullBVH(tris, new RayCostEvaluator(res, exponent));
                 created.WriteToFile(writer);
                 writer.Close();
                 Console.WriteLine("{0}% done!", (k / .1f));
@@ -157,7 +157,7 @@ namespace AnalysisEngine
             FHRayResults res = RayCompiler.CompileCasts(set, given);
             BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
             st.Start();
-            BVH2Builder.BuildBVH(tris, new RayCostEvaluator(res, .9f), new RayCostEvaluator.RayShuffleState(res), 4, false);
+            BVH2Builder.BuildBVH(tris, new RayCostEvaluator(res, .9f), 4, false);
             st.Stop();
             Console.WriteLine("Took {0:.000} seconds", st.Elapsed.TotalSeconds);
             Console.ReadLine();
@@ -202,10 +202,10 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 400, strangeVec * 100, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k+" ");
-                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                    writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
                 }
                 Console.WriteLine();
                 writer.WriteLine();
@@ -236,10 +236,10 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(new CVector3(300, 0, 0), strangeVec * 100, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k + " ");
-                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                    writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
                 }
                 Console.WriteLine();
                 writer.WriteLine();
@@ -266,10 +266,48 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 120 + new CVector3(300, 0, 0), strangeVec * 120, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1), new RayCostEvaluator.RayShuffleState(res));
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k + " ");
-                    writer.Write(" {1} {2}", focus, initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                    writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                }
+                Console.WriteLine();
+                writer.WriteLine();
+            }
+            writer.Close();
+        }
+
+        public static void SphereFocusAndWeightExperiment(string tracesPath)
+        {
+            Random rng = new Random(19120623); // dinner for whoever figures out this constant
+            CVector3[] strangeVecs = new CVector3[10];
+            for (int k = 0; k < strangeVecs.Length; k++)
+                strangeVecs[k] = new CVector3((float)rng.NextDouble(), (float)rng.NextDouble(), (float)rng.NextDouble()).Normalized();
+
+            StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\SphereFocusAndWeightExperiment.txt", false);
+            writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
+            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+
+            for (int k = 0; k <= 50; k++)
+            {
+                float focus = k / 50f;
+                writer.Write("{0}", focus);
+                foreach (CVector3 strangeVec in strangeVecs)
+                {
+                    Console.Write(k);
+                    Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 400, strangeVec * 100, 80, 80 * focus, 3000);
+                    FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild); // you can use the same res for multiple builds
+
+                    for (int j = 0; j <= 5; j++)
+                    {
+                        float weight = j / 5f;
+
+                        BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new BlendedSplitEvaluator(res, 1, weight));
+
+                        Console.Write("."+j);
+                        writer.Write(" {0}", rebuild.BranchTraversalCost(res));
+                    }
+                    Console.Write(" ");
                 }
                 Console.WriteLine();
                 writer.WriteLine();

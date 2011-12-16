@@ -7,6 +7,7 @@ namespace RayVisualizer.Common
 {
     public interface SplitEvaluator<T>
     {
+        T GetDefaultState(Box3 toBeDivided);
         T SetState(Box3 toBeDivided, T parentState);
         float EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, T state);
     }
@@ -26,5 +27,6 @@ namespace RayVisualizer.Common
         }
 
         public bool SetState(Box3 splitCandidate, bool parentState) { return false; }
+        public bool GetDefaultState(Box3 toBeDivided) { return false; }
     }
 }

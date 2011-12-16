@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BVH2Visitors\RayCostVisitor.cs" />
+    <Compile Include="BVHBuild\BlendedSplitEvaluator.cs" />
     <Compile Include="BVHBuild\BVH2Builder.cs" />
     <Compile Include="BVHBuild\BVH2Parser.cs" />
     <Compile Include="BVHBuild\RayCostEvaluator.cs" />

@@ -7,9 +7,9 @@ namespace RayVisualizer.Common
 {
     public class RayCostEvaluator : SplitEvaluator<RayCostEvaluator.RayShuffleState>
     {
-        Segment3[] hits;
-        Ray3[] misses;
-        float _expo;
+        private Segment3[] hits;
+        private Ray3[] misses;
+        private float _expo;
 
         public RayCostEvaluator(FHRayResults res, float expo)
         {
@@ -17,6 +17,7 @@ namespace RayVisualizer.Common
             hits = res.Hits;
             misses = res.Misses;
         }
+        
         public RayShuffleState SetState(Box3 toBeSplit, RayShuffleState parentState)
         {
             int hitPart = 0;
@@ -80,19 +81,18 @@ namespace RayVisualizer.Common
                 if (!leftBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty || !rightBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty)
                     throw new Exception("BAD STATE MISS");
              * */
-            return (float)(left_collisions * Math.Pow(leftNu,_expo) + right_collisions * Math.Pow(rightNu,_expo));
+            return (float)(left_collisions * Math.Pow(leftNu - 1, _expo) + right_collisions * Math.Pow(rightNu - 1, _expo));
+        }
+
+        public RayCostEvaluator.RayShuffleState GetDefaultState(Box3 toBeDivided)
+        {
+            return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length };
         }
 
         public struct RayShuffleState
         {
             public int missMax;
             public int hitMax;
-
-            public RayShuffleState(FHRayResults res)
-            {
-                missMax = res.Misses.Length;
-                hitMax = res.Hits.Length;
-            }
         }
     }
 }

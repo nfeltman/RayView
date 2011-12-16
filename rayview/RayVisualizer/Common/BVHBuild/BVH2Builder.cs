@@ -16,20 +16,20 @@ namespace RayVisualizer.Common
 
         public static BVH2 BuildFullBVH(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est)
         {
-            return BuildFullBVH(tri, new StatelessSplitEvaluator(est), false);
+            return BuildFullBVH(tri, new StatelessSplitEvaluator(est));
         }
 
-        public static BVH2 BuildFullBVH<T>(BuildTriangle[] tri, SplitEvaluator<T> se, T defaultState)
+        public static BVH2 BuildFullBVH<T>(BuildTriangle[] tri, SplitEvaluator<T> se)
         {
-            return BuildBVH(tri, se, defaultState, 1, true);
+            return BuildBVH(tri, se, 1, true);
         }
 
         public static BVH2 BuildBVH(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, int mandatoryLeafSize, bool splitDegenerateNodes)
         {
-            return BuildBVH(tri, new StatelessSplitEvaluator(est), false, mandatoryLeafSize, splitDegenerateNodes);
+            return BuildBVH(tri, new StatelessSplitEvaluator(est), mandatoryLeafSize, splitDegenerateNodes);
         }
 
-        public static BVH2 BuildBVH<T>(BuildTriangle[] tri, SplitEvaluator<T> se, T defaultState, int mandatoryLeafSize, bool splitDegenerateNodes)
+        public static BVH2 BuildBVH<T>(BuildTriangle[] tri, SplitEvaluator<T> se, int mandatoryLeafSize, bool splitDegenerateNodes)
         {
             if (tri.Length == 0)
                 throw new ArgumentException("BVH Cannot be empty");
@@ -45,7 +45,8 @@ namespace RayVisualizer.Common
                 splitDegenerateNodes = splitDegenerateNodes
             };
             int len = tri.Length-1;
-            BVH2Node root = BuildNodeSegment(0, tri.Length, 0, b.GetBox(), defaultState, im);
+            Box3 topBox = b.GetBox();
+            BVH2Node root = BuildNodeSegment(0, tri.Length, 0, topBox, im.costEstimator.GetDefaultState(topBox), im);
             return new BVH2(root, im.branchCounter);
         }
 

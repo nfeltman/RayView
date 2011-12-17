@@ -277,6 +277,36 @@ namespace AnalysisEngine
             writer.Close();
         }
 
+        public static void TubeFocusExperiment(string tracesPath)
+        {
+            Random rng = new Random(19120623); // dinner for whoever figures out this constant
+            CVector3[] strangeVecs = new CVector3[10];
+            for (int k = 0; k < strangeVecs.Length; k++)
+                strangeVecs[k] = new CVector3(0, (float)rng.NextDouble() * 2 - 1, (float)rng.NextDouble() * 2 - 1);
+
+            StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\TubeFocusExperiment.txt", false);
+            writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
+
+            for (int k = 0; k <= 50; k++)
+            {
+                float focus = k / 50f;
+                writer.Write("{0}", focus);
+                foreach (CVector3 strangeVec in strangeVecs)
+                {
+                    BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildTube(strangeVec * (-200), strangeVec * 400, 100, new CVector3(1.3f, 23.4f, 12.2f), 23, 37).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+                    Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * (-250), strangeVec * 250, 100 * focus, 100 * focus, 3000);
+                    FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
+                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+
+                    Console.Write(k + " ");
+                    writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
+                }
+                Console.WriteLine();
+                writer.WriteLine();
+            }
+            writer.Close();
+        }
+
         public static void SphereFocusAndWeightExperiment(string tracesPath)
         {
             Random rng = new Random(19120623); // dinner for whoever figures out this constant

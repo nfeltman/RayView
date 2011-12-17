@@ -13,10 +13,7 @@ namespace AnalysisEngine
         public static void Main()
         {
             string tracesPath = "traces\\";
-            BuildAnalysis.SphereFocusExperiment(tracesPath);
-            BuildAnalysis.HemisphereFocusExperiment(tracesPath);
-            BuildAnalysis.PlaneFocusExperiment(tracesPath);
-            BuildAnalysis.SphereFocusAndWeightExperiment(tracesPath);
+            BuildAnalysis.TubeFocusExperiment(tracesPath);
             //BuildAnalysis.BuildTreeWithRayData(tracesPath);
             //SpeedTest(tracesPath);
         }

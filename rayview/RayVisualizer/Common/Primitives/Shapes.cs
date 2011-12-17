@@ -98,5 +98,30 @@ namespace RayVisualizer.Common
                 insideRing = outsideRing;
             }
         }
+
+        public static Triangle[] BuildTube(CVector3 p, CVector3 l, float radius, CVector3 orientation, int nLength, int nCirc)
+        {
+            Triangle[] tris = new Triangle[2 * nLength * nCirc];
+            CVector3 u = (l ^ orientation).Normalized();
+            CVector3 v = (u ^ l).Normalized();
+            CVector3 x = l / nLength;
+            for (int k = 0; k < nCirc; k++)
+            {
+                double theta1 = k * 2 * Math.PI / nCirc;
+                double theta2 = (k+1) * 2 * Math.PI / nCirc;
+                CVector3 c1 = p + u * ((float)Math.Cos(theta1) * radius) + v * ((float)Math.Sin(theta1) * radius);
+                CVector3 c2 = p + u * ((float)Math.Cos(theta2) * radius) + v * ((float)Math.Sin(theta2) * radius);
+                for (int j = 0; j < nLength; j++)
+                {
+                    CVector3 t1 = c1 + (j * x);
+                    CVector3 t2 = c2 + (j * x);
+                    CVector3 t3 = t1 + x;
+                    CVector3 t4 = t2 + x;
+                    tris[(k + j * nCirc) * 2] = new Triangle(t1, t2, t3);
+                    tris[(k + j * nCirc) * 2 + 1] = new Triangle(t3, t2, t4);
+                }
+            }
+            return tris;
+        }
     }
 }

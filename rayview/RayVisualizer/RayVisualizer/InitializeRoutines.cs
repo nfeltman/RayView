@@ -10,7 +10,7 @@ namespace RayVisualizer
     {
         public static ViewerState Initialize(SceneData scene, List<ViewerState> statesList)
         {
-            return FocusOnSpehere(scene, statesList);
+            return FocusThroughPipe(scene, statesList);
         }
 
         public static ViewerState FocusOnSpehere(SceneData scene, List<ViewerState> statesList)
@@ -68,6 +68,26 @@ namespace RayVisualizer
             scene.Viewables.Add(bvhViewer);
             scene.Viewables.Add(new RaysViewer(res.Hits));
             scene.Viewables.Add(new RaysViewer(res.Misses, 100));
+
+            // states
+            statesList.Add(new ExploreState());
+            statesList.Add(new BVHExploreState(bvhViewer));
+            return statesList[0];
+        }
+
+        public static ViewerState FocusThroughPipe(SceneData scene, List<ViewerState> statesList)
+        {
+            CVector3 strangeVec = new CVector3(1, 2, 8).Normalized();
+            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildTube(strangeVec*(-200), strangeVec*400, 100, new CVector3(1.3f, 23.4f, 12.2f), 23, 37).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            float prop = 1f;
+            Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*(-250), strangeVec * 250, 100 * prop, 100 * prop, 3000);
+            FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
+            BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+
+            BVHTriangleViewer bvhViewer = new BVHTriangleViewer(rebuild);
+            scene.Viewables.Add(bvhViewer);
+            scene.Viewables.Add(new RaysViewer(res.Hits));
+            scene.Viewables.Add(new RaysViewer(res.Misses, 1f));
 
             // states
             statesList.Add(new ExploreState());

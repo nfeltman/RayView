@@ -86,6 +86,7 @@
     <Compile Include="BVHBuild\BlendedSplitEvaluator.cs" />
     <Compile Include="BVHBuild\BVH2Builder.cs" />
     <Compile Include="BVHBuild\BVH2Parser.cs" />
+    <Compile Include="BVHBuild\BVH2DeepBuilder.cs" />
     <Compile Include="BVHBuild\RayCostEvaluator.cs" />
     <Compile Include="BVHBuild\RayCompiler.cs" />
     <Compile Include="BVHBuild\SplitEvaluator.cs" />

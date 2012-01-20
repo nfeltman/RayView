@@ -36,4 +36,6 @@ namespace RayVisualizer.Common
                 return ifT2(_asT2);
         }
     }
+
+    public enum Unit { ONLY }
 }

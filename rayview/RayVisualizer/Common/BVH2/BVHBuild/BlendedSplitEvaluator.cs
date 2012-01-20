@@ -5,19 +5,20 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RayCostEvaluator : SplitEvaluator<RayCostEvaluator.RayShuffleState>
+    public class BlendedSplitEvaluator : BVHSplitEvaluator<BlendedSplitEvaluator.RayShuffleState, Unit>
     {
         private Segment3[] hits;
         private Ray3[] misses;
         private float _expo;
+        private float w;
 
-        public RayCostEvaluator(FHRayResults res, float expo)
+        public BlendedSplitEvaluator(FHRayResults res, float expo, float weightRays)
         {
             _expo = expo;
             hits = res.Hits;
             misses = res.Misses;
+            w = weightRays;
         }
-        
         public RayShuffleState SetState(Box3 toBeSplit, RayShuffleState parentState)
         {
             int hitPart = 0;
@@ -48,18 +49,11 @@ namespace RayVisualizer.Common
                     missPart++;
                 }
             }
-            /*
-            for (int k = parentState.hitMax; k < hits.Length; k++)
-                if (!toBeSplit.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty)
-                    throw new Exception("BAD STATE HIT");
-            for (int k = parentState.missMax; k < misses.Length; k++)
-                if (!toBeSplit.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty)
-                    throw new Exception("BAD STATE MISS");
-             */
-            return new RayShuffleState() { missMax = missPart, hitMax = hitPart };
+            
+            return new RayShuffleState() { missMax = missPart, hitMax = hitPart, topSA = toBeSplit.SurfaceArea};
         }
 
-        public float EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state)
+        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplit split)
         {
             int left_collisions = 0;
             int right_collisions = 0;
@@ -73,26 +67,28 @@ namespace RayVisualizer.Common
                 if (leftBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++left_collisions;
                 if (rightBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++right_collisions;
             }
-            /*
-            for (int k = state.hitMax; k < hits.Length; k++)
-                if (!leftBox.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty || !rightBox.IntersectSegment(hits[k].Origin, hits[k].Difference).IsEmpty)
-                    throw new Exception("BAD STATE HIT");
-            for (int k = state.missMax; k < misses.Length; k++)
-                if (!leftBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty || !rightBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty)
-                    throw new Exception("BAD STATE MISS");
-             * */
-            return (float)(left_collisions * Math.Pow(leftNu - 1, _expo) + right_collisions * Math.Pow(rightNu - 1, _expo));
+
+            int rayMax = state.hitMax + state.missMax;
+            double leftRayProp = rayMax == 0 ? 1 : ((double)left_collisions) / rayMax;
+            double rightRayProp = rayMax == 0 ? 1 : ((double)right_collisions) / rayMax;
+            double leftSAProp = leftBox.SurfaceArea / state.topSA;
+            double rightSAProp = rightBox.SurfaceArea / state.topSA;
+            double leftCombinedProp = leftRayProp * w + leftSAProp * (1 - w);
+            double rightCombinedProp = rightRayProp * w + rightSAProp * (1 - w);
+
+            return new EvalResult<Unit>(leftCombinedProp * Math.Pow(leftNu - 1, _expo) + rightCombinedProp * Math.Pow(rightNu - 1, _expo), Unit.ONLY);
         }
 
-        public RayCostEvaluator.RayShuffleState GetDefaultState(Box3 toBeDivided)
+        public BlendedSplitEvaluator.RayShuffleState GetDefaultState(Box3 toBeDivided)
         {
-            return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length };
+            return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length, topSA = toBeDivided.SurfaceArea };
         }
 
         public struct RayShuffleState
         {
             public int missMax;
             public int hitMax;
+            public double topSA;
         }
     }
 }

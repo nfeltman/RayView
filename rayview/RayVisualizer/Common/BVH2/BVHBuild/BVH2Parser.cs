@@ -52,7 +52,7 @@ namespace RayVisualizer.Common
                 }
                 if (!bbox.HasValue) // implicit leaf
                 {
-                    BVH2Builder.BoundBuilder builder = new BVH2Builder.BoundBuilder(true);
+                    BoundBuilder builder = new BoundBuilder(true);
                     foreach (Triangle tri in tris) builder.AddTriangle(tri);
                     bbox = builder.GetBox();
                 }

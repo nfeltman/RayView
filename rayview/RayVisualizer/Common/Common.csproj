@@ -82,37 +82,49 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BVH2Visitors\RayCostVisitor.cs" />
-    <Compile Include="BVHBuild\BlendedSplitEvaluator.cs" />
-    <Compile Include="BVHBuild\BVH2Builder.cs" />
-    <Compile Include="BVHBuild\BVH2Parser.cs" />
-    <Compile Include="BVHBuild\BVH2DeepBuilder.cs" />
-    <Compile Include="BVHBuild\RayCostEvaluator.cs" />
-    <Compile Include="BVHBuild\RayCompiler.cs" />
-    <Compile Include="BVHBuild\SplitEvaluator.cs" />
-    <Compile Include="BVHTraverser\RayOrderBoxTestCounter.cs" />
+    <Compile Include="Builders\BoundBuilder.cs" />
+    <Compile Include="Builders\BuildTools.cs" />
+    <Compile Include="Builders\NodeBuilder.cs" />
+    <Compile Include="BVH2\BVH2Visitors\RayCostVisitor.cs" />
+    <Compile Include="BVH2\BVHBuild\BlendedSplitEvaluator.cs" />
+    <Compile Include="BVH2\BVHBuild\BVH2Parser.cs" />
+    <Compile Include="BVH2\BVHBuild\BVHNodeFactory.cs" />
+    <Compile Include="BVH2\BVHBuild\RayCostEvaluator.cs" />
+    <Compile Include="BVH2\BVHBuild\RayCompiler.cs" />
+    <Compile Include="Builders\BVHSplitEvaluator.cs" />
+    <Compile Include="BVH2\BVHTraverser\RayOrderBoxTestCounter.cs" />
+    <Compile Include="Primitives\AASplit.cs" />
     <Compile Include="Primitives\Box3.cs" />
-    <Compile Include="BVH2.cs" />
-    <Compile Include="BVH2Visitors\BVH2Visitor.cs" />
-    <Compile Include="BVH2Visitors\CollectTrianglesVisitor.cs" />
-    <Compile Include="BVHTraverser\OrderedDepthFirstInspectionCounter.cs" />
-    <Compile Include="BVHTraverser\OrderedDepthFirstOpCounter.cs" />
-    <Compile Include="BVHTraverser\OrderedDepthFirstTraverser.cs" />
-    <Compile Include="BVHTraverser\RayOrderInspectionCounter.cs" />
-    <Compile Include="BVHTraverser\RayOrderOpCounter.cs" />
-    <Compile Include="BVHTraverser\RayOrderTraverser.cs" />
+    <Compile Include="BVH2\BVH2.cs" />
+    <Compile Include="BVH2\BVH2Visitors\BVH2Visitor.cs" />
+    <Compile Include="BVH2\BVH2Visitors\CollectTrianglesVisitor.cs" />
+    <Compile Include="BVH2\BVHTraverser\OrderedDepthFirstInspectionCounter.cs" />
+    <Compile Include="BVH2\BVHTraverser\OrderedDepthFirstOpCounter.cs" />
+    <Compile Include="BVH2\BVHTraverser\OrderedDepthFirstTraverser.cs" />
+    <Compile Include="BVH2\BVHTraverser\RayOrderInspectionCounter.cs" />
+    <Compile Include="BVH2\BVHTraverser\RayOrderOpCounter.cs" />
+    <Compile Include="BVH2\BVHTraverser\RayOrderTraverser.cs" />
+    <Compile Include="Builders\BuildTriangle.cs" />
     <Compile Include="Primitives\CVector3.cs" />
     <Compile Include="ExternalCode\PriorityQueue.cs" />
     <Compile Include="Primitives\Interval.cs" />
     <Compile Include="LanguageUtilities.cs" />
-    <Compile Include="NodeMap.cs" />
+    <Compile Include="BVH2\NodeMap.cs" />
     <Compile Include="Primitives\RayDistributions.cs" />
     <Compile Include="Primitives\Shapes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Primitives\RayQuery.cs" />
     <Compile Include="Primitives\RaySet.cs" />
     <Compile Include="Primitives\Triangle.cs" />
+    <Compile Include="RBVH2\BVHBuild\RBVHNodeFactory.cs" />
+    <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />
+    <Compile Include="Builders\GeneralBVH2Builder.cs" />
+    <Compile Include="RBVH2\BVHBuild\RayCompiler.cs" />
+    <Compile Include="RBVH2\FullCostMeasure.cs" />
+    <Compile Include="RBVH2\RBVH2.cs" />
+    <Compile Include="RBVH2\RBVH2Visitor.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

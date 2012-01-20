@@ -25,13 +25,13 @@ namespace AnalysisEngine
             for (int k = 0; k <= 10; k++)
             {
                 float exponent = (k / 10f) * (.3f) + .7f;
-                BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
-                BVH2 createdN = BVH2Builder.BuildFullBVH(tris, createNuExpCostEstimator(exponent));
+                BuildTriangle[] tris = BuildTools.GetTriangleList(given);
+                BVH2 createdN = GeneralBVH2Builder.BuildFullBVH(tris, createNuExpCostEstimator(exponent));
                 BinaryWriter writer = new BinaryWriter(new FileStream(tracesPath + "powerplant\\Built_BVHs\\NoRays\\nu_" + k, FileMode.CreateNew));
                 createdN.WriteToFile(writer);
                 writer.Close();
-                tris = BVH2Builder.GetTriangleList(given);
-                BVH2 createdM = BVH2Builder.BuildFullBVH(tris, createMuExpCostEstimator(exponent));
+                tris = BuildTools.GetTriangleList(given);
+                BVH2 createdM = GeneralBVH2Builder.BuildFullBVH(tris, createMuExpCostEstimator(exponent));
                 writer = new BinaryWriter(new FileStream(tracesPath + "powerplant\\Built_BVHs\\NoRays\\mu_" + k, FileMode.CreateNew));
                 createdM.WriteToFile(writer);
                 writer.Close();
@@ -53,9 +53,9 @@ namespace AnalysisEngine
             for (int k = 0; k <= 10; k++)
             {
                 float exponent = (k / 10f) * (.3f) + .7f;
-                BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
+                BuildTriangle[] tris = BuildTools.GetTriangleList(given);
                 BinaryWriter writer = new BinaryWriter(new FileStream(tracesPath + "powerplant\\Built_BVHs\\WithRays\\eyerays_" + k, FileMode.CreateNew));
-                BVH2 created = BVH2Builder.BuildFullBVH(tris, new RayCostEvaluator(res, exponent));
+                BVH2 created = GeneralBVH2Builder.BuildFullBVH(tris, new RayCostEvaluator(res, exponent));
                 created.WriteToFile(writer);
                 writer.Close();
                 Console.WriteLine("{0}% done!", (k / .1f));
@@ -68,10 +68,10 @@ namespace AnalysisEngine
             for (int k = 0; k <= 10; k++)
             {
                 float exponent = (k / 30f) * (.3f) + .7f;
-                BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
-                BVH2 createdN = BVH2Builder.BuildFullBVH(tris, createNuExpCostEstimator(exponent));
-                tris = BVH2Builder.GetTriangleList(given);
-                BVH2 createdM = BVH2Builder.BuildFullBVH(tris, createMuExpCostEstimator(exponent));
+                BuildTriangle[] tris = BuildTools.GetTriangleList(given);
+                BVH2 createdN = GeneralBVH2Builder.BuildFullBVH(tris, createNuExpCostEstimator(exponent));
+                tris = BuildTools.GetTriangleList(given);
+                BVH2 createdM = GeneralBVH2Builder.BuildFullBVH(tris, createMuExpCostEstimator(exponent));
                 writer.WriteLine("{0} {1}", 
                     exponent, 
                     //createdN.BranchSurfaceArea(),
@@ -139,9 +139,9 @@ namespace AnalysisEngine
         {
             Stopwatch st = new Stopwatch();
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
+            BuildTriangle[] tris = BuildTools.GetTriangleList(given);
             st.Start();
-            BVH2Builder.BuildBVHTest(tris);
+            GeneralBVH2Builder.BuildBVHTest(tris);
             st.Stop();
             Console.WriteLine("Took {0:.000} seconds", st.Elapsed.TotalSeconds);
             Console.ReadLine();
@@ -155,9 +155,9 @@ namespace AnalysisEngine
 
             RaySet set = allrays.CastOnlyFilter((r, i) => i % 200 == 0 && r.Depth>=1);
             FHRayResults res = RayCompiler.CompileCasts(set, given);
-            BuildTriangle[] tris = BVH2Builder.GetTriangleList(given);
+            BuildTriangle[] tris = BuildTools.GetTriangleList(given);
             st.Start();
-            BVH2Builder.BuildBVH(tris, new RayCostEvaluator(res, .9f), 4, false);
+            GeneralBVH2Builder.BuildStructure(tris, new RayCostEvaluator(res, .9f), BVHNodeFactory.ONLY, 4, false);
             st.Stop();
             Console.WriteLine("Took {0:.000} seconds", st.Elapsed.TotalSeconds);
             Console.ReadLine();
@@ -192,7 +192,7 @@ namespace AnalysisEngine
 
             StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\SphereFocusExperiment.txt", false);
             writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
-            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
             
             for (int k = 0; k <= 50; k++)
             {
@@ -202,7 +202,7 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 400, strangeVec * 100, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+                    BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k+" ");
                     writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
@@ -226,7 +226,7 @@ namespace AnalysisEngine
 
             StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\HemisphereFocusExperiment.txt", false);
             writer.WriteLine("% focus of rays, (unspecialized cost, specialized cost)x"+strangeVecs.Length);
-            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildHemisphere(new CVector3(0, 0, 0), new CVector3(-100, 0, 0), new CVector3(0, 100, 0), 17).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullBVH(Shapes.BuildHemisphere(new CVector3(0, 0, 0), new CVector3(-100, 0, 0), new CVector3(0, 100, 0), 17).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
 
             for (int k = 0; k <= 50; k++)
             {
@@ -236,7 +236,7 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(new CVector3(300, 0, 0), strangeVec * 100, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+                    BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k + " ");
                     writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
@@ -256,7 +256,7 @@ namespace AnalysisEngine
 
             StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\PlaneFocusExperiment.txt", false);
             writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
-            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildParallelogram(new CVector3(0, -200, -200), new CVector3(0, 400, 0), new CVector3(0, 0, 400), 29, 29).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullBVH(Shapes.BuildParallelogram(new CVector3(0, -200, -200), new CVector3(0, 400, 0), new CVector3(0, 0, 400), 29, 29).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
 
             for (int k = 0; k <= 50; k++)
             {
@@ -266,7 +266,7 @@ namespace AnalysisEngine
                 {
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 120 + new CVector3(300, 0, 0), strangeVec * 120, 80, 80 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+                    BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k + " ");
                     writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
@@ -293,10 +293,10 @@ namespace AnalysisEngine
                 writer.Write("{0}", focus);
                 foreach (CVector3 strangeVec in strangeVecs)
                 {
-                    BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildTube(strangeVec * (-200), strangeVec * 400, 100, new CVector3(1.3f, 23.4f, 12.2f), 23, 37).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildFullBVH(Shapes.BuildTube(strangeVec * (-200), strangeVec * 400, 100, new CVector3(1.3f, 23.4f, 12.2f), 23, 37).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
                     Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * (-250), strangeVec * 250, 100 * focus, 100 * focus, 3000);
                     FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-                    BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+                    BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
 
                     Console.Write(k + " ");
                     writer.Write(" {0} {1}", initialBuild.BranchTraversalCost(res), rebuild.BranchTraversalCost(res));
@@ -316,7 +316,7 @@ namespace AnalysisEngine
 
             StreamWriter writer = new StreamWriter(tracesPath + "generated\\results\\SphereFocusAndWeightExperiment.txt", false);
             writer.WriteLine("% focus of rays, unspecialized cost, specialized cost");
-            BVH2 initialBuild = BVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullBVH(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea);
 
             for (int k = 0; k <= 50; k++)
             {
@@ -332,7 +332,7 @@ namespace AnalysisEngine
                     {
                         float weight = j / 5f;
 
-                        BVH2 rebuild = BVH2Builder.BuildFullBVH(BVH2Builder.GetTriangleList(initialBuild), new BlendedSplitEvaluator(res, 1, weight));
+                        BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new BlendedSplitEvaluator(res, 1, weight));
 
                         Console.Write("."+j);
                         writer.Write(" {0}", rebuild.BranchTraversalCost(res));

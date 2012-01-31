@@ -12,14 +12,14 @@ namespace RayVisualizer.Common
         {
             int branchCounter = 0, leafCounter = 0;
             BinaryReader reader = new BinaryReader(stream);
-            BVH2Node root = ParseNode(reader, 0, ref branchCounter, ref leafCounter);
+            TreeNode<BVH2Branch, BVH2Leaf> root = ParseNode(reader, 0, ref branchCounter, ref leafCounter);
             int endSentinel = reader.ReadInt32();
             if (endSentinel != 9215) throw new IOException("Sentinel not found!");
             if (branchCounter != leafCounter - 1) throw new IOException("Branch/leaf mismatch, somehow.");
             return new BVH2(root, branchCounter);
         }
 
-        private static BVH2Node ParseNode(BinaryReader reader, int depth, ref int branchCounter, ref int leafCounter)
+        private static TreeNode<BVH2Branch, BVH2Leaf> ParseNode(BinaryReader reader, int depth, ref int branchCounter, ref int leafCounter)
         {
             int type = reader.ReadInt32();
             if (type == 0 || type == 2) //branch type
@@ -28,11 +28,11 @@ namespace RayVisualizer.Common
                 Box3? bbox = null;
                 if (type == 0) // explicit branch
                     bbox = ReadBoundingBox(reader);
-                BVH2Node left = ParseNode(reader, depth + 1, ref branchCounter, ref leafCounter);
-                BVH2Node right = ParseNode(reader, depth + 1, ref branchCounter, ref leafCounter);
+                TreeNode<BVH2Branch, BVH2Leaf> left = ParseNode(reader, depth + 1, ref branchCounter, ref leafCounter);
+                TreeNode<BVH2Branch, BVH2Leaf> right = ParseNode(reader, depth + 1, ref branchCounter, ref leafCounter);
                 if (!bbox.HasValue) // implicit branch
-                    bbox = left.BBox | right.BBox;
-                return new BVH2Branch() { BBox = bbox.Value, Left = left, Right = right, ID = id, Depth = depth };
+                    bbox = left.BBox() | right.BBox();
+                return new Branch<BVH2Branch,BVH2Leaf>(left, right, new BVH2Branch() { BBox = bbox.Value, ID = id, Depth = depth });
             }
             else if (type == 1 || type == 3) // leaf type
             {
@@ -56,7 +56,7 @@ namespace RayVisualizer.Common
                     foreach (Triangle tri in tris) builder.AddTriangle(tri);
                     bbox = builder.GetBox();
                 }
-                return new BVH2Leaf() { BBox = bbox.Value, Primitives = tris, ID = leafCounter++, Depth = depth };
+                return new Leaf<BVH2Branch, BVH2Leaf>(new BVH2Leaf() { BBox = bbox.Value, Primitives = tris, ID = leafCounter++, Depth = depth });
             }
             else
             {

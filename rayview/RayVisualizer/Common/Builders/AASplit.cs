@@ -5,29 +5,25 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class AASplit
+    public class AASplitSeries
     {
-        public SplitDimension Dim;
-        public float Less;
-        public float Times;
-        public int Threshold;
+        private SplitDimension Dim;
+        private float Less;
+        private float Times;
 
-        public AASplit(SplitDimension dim, float less, float times)
+        public AASplitSeries(SplitDimension dim, float less, float times)
         {
             Dim = dim;
             Less = less;
             Times = times;
         }
 
-        public AASplit(SplitDimension dim, float less, float times, int threshold)
+        public int GetPartition(float val)
         {
-            Dim = dim;
-            Less = less;
-            Times = times;
-            Threshold = threshold;
+            return (int)((val - Less) * Times);
         }
 
-        public int PerformPartition(BuildTriangle[] tri, int start, int end)
+        public int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold)
         {
             int partLoc = start; // the first larger-than-partVal element
 
@@ -35,7 +31,7 @@ namespace RayVisualizer.Common
             {
                 for (int k = start; k < end; k++)
                 {
-                    if ((tri[k].center.x - Less) * Times < Threshold)
+                    if ((tri[k].center.x - Less) * Times < threshold)
                     {
                         Swap(tri,k,partLoc);
                         partLoc++;
@@ -46,7 +42,7 @@ namespace RayVisualizer.Common
             {
                 for (int k = start; k < end; k++)
                 {
-                    if ((tri[k].center.y - Less) * Times < Threshold)
+                    if ((tri[k].center.y - Less) * Times < threshold)
                     {
                         Swap(tri, k, partLoc);
                         partLoc++;
@@ -57,12 +53,16 @@ namespace RayVisualizer.Common
             {
                 for (int k = start; k < end; k++)
                 {
-                    if ((tri[k].center.z - Less) * Times < Threshold)
+                    if ((tri[k].center.z - Less) * Times < threshold)
                     {
                         Swap(tri, k, partLoc);
                         partLoc++;
                     }
                 }
+            }
+            if (partLoc >= end || partLoc <= start)
+            {
+                throw new Exception("This shouldn't happen.");
             }
 
             return partLoc;
@@ -77,55 +77,57 @@ namespace RayVisualizer.Common
             tri[loc2].index = loc2;
         }
 
-        public InteractionCombination GetInteractionType(BuildTriangle[] points, int max)
+        public InteractionCombination GetInteractionType(BuildTriangle[] points, int max, int threshold)
         {
+            if (max == 0)
+                return InteractionCombination.HitNeither;
             if (Dim == SplitDimension.SplitX)
             {
-                if ((points[0].center.x - Less) * Times < Threshold)
+                if ((points[0].center.x - Less) * Times < threshold)
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.x - Less) * Times >= Threshold)
+                        if ((points[k].center.x - Less) * Times >= threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyLeft;
                 }
                 else
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.x - Less) * Times < Threshold)
+                        if ((points[k].center.x - Less) * Times < threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyRight;
                 }
             }
             else if (Dim == SplitDimension.SplitY)
             {
-                if ((points[0].center.y - Less) * Times < Threshold)
+                if ((points[0].center.y - Less) * Times < threshold)
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.y - Less) * Times >= Threshold)
+                        if ((points[k].center.y - Less) * Times >= threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyLeft;
                 }
                 else
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.y - Less) * Times < Threshold)
+                        if ((points[k].center.y - Less) * Times < threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyRight;
                 }
             }
             else
             {
-                if ((points[0].center.z - Less) * Times < Threshold)
+                if ((points[0].center.z - Less) * Times < threshold)
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.z - Less) * Times >= Threshold)
+                        if ((points[k].center.z - Less) * Times >= threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyLeft;
                 }
                 else
                 {
                     for (int k = 1; k < max; k++)
-                        if ((points[k].center.z - Less) * Times < Threshold)
+                        if ((points[k].center.z - Less) * Times < threshold)
                             return InteractionCombination.HitBoth;
                     return InteractionCombination.HitOnlyRight;
                 }
@@ -140,6 +142,6 @@ namespace RayVisualizer.Common
 
     public enum InteractionCombination
     {
-        HitOnlyLeft, HitOnlyRight, HitBoth
+        HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
     }
 }

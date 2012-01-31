@@ -54,7 +54,7 @@ namespace RayVisualizer{
                 _scene.RightVec = new Vector3(0, 0, 1);
             }
             _statesList = new List<ViewerState>();
-            _activeState = InitializeRoutines.Initialize(_scene, _statesList); // INITIALIZE!!!
+            _activeState = InitializeShadowRoutines.InitializeShadow(_scene, _statesList); // INITIALIZE!!!
 
             GL.ClearColor(Color.LightGray);
             //GL.Enable(EnableCap.DepthTest);

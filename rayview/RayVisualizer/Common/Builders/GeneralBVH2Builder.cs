@@ -19,50 +19,55 @@ namespace RayVisualizer.Common
             return BuildFullBVH(tri, new StatelessSplitEvaluator(est));
         }
 
-        public static BVH2 BuildFullBVH<StackState>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, Unit> se)
+        public static BVH2 BuildFullBVH<StackState, EntranceData, ExitData>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, Unit, EntranceData, ExitData> se)
         {
             return BuildStructure(tri, se, BVHNodeFactory.ONLY);
         }
 
-        public static Tree BuildStructure<Node, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<Node, Tree, Unit> builder)
+        public static RBVH2 BuildFullRBVH<StackState, EntranceData, ExitData>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, float, EntranceData, ExitData> se)
+        {
+            return BuildStructure(tri, se, RBVHNodeFactory.ONLY);
+        }
+
+        public static Tree BuildStructure<BranchT, LeafT, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<BranchT, LeafT, Tree, Unit> builder)
         {
             return BuildStructure(tri, new StatelessSplitEvaluator(est), builder);
         }
 
-        public static Tree BuildStructure<T, U, Node, Tree>(BuildTriangle[] tri, BVHSplitEvaluator<T, U> se, NodeFactory<Node, Tree, U> builder)
+        public static Tree BuildStructure<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Tree>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData> se, NodeFactory<BranchT, LeafT, Tree, BranchData> builder)
         {
             return BuildStructure(tri, se, builder, 1, true);
         }
 
-        public static Tree BuildStructure<Node, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<Node, Tree, Unit> builder, int mandatoryLeafSize, bool splitDegenerateNodes)
+        public static Tree BuildStructure<BranchT, LeafT, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<BranchT, LeafT, Tree, Unit> builder, int mandatoryLeafSize, bool splitDegenerateNodes)
         {
             return BuildStructure(tri, new StatelessSplitEvaluator(est), builder, mandatoryLeafSize, splitDegenerateNodes);
         }
 
-        public static Tree BuildStructure<T, U, Node, Tree>(BuildTriangle[] tri, BVHSplitEvaluator<T, U> se, NodeFactory<Node, Tree, U> builder, int mandatoryLeafSize, bool splitDegenerateNodes)
+        public static Tree BuildStructure<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Tree>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData> se, NodeFactory<BranchT, LeafT, Tree, BranchData> builder, int mandatoryLeafSize, bool splitDegenerateNodes)
         {
             if (tri.Length == 0)
                 throw new ArgumentException("BVH Cannot be empty");
             BoundBuilder b = new BoundBuilder(true);
             for (int k = 0; k < tri.Length; k++)
                 b.AddTriangle(tri[k].t);
-            BuildImmutables<T, U, Node, Tree> im = new BuildImmutables<T, U, Node, Tree>()
+            BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT> im = new BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT>()
             { 
-                costEstimator = se, 
+                eval = se, 
                 tris = tri,
                 branchCounter = 0,
                 leafCounter = 0,
                 mandatoryLeafSize = mandatoryLeafSize,
                 splitDegenerateNodes = splitDegenerateNodes,
-                builder = builder
+                fact = builder
             };
             int len = tri.Length-1;
             Box3 topBox = b.GetBox();
-            Node root = BuildNodeSegment(0, tri.Length, 0, topBox, im.costEstimator.GetDefaultState(topBox), im);
+            TreeNode<BranchT, LeafT> root = BuildNodeSegment(0, tri.Length, 0, topBox, se.GetDefault(), im).Item1;
             return builder.BuildTree(root, im.branchCounter);
         }
 
-        private static Node BuildNodeSegment<StackState, BranchData, Node, Tree>(int start, int end, int depth, Box3 objectBound, StackState evaluatorState, BuildImmutables<StackState, BranchData, Node, Tree> im)
+        private static Tuple<TreeNode<BranchT, LeafT>, ExitData> BuildNodeSegment<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT>(int start, int end, int depth, Box3 objectBound, EntranceData parentState, BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT> im)
         {
         //    if ((im.branchCounter & 1023) == 0)
         //        Console.WriteLine("I'm thiiiis far:" + im.branchCounter + " " + depth);
@@ -73,7 +78,7 @@ namespace RayVisualizer.Common
             // base cases
             if (numTris <= im.mandatoryLeafSize)
             {
-                return im.builder.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound);
+                return new Tuple<TreeNode<BranchT, LeafT>, ExitData>(new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound)), im.eval.GetLeafExit());
             }/*
             else if (numTris==2)
             {
@@ -89,29 +94,36 @@ namespace RayVisualizer.Common
                 return new RBVH2Branch() { Left = left, Right = right, BBox = objectBound, ID = id, Depth = depth, PLeft = 0.5f };
             }*/
 
+            StackState newState = im.eval.BeginEvaluations(start, end, objectBound, parentState);
+
             // recursive case
-            int numBins = Math.Min(32, (int)(numTris * .05f + 4f));
-            Box3 centroidBounds = BuildTools.FindCentroidBound(im.tris, start, end);
-            CVector3 scaleVec = new CVector3(numBins / centroidBounds.XRange.Size, numBins / centroidBounds.YRange.Size, numBins / centroidBounds.ZRange.Size)/2;
-            BestObjectPartition<BranchData> part = FindBestPartition(start, end, scaleVec, centroidBounds.TripleMin(), numBins, evaluatorState, im);
+            BestObjectPartition<BranchData> part = FindBestPartition(im.tris, start, end, newState, im.eval);
 
             if (part.isDegenerate && !im.splitDegenerateNodes)
             {
-                return im.builder.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound);
+                return new Tuple<TreeNode<BranchT, LeafT>, ExitData>( new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound)), im.eval.GetLeafExit());
             }
             else
             {
                 int id = im.branchCounter++;
-                Node left = BuildNodeSegment(start, part.objectPartition, depth + 1, part.leftObjectBounds, im.costEstimator.SetState(part.leftObjectBounds, evaluatorState), im);
-                Node right = BuildNodeSegment(part.objectPartition, end, depth + 1, part.rightObjectBounds, im.costEstimator.SetState(part.rightObjectBounds, evaluatorState), im);
-                return im.builder.BuildBranch(left, right, part.branchBuildData, id, depth, objectBound);
+                EntranceData firstTransition = im.eval.PrepareFirstChild(part.branchBuildData, newState);
+                Tuple<TreeNode<BranchT, LeafT>, ExitData> left = BuildNodeSegment(start, part.objectPartition, depth + 1, part.leftObjectBounds, firstTransition, im);
+                EntranceData secondTransition = im.eval.PrepareSecondChild(left.Item2, part.branchBuildData, newState);
+                Tuple<TreeNode<BranchT, LeafT>, ExitData> right = BuildNodeSegment(part.objectPartition, end, depth + 1, part.rightObjectBounds, secondTransition, im);
+                ExitData exit = im.eval.EndBothChildren(left.Item2, right.Item2);
+                return new Tuple<TreeNode<BranchT, LeafT>, ExitData>(new Branch<BranchT, LeafT>(left.Item1, right.Item1, im.fact.BuildBranch(left.Item1, right.Item1, part.branchBuildData, id, depth, objectBound)), exit);
             }
         }
-        private static BestObjectPartition<BranchData> FindBestPartition<StackState, BranchData, Node, Tree>(int start, int end, CVector3 scale, CVector3 min, int numBlocks, StackState evaluatorState, BuildImmutables<StackState, BranchData, Node, Tree> im)
+        private static BestObjectPartition<BranchData> FindBestPartition<StackState, BranchData>(BuildTriangle[] tris, int start, int end, StackState evaluatorState, BVHSplitEvaluator<StackState, BranchData> eval)
         {
-            scale = scale * 2;
             int len = end - start;
-            BuildTriangle[] tris = im.tris;
+
+            // calculate splits
+            Box3 centroidBounds = BuildTools.FindCentroidBound(tris, start, end);
+            int numBlocks = Math.Min(32, (int)(len * .05f + 4f));
+            AASplitSeries seriesX = new AASplitSeries(SplitDimension.SplitX, centroidBounds.XRange.Min, numBlocks / centroidBounds.XRange.Size);
+            AASplitSeries seriesY = new AASplitSeries(SplitDimension.SplitY, centroidBounds.YRange.Min, numBlocks / centroidBounds.YRange.Size);
+            AASplitSeries seriesZ = new AASplitSeries(SplitDimension.SplitZ, centroidBounds.ZRange.Min, numBlocks / centroidBounds.ZRange.Size);
 
             // initialize counts and bounds
             int[] blockCountsX = new int[numBlocks];
@@ -131,9 +143,9 @@ namespace RayVisualizer.Common
             for (int k = start; k < end; k++)
             {
                 BuildTriangle t = tris[k];
-                int blockX = Math.Max(0, Math.Min(numBlocks - 1, (int)((t.center.x - min.x) * scale.x)));
-                int blockY = Math.Max(0, Math.Min(numBlocks - 1, (int)((t.center.y - min.y) * scale.y)));
-                int blockZ = Math.Max(0, Math.Min(numBlocks - 1, (int)((t.center.z - min.z) * scale.z)));
+                int blockX = Math.Max(0, Math.Min(numBlocks - 1, seriesX.GetPartition(t.center.x)));
+                int blockY = Math.Max(0, Math.Min(numBlocks - 1, seriesY.GetPartition(t.center.y)));
+                int blockZ = Math.Max(0, Math.Min(numBlocks - 1, seriesZ.GetPartition(t.center.z)));
                 blockCountsX[blockX]++;
                 blockCountsY[blockY]++;
                 blockCountsZ[blockZ]++;
@@ -148,48 +160,42 @@ namespace RayVisualizer.Common
             bool zDegen = blockCountsZ[0] == len;
 
             // conditionally score the partition groups
-            BestBinPartition<BranchData> resX = xDegen ? null : ScorePartitions(blockCountsX, blockBoundsX, im.costEstimator, evaluatorState, new AASplit(SplitDimension.SplitX, min.x, scale.x));
-            BestBinPartition<BranchData> resY = yDegen ? null : ScorePartitions(blockCountsY, blockBoundsY, im.costEstimator, evaluatorState, new AASplit(SplitDimension.SplitY, min.y, scale.y));
-            BestBinPartition<BranchData> resZ = zDegen ? null : ScorePartitions(blockCountsZ, blockBoundsZ, im.costEstimator, evaluatorState, new AASplit(SplitDimension.SplitZ, min.z, scale.z));
+            BestBinPartition<BranchData> resX = xDegen ? null : ScorePartitions(blockCountsX, blockBoundsX, eval, evaluatorState, seriesX);
+            BestBinPartition<BranchData> resY = yDegen ? null : ScorePartitions(blockCountsY, blockBoundsY, eval, evaluatorState, seriesY);
+            BestBinPartition<BranchData> resZ = zDegen ? null : ScorePartitions(blockCountsZ, blockBoundsZ, eval, evaluatorState, seriesZ);
 
-            AASplit split;
+            AASplitSeries split;
             BestBinPartition<BranchData> res;
             // the partition function has a funky signature because it needs to have the EXACT SAME numerical precision properties as the binning check above
             if (!xDegen && (yDegen || resX.heuristicValue <= resY.heuristicValue) && (zDegen || resX.heuristicValue <= resZ.heuristicValue))
             {
                 res = resX;
-                split = new AASplit(SplitDimension.SplitX, min.x, scale.x, resX.binPartition);
+                split = seriesX;
             }
             else if (!yDegen && (zDegen || resY.heuristicValue <= resZ.heuristicValue))
             {
                 res = resY;
-                split = new AASplit(SplitDimension.SplitY, min.y, scale.y, resY.binPartition);
+                split = seriesY;
             }
             else if(!zDegen)
             {
                 res = resZ;
-                split = new AASplit(SplitDimension.SplitZ, min.z, scale.z, resZ.binPartition);
+                split = seriesZ;
             }
             else
             {
                 // triple degenerate
-                if (!(xDegen && yDegen && zDegen))
-                    throw new Exception("Oh god, my logic is wrong");
+                if (!(xDegen && yDegen && zDegen)) throw new Exception("Oh god, my logic is wrong");
                 Box3 box = blockBoundsX[0].GetBox();
                 return new BestObjectPartition<BranchData>() { leftObjectBounds = box, rightObjectBounds = box, branchBuildData = default(BranchData), objectPartition = (start + end) / 2, isDegenerate = true };
             }
 
-            int index = split.PerformPartition(tris, start, end);
-
-            if (index >= end || index<=start)
-            {
-                throw new Exception("This shouldn't happen.");
-            }
+            int index = split.PerformPartition(tris, start, end, res.binPartition);
 
             return new BestObjectPartition<BranchData>() { leftObjectBounds = res.leftObjectBounds, rightObjectBounds = res.rightObjectBounds, branchBuildData = res.branchBuildData, objectPartition = index, isDegenerate = false };
         }
 
-        private static BestBinPartition<BranchData> ScorePartitions<StackState, BranchData>(int[] blockCounts, BoundBuilder[] blockOBounds, BVHSplitEvaluator<StackState, BranchData> se, StackState evaluatorState, AASplit split)
+        private static BestBinPartition<BranchData> ScorePartitions<StackState, BranchData>(int[] blockCounts, BoundBuilder[] blockOBounds, BVHSplitEvaluator<StackState, BranchData> se, StackState evaluatorState, AASplitSeries split)
         {
             int numBlocks = blockCounts.Length;
 
@@ -217,9 +223,7 @@ namespace RayVisualizer.Common
                 forwardPrevCount = forwardPrevCount + blockCounts[k];
                 builder.AddBox(blockOBounds[k]);
                 Box3 forwardBox = builder.GetBox();
-                // float cost = ((forwardPrevCount + 3) >> 2) * forwardBox.SurfaceArea + ((backwardCountAccumulator[k + 1] + 3) >> 2) * backwardBoxAccumulator[k + 1].SurfaceArea;
-                split.Threshold = k;
-                EvalResult<BranchData> cost = se.EvaluateSplit(forwardPrevCount, forwardBox, backwardCountAccumulator[k + 1], backwardBoxAccumulator[k + 1], evaluatorState, split);
+                EvalResult<BranchData> cost = se.EvaluateSplit(forwardPrevCount, forwardBox, backwardCountAccumulator[k + 1], backwardBoxAccumulator[k + 1], evaluatorState, split, k + 1);
                 if (cost.Cost < minCost)
                 {
                     bestPartition = k+1;
@@ -258,13 +262,13 @@ namespace RayVisualizer.Common
             public BranchData branchBuildData;
         }
 
-        private class BuildImmutables<StackState, BranchData, Node, Tree>
+        private class BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT>
         {
             public BuildTriangle[] tris;
             public int mandatoryLeafSize;
             public bool splitDegenerateNodes;
-            public BVHSplitEvaluator<StackState, BranchData> costEstimator;
-            public NodeFactory<Node, Tree, BranchData> builder;
+            public BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData> eval;
+            public NodeFactory<BranchT, LeafT, BranchData> fact;
             public int branchCounter;
             public int leafCounter;
         }

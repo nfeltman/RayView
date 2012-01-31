@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class BlendedSplitEvaluator : BVHSplitEvaluator<BlendedSplitEvaluator.RayShuffleState, Unit>
+    public class BlendedSplitEvaluator : TransitionlessEvaluator<BlendedSplitEvaluator.RayShuffleState, Unit>
     {
         private Segment3[] hits;
         private Ray3[] misses;
@@ -19,7 +19,7 @@ namespace RayVisualizer.Common
             misses = res.Misses;
             w = weightRays;
         }
-        public RayShuffleState SetState(Box3 toBeSplit, RayShuffleState parentState)
+        public override RayShuffleState BeginEvaluations(int startTri, int endTri, Box3 toBeSplit, RayShuffleState parentState)
         {
             int hitPart = 0;
             int missPart = 0;
@@ -53,7 +53,7 @@ namespace RayVisualizer.Common
             return new RayShuffleState() { missMax = missPart, hitMax = hitPart, topSA = toBeSplit.SurfaceArea};
         }
 
-        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplit split)
+        public override EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplitSeries split, int threshold)
         {
             int left_collisions = 0;
             int right_collisions = 0;
@@ -79,9 +79,9 @@ namespace RayVisualizer.Common
             return new EvalResult<Unit>(leftCombinedProp * Math.Pow(leftNu - 1, _expo) + rightCombinedProp * Math.Pow(rightNu - 1, _expo), Unit.ONLY);
         }
 
-        public BlendedSplitEvaluator.RayShuffleState GetDefaultState(Box3 toBeDivided)
+        public override BlendedSplitEvaluator.RayShuffleState GetDefault()
         {
-            return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length, topSA = toBeDivided.SurfaceArea };
+            return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length };
         }
 
         public struct RayShuffleState

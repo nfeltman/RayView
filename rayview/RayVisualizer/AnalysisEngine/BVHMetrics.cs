@@ -54,18 +54,18 @@ namespace AnalysisEngine
             return ConsistencyCheck(bvh1.Root, bvh2.Root, depth);
         }
 
-        private static bool ConsistencyCheck(BVH2Node bvh1, BVH2Node bvh2, int depth)
+        private static bool ConsistencyCheck(TreeNode<BVH2Branch, BVH2Leaf> bvh1, TreeNode<BVH2Branch, BVH2Leaf> bvh2, int depth)
         {
             if (depth < 0) return true;
             return bvh1.Accept(
                 b1 => bvh2.Accept(
-                    b2 => b1.BBox.Equals(b2.BBox) &&
+                    b2 => b1.Content.BBox.Equals(b2.Content.BBox) &&
                         ((ConsistencyCheck(b1.Left, b2.Left, depth - 1) && ConsistencyCheck(b1.Right, b2.Right, depth - 1)) ||
                         (ConsistencyCheck(b1.Left, b2.Right, depth - 1) && ConsistencyCheck(b1.Right, b2.Left, depth - 1))),
                     l2 => false),
                 l1 => bvh2.Accept(
                     b2 => false,
-                    l2 => l1.BBox.Equals(l2.BBox)));
+                    l2 => l1.Content.BBox.Equals(l2.Content.BBox)));
         }
     }
 }

@@ -20,27 +20,27 @@ namespace RayVisualizer.Common
             rayCasts++;
         }
 
-        public void BoundingBoxTest(BVH2Node node)
+        public void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node)
         {
             boundingBoxTests++;
         }
 
-        public void BoundingBoxHit(BVH2Node node)
+        public void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node)
         {
             boundingBoxHits++;
         }
 
-        public void PrimitiveNodeInspection(BVH2Leaf leaf)
+        public void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf)
         {
             primitiveNodeInspections++;
         }
 
-        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit)
+        public void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit)
         {
             primitiveNodePrimitiveHits++;
         }
 
-        public void BranchNodeInspection(BVH2Branch branch)
+        public void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch)
         {
             branchNodeInspections++;
         }

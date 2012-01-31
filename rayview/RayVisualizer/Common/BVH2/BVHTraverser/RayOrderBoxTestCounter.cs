@@ -23,24 +23,24 @@ namespace RayVisualizer.Common
         {
         }
 
-        public void BoundingBoxTest(BVH2Node node)
+        public void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node)
         {
-            node.Accept(b => ++_branchInspections[b.ID], l=> ++_leafInspections[l.ID]);
+            node.Accept(b => ++_branchInspections[b.Content.ID], l=> ++_leafInspections[l.Content.ID]);
         }
 
-        public void BoundingBoxHit(BVH2Node node)
-        {
-        }
-
-        public void PrimitiveNodeInspection(BVH2Leaf leaf)
+        public void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node)
         {
         }
 
-        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit)
+        public void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf)
         {
         }
 
-        public void BranchNodeInspection(BVH2Branch branch)
+        public void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit)
+        {
+        }
+
+        public void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch)
         {
         }
 

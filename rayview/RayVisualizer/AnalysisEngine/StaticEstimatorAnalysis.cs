@@ -33,15 +33,15 @@ namespace AnalysisEngine
         public static void Full_TU_vs_PU(BVH2 bvh, StreamWriter writer)
         {
             // rolls over the tuple (surface area subsum, leaf count)
-            bvh.RollUp(
+            bvh.RollUpNodes(
                 (b, leftSum, rightSum) =>
                 {
-                    float subSAsum = leftSum.Item1 + rightSum.Item1 + b.BBox.SurfaceArea;
+                    float subSAsum = leftSum.Item1 + rightSum.Item1 + b.Content.BBox.SurfaceArea;
                     int subLeafSum = leftSum.Item2 + rightSum.Item2;
-                    writer.WriteLine("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}", b.Depth,
-                        subSAsum, subLeafSum, b.BBox.SurfaceArea,
-                        leftSum.Item1, leftSum.Item2, b.Left.BBox.SurfaceArea,
-                        rightSum.Item1, rightSum.Item2, b.Right.BBox.SurfaceArea);
+                    writer.WriteLine("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}", b.Content.Depth,
+                        subSAsum, subLeafSum, b.BBox().SurfaceArea,
+                        leftSum.Item1, leftSum.Item2, b.Left.BBox().SurfaceArea,
+                        rightSum.Item1, rightSum.Item2, b.Right.BBox().SurfaceArea);
                     return new Tuple<float, int>(subSAsum, subLeafSum);
                 },
                 l => new Tuple<float, int>(0, 1));
@@ -53,17 +53,17 @@ namespace AnalysisEngine
             RayOrderTraverser.RunTooledTraverser(bvh, rays, ops);
             NodeMap<int> p_r = ops.Inspections;
             // rolls over the tuple (nu, T_U, T_R)
-            bvh.RollUp(
+            bvh.RollUpNodes(
                 (b, leftSum, rightSum) =>
                 {
-                    float t_u = leftSum.Item2 + rightSum.Item2 + b.BBox.SurfaceArea;
-                    int t_r = leftSum.Item3 + rightSum.Item3 + ops.BranchInspections[b.ID];
+                    float t_u = leftSum.Item2 + rightSum.Item2 + b.Content.BBox.SurfaceArea;
+                    int t_r = leftSum.Item3 + rightSum.Item3 + ops.BranchInspections[b.Content.ID];
                     int nu = leftSum.Item1 + rightSum.Item1;
                     writer.WriteLine("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12}",
-                        b.Depth,
-                        b.BBox.SurfaceArea, ops.BranchInspections[b.ID], // P_U(b), P_R(b)
-                        leftSum.Item1, b.Left.BBox.SurfaceArea, leftSum.Item2, p_r[b.Left], leftSum.Item3, // nu(left(b)), P_U(left(b)), T_U(left(b)), P_R(left(b)), T_R(left(b))
-                        rightSum.Item1, b.Right.BBox.SurfaceArea, rightSum.Item2, p_r[b.Right], rightSum.Item3); // nu(left(b)), P_U(right(b)), T_U(right(b)), P_R(right(b)), T_R(right(b))
+                        b.Content.Depth,
+                        b.Content.BBox.SurfaceArea, ops.BranchInspections[b.Content.ID], // P_U(b), P_R(b)
+                        leftSum.Item1, b.Left.BBox().SurfaceArea, leftSum.Item2, p_r[b.Left], leftSum.Item3, // nu(left(b)), P_U(left(b)), T_U(left(b)), P_R(left(b)), T_R(left(b))
+                        rightSum.Item1, b.Right.BBox().SurfaceArea, rightSum.Item2, p_r[b.Right], rightSum.Item3); // nu(left(b)), P_U(right(b)), T_U(right(b)), P_R(right(b)), T_R(right(b))
                     return new Tuple<int, float, int>(nu, t_u, t_r);
                 },
                 l => new Tuple<int, float, int>(1, 0, 0));

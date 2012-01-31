@@ -24,10 +24,10 @@ namespace RayVisualizer.Common
         public T[] Branches { get { return _branches; } }
         public T[] Leaves { get { return _leaves; } }
 
-        public T this[BVH2Node index]
+        public T this[TreeNode<BVH2Branch, BVH2Leaf> index]
         {
-            get { return index.Accept(b => _branches[b.ID], l => _leaves[l.ID]);}
-            set { index.Accept(b => _branches[b.ID] = value, l => _leaves[l.ID] = value); }
+            get { return index.Accept(b => _branches[b.Content.ID], l => _leaves[l.Content.ID]); }
+            set { index.Accept(b => _branches[b.Content.ID] = value, l => _leaves[l.Content.ID] = value); }
         }
     }
 }

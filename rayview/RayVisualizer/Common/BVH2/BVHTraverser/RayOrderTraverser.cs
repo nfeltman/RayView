@@ -7,7 +7,7 @@ using Common;
 namespace RayVisualizer.Common
 {
     // alias, because Union<...,...> is too long
-    using QueueItem = Union<BVH2Node, HitRecord>;
+    using QueueItem = Union<TreeNode<BVH2Branch,BVH2Leaf>, HitRecord>;
     
     public class RayOrderTraverser 
     {
@@ -29,7 +29,7 @@ namespace RayVisualizer.Common
             ops.RayCast(origin,direction);
             ops.BoundingBoxTest(bvh.Root);
 
-            ClosedInterval rootInterval = bvh.Root.BBox.IntersectRay(origin, direction);
+            ClosedInterval rootInterval = bvh.Root.BBox().IntersectRay(origin, direction);
             if (!rootInterval.IsEmpty)
             {
                 ops.BoundingBoxHit(bvh.Root);
@@ -43,12 +43,12 @@ namespace RayVisualizer.Common
                 //if (pair.Key > t_found) throw new Exception("Somehow we skipped past the found intersection.");
                 HitRecord intersection = pair.Value.Run(n => /*pair.Key == t_found ? null :*/ n.Accept(
                     // pattern match based on the type of queue item
-                    (BVH2Branch branch) =>
+                    (Branch<BVH2Branch,BVH2Leaf> branch) =>
                     {
                         ops.BranchNodeInspection(branch);
 
-                        ClosedInterval leftIntersection = branch.Left.BBox.IntersectRay(origin, direction);
-                        ClosedInterval rightIntersection = branch.Right.BBox.IntersectRay(origin, direction);
+                        ClosedInterval leftIntersection = branch.Left.BBox().IntersectRay(origin, direction);
+                        ClosedInterval rightIntersection = branch.Right.BBox().IntersectRay(origin, direction);
                         ops.BoundingBoxTest(branch.Left);
                         ops.BoundingBoxTest(branch.Right);
 
@@ -64,10 +64,10 @@ namespace RayVisualizer.Common
                         }
                         return (HitRecord)null; //do not stop queue processing
                     },
-                    (BVH2Leaf leaf) =>
+                    (Leaf<BVH2Branch, BVH2Leaf> leaf) =>
                     {
                         ops.PrimitiveNodeInspection(leaf);
-                        HitRecord closestIntersection = leaf.FindClosestPositiveIntersection(origin, direction, ClosedInterval.POSITIVES);
+                        HitRecord closestIntersection = leaf.Content.FindClosestPositiveIntersection(origin, direction, ClosedInterval.POSITIVES);
                         if (closestIntersection != null)
                         {
                             ops.PrimitiveNodePrimitiveHit(leaf, closestIntersection);
@@ -100,22 +100,22 @@ namespace RayVisualizer.Common
     public interface RayOrderOperations
     {
         void RayCast(CVector3 origin, CVector3 direction);
-        void BoundingBoxTest(BVH2Node node);
-        void BoundingBoxHit(BVH2Node node);
-        void PrimitiveNodeInspection(BVH2Leaf leaf);
-        void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit);
-        void BranchNodeInspection(BVH2Branch branch);
+        void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node);
+        void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node);
+        void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf);
+        void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit);
+        void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch);
         void RayHitFound(HitRecord hit);
     }
 
     public class NullRayOrderOperations : RayOrderOperations
     {
         public void RayCast(CVector3 origin, CVector3 direction) { }
-        public void BoundingBoxTest(BVH2Node node) { }
-        public void BoundingBoxHit(BVH2Node node) { }
-        public void PrimitiveNodeInspection(BVH2Leaf leaf) { }
-        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit) { }
-        public void BranchNodeInspection(BVH2Branch branch) { }
+        public void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node) { }
+        public void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node) { }
+        public void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf) { }
+        public void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit) { }
+        public void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch) { }
         public void RayHitFound(HitRecord hit) { }
     }
 }

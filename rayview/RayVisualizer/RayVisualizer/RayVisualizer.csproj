@@ -89,6 +89,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InitializeShadowRoutines.cs" />
     <Compile Include="Crossplane\CrossplaneBehavior.cs" />
     <Compile Include="InitializeRoutines.cs" />
     <Compile Include="MyKeyboard.cs" />

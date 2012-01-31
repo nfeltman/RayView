@@ -6,30 +6,30 @@ using RayVisualizer.Common;
 
 namespace RayVisualizer
 {
-    public class InitializeRoutines
+    public class InitializeShadowRoutines
     {
-        public static ViewerState InitializeRadiance(SceneData scene, List<ViewerState> statesList)
+        public static ViewerState InitializeShadow(SceneData scene, List<ViewerState> statesList)
         {
-            return FocusThroughPipe(scene, statesList);
+            return FocusOnSpehere(scene, statesList);
         }
 
         private static ViewerState FocusOnSpehere(SceneData scene, List<ViewerState> statesList)
         {
             CVector3 strangeVec = new CVector3(1, 0, 0).Normalized();
             BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BVHNodeFactory.ONLY);
-            float prop = .4f;
-            Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*400, strangeVec*100, 80, 80 * prop, 3000);
-            FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
-            BVH2 rebuild = GeneralBVH2Builder.BuildFullBVH(BuildTools.GetTriangleList(initialBuild), new RayCostEvaluator(res, 1));
+            float prop = .1f;
+            Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*400, strangeVec*-120, 80, 80 * prop, 3000);
+            ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays.AsSegements(1f), initialBuild);
+            RBVH2 rebuild = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
 
-            BVHTriangleViewer bvhViewer = new BVHTriangleViewer(rebuild);
+            RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(rebuild);
             scene.Viewables.Add(bvhViewer);
-            scene.Viewables.Add(new RaysViewer(res.Hits));
-            scene.Viewables.Add(new RaysViewer(res.Misses, 100));
+            scene.Viewables.Add(new RaysViewer(res.Broken.Select(t=>t.Ray).ToArray()));
+            scene.Viewables.Add(new RaysViewer(res.Connected));
 
             // states
             statesList.Add(new ExploreState());
-            statesList.Add(new BVHExploreState(bvhViewer));
+            statesList.Add(new RBVHExploreState(bvhViewer));
             return statesList[0];
         }
 

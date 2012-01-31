@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RayDistributions
+    public static class RayDistributions
     {
         public static Ray3[] AlignedCircularFrustrum(CVector3 c1, CVector3 c2, float r1, float r2, int n)
         {
@@ -47,6 +47,14 @@ namespace RayVisualizer.Common
                 ans[k] = new Ray3(c1 + d1, l + d2);
             }
             return ans;
+        }
+
+        public static Segment3[] AsSegements(this Ray3[] rays, float factor)
+        {
+            Segment3[] segs = new Segment3[rays.Length];
+            for (int k = 0; k < segs.Length; k++)
+                segs[k] = new Segment3(rays[k].Origin, rays[k].Direction * factor);
+            return segs;
         }
     }
 }

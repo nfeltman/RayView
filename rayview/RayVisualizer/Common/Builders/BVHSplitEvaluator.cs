@@ -7,9 +7,46 @@ namespace RayVisualizer.Common
 {
     public interface BVHSplitEvaluator<StackState, BranchData>
     {
-        StackState GetDefaultState(Box3 toBeDivided);
-        StackState SetState(Box3 objectBounds, StackState parentState);
-        EvalResult<BranchData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, StackState state, AASplit split);
+        EvalResult<BranchData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
+    }
+
+    public interface BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData> : BVHSplitEvaluator<StackState, BranchData>
+    {
+        EntranceData GetDefault();
+        StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
+        EntranceData PrepareFirstChild(BranchData selected, StackState currentState);
+        EntranceData PrepareSecondChild(ExitData firstChildsExit, BranchData selected, StackState currentState);
+        ExitData EndBothChildren(ExitData firstChildsExit, ExitData secondChildsExit);
+        ExitData GetLeafExit();
+    }
+
+    public abstract class ExitlessEvaluator<StackState, BranchData, EntranceData> : BVHSplitEvaluator<StackState, BranchData, EntranceData, Unit>
+    {
+        public abstract EntranceData GetDefault();
+        public abstract StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
+        public abstract EvalResult<BranchData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
+        public abstract EntranceData PrepareFirstChild(BranchData selected, StackState currentState);
+        public abstract EntranceData PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState);
+        public Unit EndBothChildren(Unit firstChildsExit, Unit secondChildsExit)
+        {
+            return Unit.ONLY;
+        }
+        public Unit GetLeafExit()
+        {
+            return Unit.ONLY;
+        }
+    }
+
+    public abstract class TransitionlessEvaluator<StackState, BranchData> : ExitlessEvaluator<StackState, BranchData, StackState>
+    {
+        public override StackState PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState)
+        {
+            return currentState;
+        }
+        public override StackState PrepareFirstChild(BranchData selected, StackState currentState)
+        {
+            return currentState;
+        }
     }
 
     public class EvalResult<BuildData>
@@ -23,7 +60,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class StatelessSplitEvaluator : BVHSplitEvaluator<Unit, Unit>
+    public class StatelessSplitEvaluator : BVHSplitEvaluator<Unit, Unit, Unit, Unit>
     {
         private Func<int, Box3, int, Box3, float> _costEstimator;
 
@@ -32,12 +69,36 @@ namespace RayVisualizer.Common
             _costEstimator = costEstimator;
         }
 
-        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, Unit state, AASplit split)
+        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, Unit state, AASplitSeries split, int threshold)
         {
             return new EvalResult<Unit>(_costEstimator(leftNu, leftBox, rightNu, rightBox), Unit.ONLY);
         }
 
-        public Unit SetState(Box3 splitCandidate, Unit parentState) { return Unit.ONLY; }
-        public Unit GetDefaultState(Box3 toBeDivided) { return Unit.ONLY; }
+        public Unit BeginEvaluations(int startTri, int endTri, Box3 splitCandidate, Unit parentState) { return Unit.ONLY; }
+        
+        public Unit GetDefault()
+        {
+            return Unit.ONLY;
+        }
+        
+        public Unit PrepareFirstChild(Unit selected, Unit currentState)
+        {
+            return Unit.ONLY;
+        }
+
+        public Unit PrepareSecondChild(Unit firstChildsExit, Unit selected, Unit currentState)
+        {
+            return Unit.ONLY;
+        }
+
+        public Unit EndBothChildren(Unit firstChildsExit, Unit secondChildsExit)
+        {
+            return Unit.ONLY;
+        }
+
+        public Unit GetLeafExit()
+        {
+            return Unit.ONLY;
+        }
     }
 }

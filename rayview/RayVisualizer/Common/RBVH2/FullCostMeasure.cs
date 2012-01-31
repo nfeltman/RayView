@@ -6,31 +6,45 @@ using System.Text;
 namespace RayVisualizer.Common
 {
     // does not assume this box has already been hit
-    public class FullCostMeasure : RBVH2Visitor<ShadowCost>
+    public class FullCostMeasure : NodeVisitor<ShadowCost, RBVH2Branch, BVH2Leaf>
     {
         public Segment3 ShadowRay { get; set; }
 
-        public ShadowCost ForBranch(RBVH2Branch branch)
+        public ShadowCost ForBranch(Branch<RBVH2Branch, BVH2Leaf> branch)
         {
-            if (!branch.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
+            if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 return new ShadowCost(false, new RandomVariable(1, 0), new RandomVariable(0, 0));
 
-            ShadowCost left = branch.Left.Accept(this);
-            ShadowCost right = branch.Right.Accept(this);
+            ShadowCost left = null;
+            ShadowCost right = null;
+
+            if (branch.Content.PLeft == 1)
+            {
+                left = branch.Left.Accept(this);
+                if(left.Hits) return left;
+            }
+            if (branch.Content.PLeft == 0)
+            {
+                right = branch.Right.Accept(this);
+                if(right.Hits) return right;
+            }
+
+            if (left == null) left = branch.Left.Accept(this);
+            if (right == null) right = branch.Right.Accept(this);
             ShadowCost both = new ShadowCost(false, left.BBoxTests + right.BBoxTests, left.PrimitiveTests + right.PrimitiveTests);
 
             ShadowCost res;
             if (left.Hits && right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.PLeft, left, right);
+                res = ShadowCost.RandomSelect(branch.Content.PLeft, left, right);
             }
             else if (!left.Hits && right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.PLeft, both, right);
+                res = ShadowCost.RandomSelect(branch.Content.PLeft, both, right);
             }
             else if (left.Hits && !right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.PLeft, left, both);
+                res = ShadowCost.RandomSelect(branch.Content.PLeft, left, both);
             }
             else
             {
@@ -40,13 +54,13 @@ namespace RayVisualizer.Common
             return res;
         }
 
-        public ShadowCost ForLeaf(RBVH2Leaf leaf)
+        public ShadowCost ForLeaf(Leaf<RBVH2Branch, BVH2Leaf> leaf)
         {
-            if (!leaf.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
+            if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 return new ShadowCost(false, new RandomVariable(1, 0), new RandomVariable(0, 0));
-            Triangle[] prims = leaf.Primitives;
-            int k=0;
-            while(k < prims.Length)
+            Triangle[] prims = leaf.Content.Primitives;
+            int k = 0;
+            while (k < prims.Length)
             {
                 if (prims[k++].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1) break;
             }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RayCostEvaluator : BVHSplitEvaluator<RayCostEvaluator.RayShuffleState, Unit>
+    public class RayCostEvaluator : TransitionlessEvaluator<RayCostEvaluator.RayShuffleState, Unit>
     {
         private Segment3[] hits;
         private Ray3[] misses;
@@ -18,13 +18,13 @@ namespace RayVisualizer.Common
             misses = res.Misses;
         }
         
-        public RayShuffleState SetState(Box3 toBeSplit, RayShuffleState parentState)
+        public override RayCostEvaluator.RayShuffleState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, RayCostEvaluator.RayShuffleState parentState)
         {
             int hitPart = 0;
             int missPart = 0;
             for (int k = 0; k < parentState.hitMax; k++)
             {
-                if (toBeSplit.DoesIntersectSegment(hits[k].Origin, hits[k].Difference))
+                if (objectBounds.DoesIntersectSegment(hits[k].Origin, hits[k].Difference))
                 {
                     if (hitPart != k)
                     {
@@ -37,7 +37,7 @@ namespace RayVisualizer.Common
             } 
             for (int k = 0; k < parentState.missMax; k++)
             {
-                if (toBeSplit.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
+                if (objectBounds.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
                 {
                     if (hitPart != k)
                     {
@@ -59,7 +59,7 @@ namespace RayVisualizer.Common
             return new RayShuffleState() { missMax = missPart, hitMax = hitPart };
         }
 
-        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplit split)
+        public override EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplitSeries split, int threshold)
         {
             int left_collisions = 0;
             int right_collisions = 0;
@@ -80,11 +80,11 @@ namespace RayVisualizer.Common
             for (int k = state.missMax; k < misses.Length; k++)
                 if (!leftBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty || !rightBox.IntersectRay(misses[k].Origin, misses[k].Direction).IsEmpty)
                     throw new Exception("BAD STATE MISS");
-             * */
+             */
             return new EvalResult<Unit>(left_collisions * Math.Pow(leftNu - 1, _expo) + right_collisions * Math.Pow(rightNu - 1, _expo), Unit.ONLY);
         }
-
-        public RayCostEvaluator.RayShuffleState GetDefaultState(Box3 toBeDivided)
+        
+        public override RayCostEvaluator.RayShuffleState GetDefault()
         {
             return new RayShuffleState() { missMax = misses.Length, hitMax = hits.Length };
         }

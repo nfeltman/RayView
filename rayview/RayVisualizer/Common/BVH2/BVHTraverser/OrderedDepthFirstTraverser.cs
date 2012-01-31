@@ -8,7 +8,7 @@ namespace RayVisualizer.Common
     // if we've made it into the visitor, the ray intersects with the bounding box
     public class OrderedDepthFirstTraverser
     {
-        private class ODFVisitor : BVH2Visitor<HitRecord>
+        private class ODFVisitor : NodeVisitor<HitRecord,BVH2Branch,BVH2Leaf>
         {
             private OrderedDepthFirstOperations _ops;
             private CVector3 origin;
@@ -23,14 +23,14 @@ namespace RayVisualizer.Common
                 _c = ClosedInterval.POSITIVES;
             }
 
-            public HitRecord ForBranch(BVH2Branch branch)
+            public HitRecord ForBranch(Branch<BVH2Branch,BVH2Leaf> branch)
             {
                 _ops.BranchNodeInspection(branch);
                 _ops.BoundingBoxTest(branch.Left);
                 _ops.BoundingBoxTest(branch.Right);
 
-                ClosedInterval leftInterval = branch.Left.BBox.IntersectInterval(origin, direction, _c);
-                ClosedInterval rightInterval = branch.Right.BBox.IntersectInterval(origin, direction, _c);
+                ClosedInterval leftInterval = branch.Left.BBox().IntersectInterval(origin, direction, _c);
+                ClosedInterval rightInterval = branch.Right.BBox().IntersectInterval(origin, direction, _c);
 
                 if (leftInterval.IsEmpty && rightInterval.IsEmpty)
                 {
@@ -81,10 +81,10 @@ namespace RayVisualizer.Common
                 }
             }
 
-            public HitRecord ForLeaf(BVH2Leaf leaf)
+            public HitRecord ForLeaf(Leaf<BVH2Branch, BVH2Leaf> leaf)
             {
                 _ops.PrimitiveNodeInspection(leaf);
-                HitRecord res = leaf.FindClosestPositiveIntersection(origin, direction, _c);
+                HitRecord res = leaf.Content.FindClosestPositiveIntersection(origin, direction, _c);
                 if (res != null)
                 {
                     _ops.PrimitiveNodePrimitiveHit(leaf, res);
@@ -101,7 +101,7 @@ namespace RayVisualizer.Common
 
             //root bbox test
             ops.BoundingBoxTest(bvh.Root);
-            ClosedInterval interval = bvh.Root.BBox.IntersectRay(origin, direction);
+            ClosedInterval interval = bvh.Root.BBox().IntersectRay(origin, direction);
             if (interval.IsEmpty) return null;
             ops.BoundingBoxHit(bvh.Root);
             
@@ -115,21 +115,21 @@ namespace RayVisualizer.Common
     public interface OrderedDepthFirstOperations
     {
         void RayCast(CVector3 origin, CVector3 direction);
-        void BoundingBoxTest(BVH2Node node);
-        void BoundingBoxHit(BVH2Node node);
-        void PrimitiveNodeInspection(BVH2Leaf leaf);
-        void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit);
-        void BranchNodeInspection(BVH2Branch branch);
+        void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node);
+        void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node);
+        void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf);
+        void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit);
+        void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch);
         void RayHitFound(HitRecord hit);
     }
     public class NullOrderedDepthFirstOperations : OrderedDepthFirstOperations
     {
         public void RayCast(CVector3 origin, CVector3 direction) { }
-        public void BoundingBoxTest(BVH2Node node) { }
-        public void BoundingBoxHit(BVH2Node node) { }
-        public void PrimitiveNodeInspection(BVH2Leaf leaf) { }
-        public void PrimitiveNodePrimitiveHit(BVH2Leaf leaf, HitRecord hit) { }
-        public void BranchNodeInspection(BVH2Branch branch) { }
+        public void BoundingBoxTest(TreeNode<BVH2Branch, BVH2Leaf> node) { }
+        public void BoundingBoxHit(TreeNode<BVH2Branch, BVH2Leaf> node) { }
+        public void PrimitiveNodeInspection(Leaf<BVH2Branch, BVH2Leaf> leaf) { }
+        public void PrimitiveNodePrimitiveHit(Leaf<BVH2Branch, BVH2Leaf> leaf, HitRecord hit) { }
+        public void BranchNodeInspection(Branch<BVH2Branch, BVH2Leaf> branch) { }
         public void RayHitFound(HitRecord hit) { }
     }
 }

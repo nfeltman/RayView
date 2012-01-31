@@ -60,5 +60,37 @@ namespace RayVisualizer.Common
             }
             return res;
         }
+
+        public static void Swap<T>(T[] arr, int loc1, int loc2)
+        {
+            T temp = arr[loc1];
+            arr[loc1] = arr[loc2];
+            arr[loc2] = temp;
+        }
+
+        public static int SweepPartition<T>(T[] arr, int start, int end, Func<T,bool> goesLeft)
+        {
+            int part = start;
+            // filter "connected" buffer
+            for (int k = start; k < end; k++)
+            {
+                if (goesLeft(arr[k]))
+                {
+                    if (part != k)
+                    {
+                        Swap(arr, part, k);
+                    }
+                    part++;
+                }
+            }
+            return part;
+        }
+
+        /*
+        public static int MinSwapsPartition<T>(T[] arr, int start, int end, Func<T, bool> goesLeft)
+        {
+
+        }
+         */
     }
 }

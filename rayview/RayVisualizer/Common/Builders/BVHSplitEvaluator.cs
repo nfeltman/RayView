@@ -5,12 +5,12 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public interface BVHSplitEvaluator<StackState, BranchData>
+    public interface BVHSplitEvaluator<StackState, BranchData, Aggregate>
     {
-        EvalResult<BranchData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
+        EvalResult<BranchData> EvaluateSplit(Aggregate leftAgg, Box3 leftBox, Aggregate rightAgg, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
     }
 
-    public interface BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData> : BVHSplitEvaluator<StackState, BranchData>
+    public interface BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData, Aggregate> : BVHSplitEvaluator<StackState, BranchData, Aggregate>
     {
         EntranceData GetDefault();
         StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
@@ -20,11 +20,11 @@ namespace RayVisualizer.Common
         ExitData GetLeafExit();
     }
 
-    public abstract class ExitlessEvaluator<StackState, BranchData, EntranceData> : BVHSplitEvaluator<StackState, BranchData, EntranceData, Unit>
+    public abstract class ExitlessEvaluator<StackState, BranchData, EntranceData, Aggregate> : BVHSplitEvaluator<StackState, BranchData, EntranceData, Unit, Aggregate>
     {
         public abstract EntranceData GetDefault();
         public abstract StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
-        public abstract EvalResult<BranchData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
+        public abstract EvalResult<BranchData> EvaluateSplit(Aggregate leftNu, Box3 leftBox, Aggregate rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
         public abstract EntranceData PrepareFirstChild(BranchData selected, StackState currentState);
         public abstract EntranceData PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState);
         public Unit EndBothChildren(Unit firstChildsExit, Unit secondChildsExit)
@@ -37,7 +37,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public abstract class TransitionlessEvaluator<StackState, BranchData> : ExitlessEvaluator<StackState, BranchData, StackState>
+    public abstract class TransitionlessEvaluator<StackState, BranchData, Aggregate> : ExitlessEvaluator<StackState, BranchData, StackState, Aggregate>
     {
         public override StackState PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState)
         {
@@ -60,7 +60,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class StatelessSplitEvaluator : BVHSplitEvaluator<Unit, Unit, Unit, Unit>
+    public class StatelessSplitEvaluator : BVHSplitEvaluator<Unit, Unit, Unit, Unit, int>
     {
         private Func<int, Box3, int, Box3, float> _costEstimator;
 

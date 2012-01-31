@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RayCostEvaluator : TransitionlessEvaluator<RayCostEvaluator.RayShuffleState, Unit>
+    public class RayCostEvaluator : TransitionlessEvaluator<RayCostEvaluator.RayShuffleState, Unit, int>
     {
         private Segment3[] hits;
         private Ray3[] misses;

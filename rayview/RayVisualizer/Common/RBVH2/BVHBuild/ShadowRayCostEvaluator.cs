@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator : TransitionlessEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, float>
+    public class ShadowRayCostEvaluator : TransitionlessEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, float, int>
     {
         private Segment3[] _connected;
         private CompiledShadowRay[] _broken;

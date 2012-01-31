@@ -85,6 +85,7 @@
     <Compile Include="Builders\BoundBuilder.cs" />
     <Compile Include="Builders\BuildTools.cs" />
     <Compile Include="Builders\NodeBuilder.cs" />
+    <Compile Include="Builders\TriangleAggregator.cs" />
     <Compile Include="BVH2\BVH2Visitors\RayCostVisitor.cs" />
     <Compile Include="BVH2\BVHBuild\BlendedSplitEvaluator.cs" />
     <Compile Include="BVH2\BVHBuild\BVH2Parser.cs" />

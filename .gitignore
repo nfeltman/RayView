@@ -24,6 +24,7 @@
 *.sdf
 *.opensdf
 *.unsuccessfulbuild
+*.vsp
 ipch/
 obj/
 [Bb]in
@@ -48,5 +49,20 @@ _ReSharper*/
 #NuGet
 packages/
 
+# Latex Junk
+*.bbl
+*.out
+*.aux
+*.blg
+*.synctex.gz
+
 # Traces
 *.bvh
+*.ray
+
+# Scene Files
+*.obj
+*.bin
+*.tga
+embree-1.0beta/models
+traces/

@@ -13,7 +13,7 @@ namespace AnalysisEngine
         public static void RunTraversalComparerSuite(string tracesPath)
         {
             BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "crown\\bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "crown\\casts.txt", FileMode.Open, FileAccess.Read));
             StreamWriter writer = new StreamWriter(tracesPath + "crown\\RayOrder_vs_ODF_per_node.txt");
             RayOrderAdvantageQuantifier(bvh, allrays.CastOnlyFilter((r,i) => r.Depth>=1), writer);
             writer.Close();

@@ -13,6 +13,15 @@ namespace RayVisualizer.Common
             xMin = yMin = zMin = float.PositiveInfinity;
             xMax = yMax = zMax = float.NegativeInfinity;
         }
+        public BoundBuilder(BoundBuilder b)
+        {
+            xMin = b.xMin;
+            xMax = b.xMax;
+            yMin = b.yMin;
+            yMax = b.yMax;
+            zMin = b.zMin;
+            zMax = b.zMax;
+        }
         public void Reset()
         {
             xMin = yMin = zMin = float.PositiveInfinity;

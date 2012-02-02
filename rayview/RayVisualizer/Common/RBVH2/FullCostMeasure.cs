@@ -6,109 +6,97 @@ using System.Text;
 namespace RayVisualizer.Common
 {
     // does not assume this box has already been hit
-    public class FullCostMeasure : NodeVisitor<ShadowCost, RBVH2Branch, BVH2Leaf>
+    public class FullCostMeasure : NodeVisitor<TraceResult, RBVH2Branch, RBVH2Leaf>
     {
         public Segment3 ShadowRay { get; set; }
 
-        public ShadowCost ForBranch(Branch<RBVH2Branch, BVH2Leaf> branch)
+        public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
         {
             if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new ShadowCost(false, new RandomVariable(1, 0), new RandomVariable(0, 0));
+                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
 
-            ShadowCost left = null;
-            ShadowCost right = null;
+            TraceResult left = null;
+            TraceResult right = null;
 
             if (branch.Content.PLeft == 1)
             {
                 left = branch.Left.Accept(this);
-                if(left.Hits) return left;
+                if (left.Hits)
+                {
+                    left.Cost.BBoxTests.ExpectedValue += 1.0;
+                    return left;
+                }
             }
             if (branch.Content.PLeft == 0)
             {
                 right = branch.Right.Accept(this);
-                if(right.Hits) return right;
+                if (right.Hits) 
+                {
+                    right.Cost.BBoxTests.ExpectedValue += 1.0;
+                    return right; 
+                }
             }
 
             if (left == null) left = branch.Left.Accept(this);
             if (right == null) right = branch.Right.Accept(this);
-            ShadowCost both = new ShadowCost(false, left.BBoxTests + right.BBoxTests, left.PrimitiveTests + right.PrimitiveTests);
+            TraceCost both = left.Cost;
 
-            ShadowCost res;
+            TraceCost res;
             if (left.Hits && right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.Content.PLeft, left, right);
+                res = TraceCost.RandomSelect(branch.Content.PLeft, left.Cost, right.Cost);
             }
             else if (!left.Hits && right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.Content.PLeft, both, right);
+                res = TraceCost.RandomSelect(branch.Content.PLeft, both, right.Cost);
             }
             else if (left.Hits && !right.Hits)
             {
-                res = ShadowCost.RandomSelect(branch.Content.PLeft, left, both);
+                res = TraceCost.RandomSelect(branch.Content.PLeft, left.Cost, both);
             }
             else
             {
                 res = both;
             }
             res.BBoxTests.ExpectedValue += 1.0; // to account for the test from this node
-            return res;
+            return new TraceResult(left.Hits || right.Hits, res);
         }
 
-        public ShadowCost ForLeaf(Leaf<RBVH2Branch, BVH2Leaf> leaf)
+        public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
         {
             if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new ShadowCost(false, new RandomVariable(1, 0), new RandomVariable(0, 0));
+                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
             Triangle[] prims = leaf.Content.Primitives;
             int k = 0;
             while (k < prims.Length)
             {
                 if (prims[k++].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1) break;
             }
-            return new ShadowCost(k != prims.Length, new RandomVariable(1, 0), new RandomVariable(k, 0));
+            return new TraceResult(k != prims.Length, new TraceCost(new RandomVariable(1, 0), new RandomVariable(k, 0)));
+        }
+
+        public static TraceCost GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
+        {
+            TraceCost cost = new TraceCost(); //the default value is correct
+            FullCostMeasure measure = new FullCostMeasure();
+            foreach (Segment3 shadow in shadows)
+            {
+                measure.ShadowRay = shadow;
+                cost = cost + tree.Accept(measure).Cost;
+            }
+            return cost;
         }
     }
 
-    public class ShadowCost
+    public class TraceResult
     {
         public bool Hits;
-        public RandomVariable BBoxTests;
-        public RandomVariable PrimitiveTests;
+        public TraceCost Cost;
 
-        public ShadowCost(bool h, RandomVariable bbox, RandomVariable prim)
+        public TraceResult(bool h, TraceCost cost)
         {
             Hits = h;
-            BBoxTests = bbox;
-            PrimitiveTests = prim;
-        }
-
-        public static ShadowCost RandomSelect(double p, ShadowCost x, ShadowCost y)
-        {
-            return new ShadowCost(true, RandomVariable.RandomSelect(p, x.BBoxTests, y.BBoxTests), RandomVariable.RandomSelect(p, x.PrimitiveTests, y.PrimitiveTests));
-        }
-    }
-
-    public struct RandomVariable
-    {
-        public double ExpectedValue;
-        public double Variance;
-
-        public RandomVariable(double e, double v)
-        {
-            ExpectedValue = e;
-            Variance = v;
-        }
-
-        public static RandomVariable operator +(RandomVariable x, RandomVariable y)
-        {
-            // assume no covariance (x and y are independent)
-            return new RandomVariable(x.ExpectedValue + y.ExpectedValue, x.Variance+y.Variance); 
-        }
-
-        public static RandomVariable RandomSelect(double p, RandomVariable x, RandomVariable y)
-        {
-            double q = 1 - p;
-            double d = x.ExpectedValue-y.ExpectedValue;
-            return new RandomVariable(p * x.ExpectedValue + q * y.ExpectedValue, p * x.Variance + q * y.Variance + p * q * d * d);
+            Cost = cost;
         }
     }
 }

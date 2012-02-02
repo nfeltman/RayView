@@ -77,71 +77,28 @@ namespace RayVisualizer.Common
             tri[loc2].index = loc2;
         }
 
-        public InteractionCombination GetInteractionType(BuildTriangle[] points, int max, int threshold)
+        public Func<BuildTriangle, bool> GetFilter(int threshold)
         {
-            if (max == 0)
-                return InteractionCombination.HitNeither;
             if (Dim == SplitDimension.SplitX)
             {
-                if ((points[0].center.x - Less) * Times < threshold)
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.x - Less) * Times >= threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyLeft;
-                }
-                else
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.x - Less) * Times < threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyRight;
-                }
+                return t => ((t.center.x - Less) * Times < threshold);
+                
             }
             else if (Dim == SplitDimension.SplitY)
             {
-                if ((points[0].center.y - Less) * Times < threshold)
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.y - Less) * Times >= threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyLeft;
-                }
-                else
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.y - Less) * Times < threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyRight;
-                }
+                return t => ((t.center.y - Less) * Times < threshold);
             }
             else
             {
-                if ((points[0].center.z - Less) * Times < threshold)
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.z - Less) * Times >= threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyLeft;
-                }
-                else
-                {
-                    for (int k = 1; k < max; k++)
-                        if ((points[k].center.z - Less) * Times < threshold)
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyRight;
-                }
+                return t => ((t.center.z - Less) * Times < threshold);
             }
         }
+
+        
     }
 
     public enum SplitDimension
     {
         SplitX = 0, SplitY = 1, SplitZ = 2
-    }
-
-    public enum InteractionCombination
-    {
-        HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
     }
 }

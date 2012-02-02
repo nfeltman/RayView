@@ -76,7 +76,7 @@ namespace RayVisualizer.Common
 
     public static class RayFileParser
     {
-        public static RaySet ReadFromFile(Stream file)
+        public static RaySet ReadFromFile1(Stream file)
         {
             List<CastHitQuery> castHits = new List<CastHitQuery>();
             List<CastMissQuery> castMisses = new List<CastMissQuery>();
@@ -126,7 +126,66 @@ namespace RayVisualizer.Common
             }
 
             return new SimpleRaySet() { Shadows = shadows.ToArray(), CastHits = castHits.ToArray(), CastMisses = castMisses.ToArray() };
-        }        
+        }
+
+        public static RaySet ReadFromFile2(Stream file)
+        {
+            List<CastHitQuery> castHits = new List<CastHitQuery>();
+            List<CastMissQuery> castMisses = new List<CastMissQuery>();
+            List<ShadowQuery> shadows = new List<ShadowQuery>();
+
+            BinaryReader reader = new BinaryReader(file);
+            int header = reader.ReadInt32();
+            if (header != 1234)
+                throw new Exception("Error on first ");
+            int version = reader.ReadInt32();
+            if (version != 1)
+                throw new Exception(String.Format("Wrong version! Expected 1, got {0}", version));
+            int numRays = reader.ReadInt32();
+
+            for (int k = 0; k < numRays; k++)
+            {
+                int type = reader.ReadInt32();
+                CVector3 origin = new CVector3()
+                {
+                    x = reader.ReadSingle(),
+                    y = reader.ReadSingle(),
+                    z = reader.ReadSingle(),
+                };
+                CVector3 dir = new CVector3()
+                {
+                    x = reader.ReadSingle(),
+                    y = reader.ReadSingle(),
+                    z = reader.ReadSingle(),
+                };
+                float t = reader.ReadSingle();
+                int rayFooter = reader.ReadInt32();
+                if (rayFooter != 0)
+                    throw new Exception(String.Format("Ray {0} had bad footer", rayFooter));
+
+
+                if (type == 0)
+                {
+                    // do nothing
+                }
+                else if (type == 1)
+                {
+                    shadows.Add(new ShadowQuery()
+                    {
+                        Origin = origin,
+                        Difference = dir,
+                        Depth = -1,
+                        Connected = t > 10000
+                    });
+                }
+                else
+                {
+                    throw new Exception("Error parsing file.");
+                }
+            }
+
+            return new SimpleRaySet() { Shadows = shadows.ToArray(), CastHits = castHits.ToArray(), CastMisses = castMisses.ToArray() };
+        } 
     }
 
     public class SimpleRaySet : RaySet

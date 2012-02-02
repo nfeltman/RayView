@@ -54,10 +54,28 @@ namespace RayVisualizer.Common
         {
             return new CVector3(v.x / c, v.y / c, v.z / c);
         }
-
+        public static bool operator ==(CVector3 p1, CVector3 p2)
+        {
+            return p1.x == p2.x && p1.y == p2.y && p1.z == p2.z;
+        }
+        public static bool operator !=(CVector3 p1, CVector3 p2)
+        {
+            return p1.x != p2.x || p1.y != p2.y || p1.z != p2.z;
+        }
+        public override bool Equals(object obj)
+        {
+            if (!(obj is CVector3))
+                return false;
+            CVector3 other = (CVector3)obj;
+            return other.x == x && other.y == y && other.z == z;
+        }
+        public override int GetHashCode()
+        {
+            return x.GetHashCode() + y.GetHashCode() + z.GetHashCode();
+        }
         public override string ToString()
         {
-            return String.Format("({0}, {1:0.0000000000}, {2})", x, y, z);
+            return String.Format("({0:0.0000000000}, {1:0.0000000000}, {2:0.0000000000})", x, y, z);
         }
     }
 

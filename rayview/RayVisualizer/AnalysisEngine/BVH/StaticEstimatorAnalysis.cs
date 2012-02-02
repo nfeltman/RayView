@@ -23,7 +23,7 @@ namespace AnalysisEngine
             Console.WriteLine("Reading BVH");
             BVH2 bvh = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\bvh.txt", FileMode.Open, FileAccess.Read));
             Console.WriteLine("Reading Casts");
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
             RaySet rays = allrays.CastOnlyFilter((r, i) => r.Depth>=1);
             Console.Write("Starting Analysis");
             Full_T_vs_P(bvh, rays, writer);

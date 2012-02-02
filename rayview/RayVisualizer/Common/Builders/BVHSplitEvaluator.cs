@@ -7,15 +7,14 @@ namespace RayVisualizer.Common
 {
     public interface BVHSplitEvaluator<StackState, BranchData, Aggregate>
     {
-        EvalResult<BranchData> EvaluateSplit(Aggregate leftAgg, Box3 leftBox, Aggregate rightAgg, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
+        EvalResult<BranchData> EvaluateSplit(Aggregate leftAgg, Box3 leftBox, Aggregate rightAgg, Box3 rightBox, StackState state, Func<BuildTriangle, bool> leftFilter);
     }
 
     public interface BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData, Aggregate> : BVHSplitEvaluator<StackState, BranchData, Aggregate>
     {
         EntranceData GetDefault();
         StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
-        EntranceData PrepareFirstChild(BranchData selected, StackState currentState);
-        EntranceData PrepareSecondChild(ExitData firstChildsExit, BranchData selected, StackState currentState);
+        Tuple<EntranceData, EntranceData> PrepareChildren(EvalResult<BranchData> selected, StackState currentState);
         ExitData EndBothChildren(ExitData firstChildsExit, ExitData secondChildsExit);
         ExitData GetLeafExit();
     }
@@ -24,9 +23,8 @@ namespace RayVisualizer.Common
     {
         public abstract EntranceData GetDefault();
         public abstract StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
-        public abstract EvalResult<BranchData> EvaluateSplit(Aggregate leftNu, Box3 leftBox, Aggregate rightNu, Box3 rightBox, StackState state, AASplitSeries split, int threshold);
-        public abstract EntranceData PrepareFirstChild(BranchData selected, StackState currentState);
-        public abstract EntranceData PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState);
+        public abstract EvalResult<BranchData> EvaluateSplit(Aggregate leftNu, Box3 leftBox, Aggregate rightNu, Box3 rightBox, StackState state, Func<BuildTriangle, bool> leftFilter);
+        public abstract Tuple<EntranceData, EntranceData> PrepareChildren(EvalResult<BranchData> selected, StackState currentState);
         public Unit EndBothChildren(Unit firstChildsExit, Unit secondChildsExit)
         {
             return Unit.ONLY;
@@ -39,13 +37,9 @@ namespace RayVisualizer.Common
 
     public abstract class TransitionlessEvaluator<StackState, BranchData, Aggregate> : ExitlessEvaluator<StackState, BranchData, StackState, Aggregate>
     {
-        public override StackState PrepareSecondChild(Unit firstChildsExit, BranchData selected, StackState currentState)
+        public override Tuple<StackState, StackState> PrepareChildren(EvalResult<BranchData> selected, StackState currentState)
         {
-            return currentState;
-        }
-        public override StackState PrepareFirstChild(BranchData selected, StackState currentState)
-        {
-            return currentState;
+            return new Tuple<StackState,StackState>(currentState, currentState);
         }
     }
 
@@ -53,10 +47,12 @@ namespace RayVisualizer.Common
     {
         public BuildData Data { get; set; }
         public double Cost { get; set; }
-        public EvalResult(double cost, BuildData data)
+        public bool BuildLeftFirst { get; set; }
+        public EvalResult(double cost, BuildData data, bool leftFirst)
         {
             Data = data;
             Cost = cost;
+            BuildLeftFirst = BuildLeftFirst;
         }
     }
 
@@ -69,9 +65,9 @@ namespace RayVisualizer.Common
             _costEstimator = costEstimator;
         }
 
-        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, Unit state, AASplitSeries split, int threshold)
+        public EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, Unit state, Func<BuildTriangle, bool> leftFilter)
         {
-            return new EvalResult<Unit>(_costEstimator(leftNu, leftBox, rightNu, rightBox), Unit.ONLY);
+            return new EvalResult<Unit>(_costEstimator(leftNu, leftBox, rightNu, rightBox), Unit.ONLY, true);
         }
 
         public Unit BeginEvaluations(int startTri, int endTri, Box3 splitCandidate, Unit parentState) { return Unit.ONLY; }
@@ -80,15 +76,10 @@ namespace RayVisualizer.Common
         {
             return Unit.ONLY;
         }
-        
-        public Unit PrepareFirstChild(Unit selected, Unit currentState)
-        {
-            return Unit.ONLY;
-        }
 
-        public Unit PrepareSecondChild(Unit firstChildsExit, Unit selected, Unit currentState)
+        public Tuple<Unit, Unit> PrepareChildren(EvalResult<Unit> selected, Unit currentState)
         {
-            return Unit.ONLY;
+            return new Tuple<Unit, Unit>(currentState, currentState);
         }
 
         public Unit EndBothChildren(Unit firstChildsExit, Unit secondChildsExit)

@@ -31,7 +31,15 @@ namespace RayVisualizer.Common
             return new Box3(minX, maxX, minY, maxY, minZ, maxZ);
         }
 
-        public static BuildTriangle[] GetTriangleList(BVH2 bvh)
+        public static Box3 FindObjectsBounds(BuildTriangle[] tris, int start, int end)
+        {
+            BoundBuilder b = new BoundBuilder(true);
+            for (int k = start; k < end; k++)
+                b.AddTriangle(tris[k].t);
+            return b.GetBox();
+        }
+
+        public static BuildTriangle[] GetTriangleList(this BVH2 bvh)
         {
             int numTris = bvh.RollUp((branch, left, right) => left + right, leaf => leaf.Primitives.Length);
             BuildTriangle[] list = new BuildTriangle[numTris];
@@ -51,12 +59,22 @@ namespace RayVisualizer.Common
             return list;
         }
 
-        public static BuildTriangle[] GetTriangleList(this Triangle[] tris)
+        public static BuildTriangle[] GetTriangleList(this IList<Triangle> tris)
         {
-            BuildTriangle[] res = new BuildTriangle[tris.Length];
+            BuildTriangle[] res = new BuildTriangle[tris.Count];
             for (int k = 0; k < res.Length; k++)
             {
                 res[k] = new BuildTriangle(tris[k], k);
+            }
+            return res;
+        }
+
+        public static BuildTriangle[] GetTriangleList(this IList<BuildTriangle> tris)
+        {
+            BuildTriangle[] res = new BuildTriangle[tris.Count];
+            for (int k = 0; k < res.Length; k++)
+            {
+                res[k] = new BuildTriangle(tris[k].t, k);
             }
             return res;
         }

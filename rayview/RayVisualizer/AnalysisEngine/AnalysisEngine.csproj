@@ -86,12 +86,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildAnalysis.cs" />
-    <Compile Include="BVHMetrics.cs" />
+    <Compile Include="BVH\BuildAnalysis.cs" />
+    <Compile Include="BVH\BVHMetrics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RBVH\RBVHAnalysis.cs" />
     <Compile Include="RunAnalysis.cs" />
-    <Compile Include="StaticEstimatorAnalysis.cs" />
-    <Compile Include="TraversalAnalysis.cs" />
+    <Compile Include="BVH\StaticEstimatorAnalysis.cs" />
+    <Compile Include="BVH\TraversalAnalysis.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

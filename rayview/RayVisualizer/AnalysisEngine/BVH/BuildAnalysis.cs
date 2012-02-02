@@ -15,7 +15,7 @@ namespace AnalysisEngine
         public static void BuildAndWriteBVHsNoRays(string tracesPath)
         {
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
 
             PrintBVHReport(given, "given");
             RaySet set = allrays.CastOnlyFilter((r, i) => i % 20 == 0 && r.Depth >= 1);
@@ -43,7 +43,7 @@ namespace AnalysisEngine
         public static void BuildTreeWithRayData(string tracesPath)
         {
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
 
             PrintBVHReport(given, "given");
             RaySet set = allrays.CastOnlyFilter((r, i) => r.Depth==0);
@@ -85,7 +85,7 @@ namespace AnalysisEngine
         public static void ReadAndCompareMethods(string tracesPath)
         {
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
             StreamWriter writer = null;// new StreamWriter(tracesPath + "powerplant\\results\\RaysVNoRays.txt", true);
 
             PrintBVHReport(given, "given");
@@ -151,7 +151,7 @@ namespace AnalysisEngine
         {
             Stopwatch st = new Stopwatch();
             BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            RaySet allrays = RayFileParser.ReadFromFile(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
+            RaySet allrays = RayFileParser.ReadFromFile1(new FileStream(tracesPath + "powerplant\\casts.txt", FileMode.Open, FileAccess.Read));
 
             RaySet set = allrays.CastOnlyFilter((r, i) => i % 200 == 0 && r.Depth>=1);
             FHRayResults res = RayCompiler.CompileCasts(set, given);

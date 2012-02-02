@@ -85,6 +85,7 @@
     <Compile Include="Builders\BoundBuilder.cs" />
     <Compile Include="Builders\BuildTools.cs" />
     <Compile Include="Builders\NodeBuilder.cs" />
+    <Compile Include="Builders\OBJParser.cs" />
     <Compile Include="Builders\TriangleAggregator.cs" />
     <Compile Include="BVH2\BVH2Visitors\RayCostVisitor.cs" />
     <Compile Include="BVH2\BVHBuild\BlendedSplitEvaluator.cs" />
@@ -117,11 +118,14 @@
     <Compile Include="Primitives\RaySet.cs" />
     <Compile Include="Primitives\Triangle.cs" />
     <Compile Include="RBVH2\BVHBuild\RBVHNodeFactory.cs" />
+    <Compile Include="RBVH2\BVHBuild\SAH5050Factory.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />
     <Compile Include="Builders\GeneralBVH2Builder.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCompiler.cs" />
     <Compile Include="RBVH2\FullCostMeasure.cs" />
+    <Compile Include="RBVH2\OracleCost.cs" />
     <Compile Include="RBVH2\RBVH2.cs" />
+    <Compile Include="RBVH2\TraceCost.cs" />
     <Compile Include="Trees\Nodes.cs" />
   </ItemGroup>
   <ItemGroup />

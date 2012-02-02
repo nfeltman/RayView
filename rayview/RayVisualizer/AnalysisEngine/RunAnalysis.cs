@@ -13,7 +13,7 @@ namespace AnalysisEngine
         public static void Main()
         {
             string tracesPath = "traces\\";
-            BuildAnalysis.TubeFocusExperiment(tracesPath);
+            RBVHAnalysis.ReadTestTris(tracesPath);
             //BuildAnalysis.BuildTreeWithRayData(tracesPath);
             //SpeedTest(tracesPath);
         }

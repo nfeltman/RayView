@@ -46,7 +46,7 @@ namespace RayVisualizer.Common
                 bt => (bt.index >= startTri && bt.index < endTri));
         }
 
-        public override EvalResult<float> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, ShadowRayShuffleState state, AASplitSeries split, int threshold)
+        public override EvalResult<float> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
         {
             int left_sure_traversal = 0;
             int right_sure_traversal = 0;
@@ -62,7 +62,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < state.brokenMax; k++)
             {
                 // figure out if it hit a child
-                InteractionCombination combo = split.GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, threshold);
+                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
                 // if it's a hit on the parent, it must be a hit for at least one of the children
                 switch (combo)
                 {
@@ -87,7 +87,33 @@ namespace RayVisualizer.Common
             double leftAvoidable = left_maybe_traversal * leftFactor;
             double rightAvoidable = right_maybe_traversal * rightFactor;
             double unavoidablePart = left_sure_traversal * leftFactor + right_sure_traversal * rightFactor;
-            return leftAvoidable < rightAvoidable ? new EvalResult<float>(leftAvoidable + unavoidablePart, 1f) : new EvalResult<float>(rightAvoidable + unavoidablePart, 0f);
+            //Console.WriteLine("{0,4}-{1,4} m{2} {3} s{4,4} {5,4} u{6}", leftNu, rightNu, left_maybe_traversal, right_maybe_traversal, left_sure_traversal, right_sure_traversal, unavoidablePart);
+            return leftAvoidable < rightAvoidable ? new EvalResult<float>(leftAvoidable + unavoidablePart, 1f, true) : new EvalResult<float>(rightAvoidable + unavoidablePart, 0f, true);
+        }
+
+        private static InteractionCombination GetInteractionType(BuildTriangle[] points, int max, Func<BuildTriangle,bool> leftFilter)
+        {
+            if (max == 0)
+                return InteractionCombination.HitNeither;
+                if (leftFilter(points[0]))
+                {
+                    for (int k = 1; k < max; k++)
+                        if (!leftFilter(points[k]))
+                            return InteractionCombination.HitBoth;
+                    return InteractionCombination.HitOnlyLeft;
+                }
+                else
+                {
+                    for (int k = 1; k < max; k++)
+                        if (leftFilter(points[k]))
+                            return InteractionCombination.HitBoth;
+                    return InteractionCombination.HitOnlyRight;
+                }
+        }
+
+        private enum InteractionCombination
+        {
+            HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
         }
 
         public override ShadowRayCostEvaluator.ShadowRayShuffleState GetDefault()

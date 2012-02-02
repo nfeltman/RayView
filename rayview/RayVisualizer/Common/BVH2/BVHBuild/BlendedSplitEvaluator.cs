@@ -53,7 +53,7 @@ namespace RayVisualizer.Common
             return new RayShuffleState() { missMax = missPart, hitMax = hitPart, topSA = toBeSplit.SurfaceArea};
         }
 
-        public override EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, AASplitSeries split, int threshold)
+        public override EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, Func<BuildTriangle, bool> leftFilter)
         {
             int left_collisions = 0;
             int right_collisions = 0;
@@ -76,7 +76,7 @@ namespace RayVisualizer.Common
             double leftCombinedProp = leftRayProp * w + leftSAProp * (1 - w);
             double rightCombinedProp = rightRayProp * w + rightSAProp * (1 - w);
 
-            return new EvalResult<Unit>(leftCombinedProp * Math.Pow(leftNu - 1, _expo) + rightCombinedProp * Math.Pow(rightNu - 1, _expo), Unit.ONLY);
+            return new EvalResult<Unit>(leftCombinedProp * Math.Pow(leftNu - 1, _expo) + rightCombinedProp * Math.Pow(rightNu - 1, _expo), Unit.ONLY, true);
         }
 
         public override BlendedSplitEvaluator.RayShuffleState GetDefault()

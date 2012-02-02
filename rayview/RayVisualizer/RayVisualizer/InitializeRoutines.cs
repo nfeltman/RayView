@@ -16,7 +16,7 @@ namespace RayVisualizer
         private static ViewerState FocusOnSpehere(SceneData scene, List<ViewerState> statesList)
         {
             CVector3 strangeVec = new CVector3(1, 0, 0).Normalized();
-            BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BVHNodeFactory.ONLY);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullStructure(Shapes.BuildSphere(new CVector3(0, 0, 0), new CVector3(100, 0, 0), new CVector3(0, 100, 0), 12).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BVHNodeFactory.ONLY);
             float prop = .4f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*400, strangeVec*100, 80, 80 * prop, 3000);
             FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);
@@ -36,7 +36,7 @@ namespace RayVisualizer
         private static ViewerState FocusOntoPerpPlane(SceneData scene, List<ViewerState> statesList)
         {
             CVector3 strangeVec = new CVector3(0f,.5f,.5f);
-            BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(Shapes.BuildParallelogram(new CVector3(0, -200, -200), new CVector3(0, 400, 0), new CVector3(0, 0, 400), 29, 29).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BVHNodeFactory.ONLY);
+            BVH2 initialBuild = GeneralBVH2Builder.BuildFullStructure(Shapes.BuildParallelogram(new CVector3(0, -200, -200), new CVector3(0, 400, 0), new CVector3(0, 0, 400), 29, 29).GetTriangleList(), (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BVHNodeFactory.ONLY);
             float prop = .4f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 120 + new CVector3(300, 0, 0), strangeVec * 120 + new CVector3(0, .1f, 0), 80, 80 * prop, 3000);
             FHRayResults res = RayCompiler.CompileCasts(rays, initialBuild);

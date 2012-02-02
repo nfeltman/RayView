@@ -21,20 +21,20 @@ namespace RayVisualizer.Common
 
         public static BVH2 BuildFullBVH<StackState, EntranceData, ExitData>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, Unit, EntranceData, ExitData, int> se)
         {
-            return BuildStructure(tri, se, BVHNodeFactory.ONLY, CountAggregator.ONLY);
+            return BuildFullStructure(tri, se, BVHNodeFactory.ONLY, CountAggregator.ONLY);
         }
 
         public static RBVH2 BuildFullRBVH<StackState, EntranceData, ExitData>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, float, EntranceData, ExitData, int> se)
         {
-            return BuildStructure(tri, se, RBVHNodeFactory.ONLY, CountAggregator.ONLY);
+            return BuildFullStructure(tri, se, RBVHNodeFactory.ONLY, CountAggregator.ONLY);
         }
 
-        public static Tree BuildStructure<BranchT, LeafT, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<BranchT, LeafT, Tree, Unit> builder)
+        public static Tree BuildFullStructure<BranchT, LeafT, Tree>(BuildTriangle[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<BranchT, LeafT, Tree, Unit> builder)
         {
-            return BuildStructure(tri, new StatelessSplitEvaluator(est), builder, CountAggregator.ONLY);
+            return BuildFullStructure(tri, new StatelessSplitEvaluator(est), builder, CountAggregator.ONLY);
         }
 
-        public static Tree BuildStructure<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Tree, Aggregate>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData, Aggregate> se, NodeFactory<BranchT, LeafT, Tree, BranchData> builder, TriangleAggregator<Aggregate> aggregator)
+        public static Tree BuildFullStructure<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Tree, Aggregate>(BuildTriangle[] tri, BVHSplitEvaluator<StackState, BranchData, EntranceData, ExitData, Aggregate> se, NodeFactory<BranchT, LeafT, Tree, BranchData> builder, TriangleAggregator<Aggregate> aggregator)
         {
             return BuildStructure(tri, se, builder, aggregator, 1, true);
         }
@@ -48,9 +48,6 @@ namespace RayVisualizer.Common
         {
             if (tri.Length == 0)
                 throw new ArgumentException("BVH Cannot be empty");
-            BoundBuilder b = new BoundBuilder(true);
-            for (int k = 0; k < tri.Length; k++)
-                b.AddTriangle(tri[k].t);
             BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Aggregate> im = new BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Aggregate>()
             { 
                 eval = se, 
@@ -62,9 +59,7 @@ namespace RayVisualizer.Common
                 fact = builder,
                 aggregator = aggregator
             };
-            int len = tri.Length-1;
-            Box3 topBox = b.GetBox();
-            TreeNode<BranchT, LeafT> root = BuildNodeSegment(0, tri.Length, 0, topBox, se.GetDefault(), im).Item1;
+            TreeNode<BranchT, LeafT> root = BuildNodeSegment(0, tri.Length, 0, BuildTools.FindObjectsBounds(tri, 0, tri.Length), se.GetDefault(), im).Item1;
             return builder.BuildTree(root, im.branchCounter);
         }
 
@@ -95,27 +90,49 @@ namespace RayVisualizer.Common
                 return new RBVH2Branch() { Left = left, Right = right, BBox = objectBound, ID = id, Depth = depth, PLeft = 0.5f };
             }*/
 
-            StackState newState = im.eval.BeginEvaluations(start, end, objectBound, parentState);
-
-            // recursive case
-            BestObjectPartition<BranchData> part = FindBestPartition(im.tris, start, end, newState, im.eval, im.aggregator);
-
-            if (part.isDegenerate && !im.splitDegenerateNodes)
+            StackState newState;
+            int objectPartition;
+            EvalResult<BranchData> buildData;
+            Box3 leftObjectBounds;
+            Box3 rightObjectBounds;
+            if (IsCompetelyDegenerate(im.tris, start, end))
             {
-                return new Tuple<TreeNode<BranchT, LeafT>, ExitData>( new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound)), im.eval.GetLeafExit());
+                if (im.splitDegenerateNodes)
+                {
+                    // we're degenerate and we split the node
+                    newState = im.eval.BeginEvaluations(start, end, objectBound, parentState);
+                    objectPartition = (start + end) / 2;
+                    leftObjectBounds = BuildTools.FindObjectsBounds(im.tris, start, objectPartition);
+                    rightObjectBounds = BuildTools.FindObjectsBounds(im.tris, objectPartition, end);
+                    Aggregate leftAggregate = im.aggregator.Roll(im.tris, start, objectPartition);
+                    Aggregate rightAggregate = im.aggregator.Roll(im.tris, objectPartition, end);
+                    buildData = im.eval.EvaluateSplit(leftAggregate, leftObjectBounds, rightAggregate, rightObjectBounds, newState, t => t.index < objectPartition);
+                }
+                else
+                {
+                    // we're degenerate and we don't split the node (so we just make a leaf)
+                    return new Tuple<TreeNode<BranchT, LeafT>, ExitData>(new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, end, im.leafCounter++, depth, objectBound)), im.eval.GetLeafExit());
+                }
             }
             else
             {
-                int id = im.branchCounter++;
-                EntranceData firstTransition = im.eval.PrepareFirstChild(part.branchBuildData, newState);
-                Tuple<TreeNode<BranchT, LeafT>, ExitData> left = BuildNodeSegment(start, part.objectPartition, depth + 1, part.leftObjectBounds, firstTransition, im);
-                EntranceData secondTransition = im.eval.PrepareSecondChild(left.Item2, part.branchBuildData, newState);
-                Tuple<TreeNode<BranchT, LeafT>, ExitData> right = BuildNodeSegment(part.objectPartition, end, depth + 1, part.rightObjectBounds, secondTransition, im);
-                ExitData exit = im.eval.EndBothChildren(left.Item2, right.Item2);
-                return new Tuple<TreeNode<BranchT, LeafT>, ExitData>(new Branch<BranchT, LeafT>(left.Item1, right.Item1, im.fact.BuildBranch(left.Item1, right.Item1, part.branchBuildData, id, depth, objectBound)), exit);
+                newState = im.eval.BeginEvaluations(start, end, objectBound, parentState);
+                BestObjectPartition<BranchData, Aggregate> res = FindBestPartition(im.tris, start, end, newState, im.eval, im.aggregator);
+                objectPartition = res.objectPartition;
+                buildData = res.branchBuildData;
+                leftObjectBounds = res.leftObjectBounds;
+                rightObjectBounds = res.rightObjectBounds;
             }
+
+            // recursive case
+            Tuple<EntranceData, EntranceData> childTransitions = im.eval.PrepareChildren(buildData, newState);
+            int id = im.branchCounter++;
+            Tuple<TreeNode<BranchT, LeafT>, ExitData> left = BuildNodeSegment(start, objectPartition, depth + 1, leftObjectBounds, childTransitions.Item1, im);
+            Tuple<TreeNode<BranchT, LeafT>, ExitData> right = BuildNodeSegment(objectPartition, end, depth + 1, rightObjectBounds, childTransitions.Item2, im);
+            ExitData exit = im.eval.EndBothChildren(left.Item2, right.Item2);
+            return new Tuple<TreeNode<BranchT, LeafT>, ExitData>(new Branch<BranchT, LeafT>(left.Item1, right.Item1, im.fact.BuildBranch(left.Item1, right.Item1, buildData.Data, id, depth, objectBound)), exit);
         }
-        private static BestObjectPartition<BranchData> FindBestPartition<StackState, BranchData, Aggregate>(BuildTriangle[] tris, int start, int end, StackState evaluatorState, BVHSplitEvaluator<StackState, BranchData, Aggregate> eval, TriangleAggregator<Aggregate> aggregator)
+        private static BestObjectPartition<BranchData, Aggregate> FindBestPartition<StackState, BranchData, Aggregate>(BuildTriangle[] tris, int start, int end, StackState evaluatorState, BVHSplitEvaluator<StackState, BranchData, Aggregate> eval, TriangleAggregator<Aggregate> aggregator)
         {
             int len = end - start;
 
@@ -152,9 +169,9 @@ namespace RayVisualizer.Common
                 int blockX = Math.Max(0, Math.Min(numBlocks - 1, seriesX.GetPartition(t.center.x)));
                 int blockY = Math.Max(0, Math.Min(numBlocks - 1, seriesY.GetPartition(t.center.y)));
                 int blockZ = Math.Max(0, Math.Min(numBlocks - 1, seriesZ.GetPartition(t.center.z)));
-                aggregator.Include(blockCountsX, blockX, t);
-                aggregator.Include(blockCountsY, blockY, t);
-                aggregator.Include(blockCountsZ, blockZ, t);
+                aggregator.InplaceOp(ref blockCountsX[blockX], t);
+                aggregator.InplaceOp(ref blockCountsY[blockY], t);
+                aggregator.InplaceOp(ref blockCountsZ[blockZ], t);
                 blockBoundsX[blockX].AddTriangle(t.t);
                 blockBoundsY[blockY].AddTriangle(t.t);
                 blockBoundsZ[blockZ].AddTriangle(t.t);
@@ -190,14 +207,12 @@ namespace RayVisualizer.Common
             {
                 // triple degenerate
                 if (!(xDegen && yDegen && zDegen)) throw new Exception("Oh god, my logic is wrong");
-                Box3 box = blockBoundsX[0].GetBox();
-                // TODO: come up with a sensible policy here
-                return new BestObjectPartition<BranchData>() { leftObjectBounds = box, rightObjectBounds = box, branchBuildData = default(BranchData), objectPartition = (start + end) / 2, isDegenerate = true };
+                throw new Exception("Checked for degeneracy above.  Why am I here?!");
             }
 
             int index = split.PerformPartition(tris, start, end, res.binPartition);
 
-            return new BestObjectPartition<BranchData>() { leftObjectBounds = res.leftObjectBounds, rightObjectBounds = res.rightObjectBounds, branchBuildData = res.branchBuildData, objectPartition = index, isDegenerate = false };
+            return new BestObjectPartition<BranchData, Aggregate>() { leftObjectBounds = res.leftObjectBounds, rightObjectBounds = res.rightObjectBounds, branchBuildData = res.branchBuildData, objectPartition = index };
         }
 
         private static BestBinPartition<BranchData> ScorePartitions<StackState, BranchData, Aggregate>(Aggregate[] blockAggregates, BoundBuilder[] blockOBounds, BVHSplitEvaluator<StackState, BranchData, Aggregate> se, TriangleAggregator<Aggregate> aggregator, StackState evaluatorState, AASplitSeries split)
@@ -219,21 +234,21 @@ namespace RayVisualizer.Common
             // find smallest cost
             double minCost = double.PositiveInfinity;
             int bestPartition = -10;
-            BranchData bestBuildData = default(BranchData);
+            EvalResult<BranchData> bestBuildData = null;
             Box3 bestForwardBox = new Box3();
             Aggregate forwardPrevAgg = aggregator.GetIdentity();
             builder.Reset();
             for (int k = 0; k < numBlocks-1; k++)
             {
-                forwardPrevAgg = aggregator.Op(forwardPrevAgg, blockAggregates[k]);
+                aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
                 builder.AddBox(blockOBounds[k]);
                 Box3 forwardBox = builder.GetBox();
-                EvalResult<BranchData> cost = se.EvaluateSplit(forwardPrevAgg, forwardBox, backwardAggAccumulator[k + 1], backwardBoxAccumulator[k + 1], evaluatorState, split, k + 1);
+                EvalResult<BranchData> cost = se.EvaluateSplit(forwardPrevAgg, forwardBox, backwardAggAccumulator[k + 1], backwardBoxAccumulator[k + 1], evaluatorState, split.GetFilter(k + 1));
                 if (cost.Cost < minCost)
                 {
                     bestPartition = k+1;
                     minCost = cost.Cost;
-                    bestBuildData = cost.Data;
+                    bestBuildData = cost;
                     bestForwardBox = forwardBox;
                 }
             }
@@ -251,20 +266,29 @@ namespace RayVisualizer.Common
                 rightObjectBounds = backwardBoxAccumulator[bestPartition] };
         }
 
+        private static bool IsCompetelyDegenerate(BuildTriangle[] tri, int start, int end)
+        {
+            CVector3 center = tri[start].center;
+            for (int k = start+1; k < end; k++)
+            {
+                if (tri[k].center != center) return false;
+            }
+            return true;
+        }
+
         private class BestBinPartition<BranchData>
         {
             public int binPartition;
             public double heuristicValue;
             public Box3 leftObjectBounds, rightObjectBounds;
-            public BranchData branchBuildData;
+            public EvalResult<BranchData> branchBuildData;
         }
 
-        private class BestObjectPartition<BranchData>
+        private class BestObjectPartition<BranchData, Aggregate>
         {
-            public bool isDegenerate;
             public int objectPartition;
             public Box3 leftObjectBounds, rightObjectBounds;
-            public BranchData branchBuildData;
+            public EvalResult<BranchData> branchBuildData;
         }
 
         private class BuildImmutables<StackState, BranchData, EntranceData, ExitData, BranchT, LeafT, Aggregate>

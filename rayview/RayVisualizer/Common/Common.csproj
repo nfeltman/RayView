@@ -117,6 +117,7 @@
     <Compile Include="Primitives\RayQuery.cs" />
     <Compile Include="Primitives\RaySet.cs" />
     <Compile Include="Primitives\Triangle.cs" />
+    <Compile Include="RBVH2\BVHBuild\TreeOrdering.cs" />
     <Compile Include="RBVH2\BVHBuild\RBVHNodeFactory.cs" />
     <Compile Include="RBVH2\BVHBuild\SAH5050Factory.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />

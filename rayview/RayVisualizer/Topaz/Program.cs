@@ -51,13 +51,13 @@ namespace Topaz
                 Func<RaySet> rays = GetRaysForBuild(args[3]);
                 Func<FileStream> output = GetFileWriteStream(args[4]);
                 if (method == null || tris == null || rays == null || output == null) return;
-                Console.WriteLine("Here");
                 FileStream fileout = output();
                 using (fileout)
                 {
-                    method(tris(), rays(), new StreamWriter(fileout));
+                    StreamWriter writer = new StreamWriter(fileout);
+                    method(tris(), rays(), writer);
+                    writer.Flush();
                 }
-                Console.WriteLine("Good");
             }
             else
             {
@@ -72,26 +72,28 @@ namespace Topaz
             {
                 return (tris, rays, output) =>
                 {
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), SAH5050Factory.ONLY);
+                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    Console.Write("Starting build... ");
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY);
+                    Console.WriteLine("done.");
+                    Console.Write("Starting evaluation... ");
                     TraceCost cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    output.WriteLine("{0} % Exp[BBoxTests]", cost.BBoxTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[BBoxTests]", cost.BBoxTests.Variance);
-                    output.WriteLine("{0} % Exp[PrimTests]", cost.PrimitiveTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[PrimTests]", cost.PrimitiveTests.Variance);
-                    Console.WriteLine("Got here!!");
+                    Console.WriteLine("done.");
+                    StandardRBVHEvaluationReport(build, cost, output);
                 };
             }
             else if (method.ToLower().Equals("sah50"))
             {
                 return (tris, rays, output) =>
                 {
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, SAH5050Factory.ONLY);
+                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    Console.Write("Starting build... ");
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
+                    Console.WriteLine("done.");
+                    Console.Write("Starting evaluation... ");
                     TraceCost cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    output.WriteLine("{0} % Exp[BBoxTests]", cost.BBoxTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[BBoxTests]", cost.BBoxTests.Variance);
-                    output.WriteLine("{0} % Exp[PrimTests]", cost.PrimitiveTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[PrimTests]", cost.PrimitiveTests.Variance);
-                    Console.WriteLine("Got here!!");
+                    Console.WriteLine("done.");
+                    StandardRBVHEvaluationReport(build, cost, output);
                 };
             }
             else if (method.ToLower().Equals("rtsah"))
@@ -121,12 +123,14 @@ namespace Topaz
             {
                 return (tris, rays, output) =>
                 {
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, SAH5050Factory.ONLY);
+                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    Console.Write("Starting build... ");
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
+                    Console.WriteLine("done.");
+                    Console.Write("Starting evaluation... ");
                     TraceCost cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    output.WriteLine("{0} % Exp[BBoxTests]", cost.BBoxTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[BBoxTests]", cost.BBoxTests.Variance);
-                    output.WriteLine("{0} % Exp[PrimTests]", cost.PrimitiveTests.ExpectedValue);
-                    output.WriteLine("{0} % Var[PrimTests]", cost.PrimitiveTests.Variance);
+                    Console.WriteLine("done.");
+                    StandardRBVHEvaluationReport(build, cost, output);
                 };
             }
             else
@@ -134,6 +138,18 @@ namespace Topaz
                 Console.WriteLine("Method \'{0}\' not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
                 return null;
             }
+        }
+
+        private static void StandardRBVHEvaluationReport(RBVH2 build, TraceCost cost, StreamWriter output)
+        {
+            output.WriteLine("{0} {1} % Number Branches (reported/measured)", build.NumBranch, build.RollUp((b, l, r) => l + r + 1, le => 0));
+            output.WriteLine("{0} {1} % Number Leaves (reported/measured)", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => 1));
+            output.WriteLine("{0} % Number Primitives", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => le.Primitives.Length));
+            output.WriteLine("{0} % Height (1-based)", build.RollUp((b, l, r) => Math.Max(l, r) + 1, le => 1));
+            output.WriteLine("{0} % Exp[BBoxTests]", cost.BBoxTests.ExpectedValue);
+            output.WriteLine("{0} % StD[BBoxTests]", Math.Sqrt(cost.BBoxTests.Variance));
+            output.WriteLine("{0} % Exp[PrimTests]", cost.PrimitiveTests.ExpectedValue);
+            output.WriteLine("{0} % StD[PrimTests]", Math.Sqrt(cost.PrimitiveTests.Variance));
         }
 
         private static Func<BuildTriangle[]> GetBuildTrianglesForBuild(string filename)
@@ -188,11 +204,13 @@ namespace Topaz
 
         private static Func<FileStream> GetFileWriteStream(string filename)
         {
+            /*
             if (!Directory.Exists(filename))
             {
                 Console.WriteLine("Directory for file does not exist: {0}", filename);
                 return null;
             }
+             */
             return () => File.OpenWrite(filename);
         }
     }

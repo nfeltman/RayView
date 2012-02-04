@@ -39,7 +39,7 @@ namespace RayVisualizer.Common
 
             if (left == null) left = branch.Left.Accept(this);
             if (right == null) right = branch.Right.Accept(this);
-            TraceCost both = left.Cost;
+            TraceCost both = left.Cost + right.Cost;
 
             TraceCost res;
             if (left.Hits && right.Hits)
@@ -64,13 +64,18 @@ namespace RayVisualizer.Common
 
         public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
         {
+            //Console.WriteLine("SPECIAL FULL");
             if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
             Triangle[] prims = leaf.Content.Primitives;
             int k = 0;
             while (k < prims.Length)
             {
-                if (prims[k++].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1) break;
+                if (prims[k].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1)
+                {
+                    break;
+                }
+                k++;
             }
             return new TraceResult(k != prims.Length, new TraceCost(new RandomVariable(1, 0), new RandomVariable(k, 0)));
         }

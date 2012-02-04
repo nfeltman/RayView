@@ -46,7 +46,7 @@ namespace RayVisualizer.Common
             for (int k=0; k < prims.Length;k++)
             {
                 if (prims[k].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1)
-                    return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(1, 0)));
+                    return new TraceResult(true, new TraceCost(new RandomVariable(1, 0), new RandomVariable(1, 0)));
             }
             return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(prims.Length, 0)));
         }

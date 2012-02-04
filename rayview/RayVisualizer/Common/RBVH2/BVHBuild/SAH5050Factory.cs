@@ -5,11 +5,11 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class SAH5050Factory: NodeFactory<RBVH2Branch, RBVH2Leaf, RBVH2, Unit>
+    public class RBVH5050Factory: NodeFactory<RBVH2Branch, RBVH2Leaf, RBVH2, Unit>
     {
-        public static readonly SAH5050Factory ONLY = new SAH5050Factory();
+        public static readonly RBVH5050Factory ONLY = new RBVH5050Factory();
 
-        private SAH5050Factory() { }
+        private RBVH5050Factory() { }
 
         public RBVH2Branch BuildBranch(TreeNode<RBVH2Branch, RBVH2Leaf> left, TreeNode<RBVH2Branch, RBVH2Leaf> right, Unit unit, int branchCounter, int depth, Box3 boundingBox)
         {

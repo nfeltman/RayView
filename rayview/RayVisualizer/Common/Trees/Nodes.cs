@@ -8,6 +8,7 @@ namespace RayVisualizer.Common
     public interface TreeNode<TBranch, TLeaf>
     {
         Ret Accept<Ret>(NodeVisitor<Ret, TBranch, TLeaf> visitor);
+        Ret Accept<Ret, TParam>(NodeVisitor<Ret, TParam, TBranch, TLeaf> visitor, TParam param);
         Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf);
         void PrefixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf);
         void PrefixEnumerateNodes(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf);
@@ -45,6 +46,10 @@ namespace RayVisualizer.Common
         public Ret Accept<Ret>(NodeVisitor<Ret, TBranch, TLeaf> visitor)
         {
             return visitor.ForBranch(this);
+        }
+        public Ret Accept<Ret, TParam>(NodeVisitor<Ret, TParam, TBranch, TLeaf> visitor, TParam param)
+        {
+            return visitor.ForBranch(this, param);
         }
         public Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf)
         {
@@ -97,6 +102,10 @@ namespace RayVisualizer.Common
         {
             return visitor.ForLeaf(this);
         }
+        public Ret Accept<Ret, TParam>(NodeVisitor<Ret, TParam, TBranch, TLeaf> visitor, TParam param)
+        {
+            return visitor.ForLeaf(this, param);
+        }
         public Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf)
         {
             return forLeaf(this);
@@ -136,5 +145,11 @@ namespace RayVisualizer.Common
     {
         Ret ForBranch(Branch<TBranch, TLeaf> branch);
         Ret ForLeaf(Leaf<TBranch, TLeaf> leaf);
+    }
+
+    public interface NodeVisitor<Ret, TParam, TBranch, TLeaf>
+    {
+        Ret ForBranch(Branch<TBranch, TLeaf> branch, TParam param);
+        Ret ForLeaf(Leaf<TBranch, TLeaf> leaf, TParam param);
     }
 }

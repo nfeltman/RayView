@@ -13,10 +13,10 @@ namespace RayVisualizer.Common
         public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
         {
             if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
+                return new TraceResult(false, new TraceCost(1, 0, 0, 0));
 
-            TraceResult left = null;
-            TraceResult right = null;
+            TraceResult left;
+            TraceResult right;
 
             if (branch.Content.PLeft == 1)
             {
@@ -26,19 +26,24 @@ namespace RayVisualizer.Common
                     left.Cost.BBoxTests.ExpectedValue += 1.0;
                     return left;
                 }
+                right = branch.Right.Accept(this);
             }
-            if (branch.Content.PLeft == 0)
+            else if (branch.Content.PLeft == 0)
             {
                 right = branch.Right.Accept(this);
-                if (right.Hits) 
+                if (right.Hits)
                 {
                     right.Cost.BBoxTests.ExpectedValue += 1.0;
-                    return right; 
+                    return right;
                 }
+                left = branch.Left.Accept(this);
+            }
+            else
+            {
+                left = branch.Left.Accept(this);
+                right = branch.Right.Accept(this);
             }
 
-            if (left == null) left = branch.Left.Accept(this);
-            if (right == null) right = branch.Right.Accept(this);
             TraceCost both = left.Cost + right.Cost;
 
             TraceCost res;
@@ -64,20 +69,21 @@ namespace RayVisualizer.Common
 
         public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
         {
-            //Console.WriteLine("SPECIAL FULL");
             if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
             Triangle[] prims = leaf.Content.Primitives;
             int k = 0;
+            int primtests=0;
             while (k < prims.Length)
             {
+                primtests++;
                 if (prims[k].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1)
                 {
                     break;
                 }
                 k++;
             }
-            return new TraceResult(k != prims.Length, new TraceCost(new RandomVariable(1, 0), new RandomVariable(k, 0)));
+            return new TraceResult(k != prims.Length, new TraceCost(new RandomVariable(1, 0), new RandomVariable(primtests, 0)));
         }
 
         public static TraceCost GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
@@ -90,18 +96,6 @@ namespace RayVisualizer.Common
                 cost = cost + tree.Accept(measure).Cost;
             }
             return cost;
-        }
-    }
-
-    public class TraceResult
-    {
-        public bool Hits;
-        public TraceCost Cost;
-
-        public TraceResult(bool h, TraceCost cost)
-        {
-            Hits = h;
-            Cost = cost;
         }
     }
 }

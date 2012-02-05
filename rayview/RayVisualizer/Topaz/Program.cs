@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using RayVisualizer.Common;
 using System.IO;
+using System.Diagnostics;
 
 namespace Topaz
 {
@@ -76,9 +77,13 @@ namespace Topaz
                     Console.Write("Starting build... ");
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY);
                     Console.WriteLine("done.");
+
+                    Stopwatch st = new Stopwatch();
                     Console.Write("Starting evaluation... ");
-                    TraceCost cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    Console.WriteLine("done.");
+                    st.Start();
+                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
+                    st.Stop();
+                    Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
                     StandardRBVHEvaluationReport(build, cost, output);
                 };
             }
@@ -90,9 +95,13 @@ namespace Topaz
                     Console.Write("Starting build... ");
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     Console.WriteLine("done.");
+
+                    Stopwatch st = new Stopwatch();
                     Console.Write("Starting evaluation... ");
-                    TraceCost cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    Console.WriteLine("done.");
+                    st.Start();
+                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
+                    st.Stop();
+                    Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
                     StandardRBVHEvaluationReport(build, cost, output);
                 };
             }

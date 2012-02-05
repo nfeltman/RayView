@@ -24,6 +24,10 @@ namespace RayVisualizer.Common
         {
             return _root.Accept(visitor);
         }
+        public Ret Accept<Ret, TParam>(NodeVisitor<Ret, TParam, RBVH2Branch, RBVH2Leaf> visitor, TParam param)
+        {
+            return _root.Accept(visitor, param);
+        }
         public void PrefixEnumerate(Action<RBVH2Branch> forBranch, Action<RBVH2Leaf> forLeaf)
         {
             _root.PrefixEnumerate(forBranch, forLeaf);

@@ -96,6 +96,7 @@
     <Compile Include="Builders\BVHSplitEvaluator.cs" />
     <Compile Include="BVH2\BVHTraverser\RayOrderBoxTestCounter.cs" />
     <Compile Include="Builders\AASplit.cs" />
+    <Compile Include="Pool.cs" />
     <Compile Include="Primitives\Box3.cs" />
     <Compile Include="BVH2\BVH2.cs" />
     <Compile Include="BVH2\BVH2Visitors\CollectTrianglesVisitor.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />
     <Compile Include="Builders\GeneralBVH2Builder.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCompiler.cs" />
+    <Compile Include="RBVH2\FastFullCostMeasure.cs" />
     <Compile Include="RBVH2\FullCostMeasure.cs" />
     <Compile Include="RBVH2\OracleCost.cs" />
     <Compile Include="RBVH2\RBVH2.cs" />

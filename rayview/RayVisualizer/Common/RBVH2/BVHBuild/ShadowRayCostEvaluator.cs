@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator : TransitionlessEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, float, int>
+    public class ShadowRayCostEvaluator : BVHSplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, float, float, ShadowRayCostEvaluator.ShadowRayShuffleState, int>
     {
         private Segment3[] _connected;
         private CompiledShadowRay[] _broken;
@@ -18,7 +18,7 @@ namespace RayVisualizer.Common
             _broken = res.Broken;
         }
 
-        public override ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, ShadowRayShuffleState parentState)
+        public ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, ShadowRayShuffleState parentState)
         {
             // filter "connected" buffer
             int connectedPart = BuildTools.SweepPartition(_connected, 0, parentState.connectedMax, seg => objectBounds.DoesIntersectSegment(seg.Origin, seg.Difference));
@@ -46,7 +46,7 @@ namespace RayVisualizer.Common
                 bt => (bt.index >= startTri && bt.index < endTri));
         }
 
-        public override EvalResult<float> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
+        public EvalResult<float> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
         {
             int left_sure_traversal = 0;
             int right_sure_traversal = 0;
@@ -116,7 +116,12 @@ namespace RayVisualizer.Common
             HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
         }
 
-        public override ShadowRayCostEvaluator.ShadowRayShuffleState GetDefault()
+        public BuildReport<ShadowRayCostEvaluator.ShadowRayShuffleState, float> FinishEvaluations(EvalResult<float> selected, ShadowRayCostEvaluator.ShadowRayShuffleState currentState)
+        {
+            return new BuildReport<ShadowRayShuffleState, float>(selected.Data, currentState, currentState);
+        }
+
+        public ShadowRayCostEvaluator.ShadowRayShuffleState GetDefault()
         {
             return new ShadowRayShuffleState(_broken.Length, _connected.Length);
         }

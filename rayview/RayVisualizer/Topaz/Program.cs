@@ -42,21 +42,26 @@ namespace Topaz
             }
             else if (command.Equals("-runexp"))
             {
-                if (args.Length != 5)
+                var dict = ParseCommandOptions(args, 1);
+                if (!dict.HasOne("-build") || !dict.ContainsKey("-eval") || dict["-eval"].Count == 0 || !dict.HasOne("-scene") || !dict.HasOne("-buildrays") || !dict.HasOne("-evalrays") || !dict.HasOne("-o"))
                 {
-                    Console.WriteLine("Usage: topaz -runexp <method> <triangle source file> <ray source file> <output file>");
+                    Console.WriteLine("Usage: topaz -runexp -build <build method> -eval method_1[ method_k]* -scene <triangle source file> -buildrays <build ray source file> -evalrays <eval ray source file> -o <output file> ");
                     return;
                 }
-                Action<BuildTriangle[], RaySet, StreamWriter> method = GetMethod(args[1]);
-                Func<BuildTriangle[]> tris = GetBuildTrianglesForBuild(args[2]);
-                Func<RaySet> rays = GetRaysForBuild(args[3]);
-                Func<FileStream> output = GetFileWriteStream(args[4]);
-                if (method == null || tris == null || rays == null || output == null) return;
+                Func<BuildTriangle[], RaySet, StreamWriter, RBVH2> build = GetBuildMethod(dict["-build"][0]);
+                Func<BuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
+                Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
+                Func<RaySet> evalrays = GetRaysFromFile(dict["-evalrays"][0]);
+                Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
+                Action<RBVH2, RaySet, StreamWriter>[] evalMethods = dict["eval"].Select(GetEvalMethod).ToArray();
+                if (build == null || tris == null || buildrays == null || evalrays == null || output == null) return;
+                foreach (var method in evalMethods) if (method == null) return;
                 FileStream fileout = output();
                 using (fileout)
                 {
                     StreamWriter writer = new StreamWriter(fileout);
-                    method(tris(), rays(), writer);
+                    RBVH2 bvh = build(tris(), buildrays(), writer);
+                    foreach (var method in evalMethods) method(bvh, evalrays(), writer);
                     writer.Flush();
                 }
             }
@@ -67,44 +72,37 @@ namespace Topaz
             // Console.WriteLine("Topaz Done.");
         }
 
-        private static Action<BuildTriangle[], RaySet, StreamWriter> GetMethod(string method)
+        private static bool HasOne<T,U>(this Dictionary<T, IList<U>> dict, T command)
         {
-            if (method.ToLower().Equals("bal50"))
+            return dict.ContainsKey(command) && dict[command].Count == 1;
+        }
+
+        private static Func<BuildTriangle[], RaySet, StreamWriter, RBVH2> GetBuildMethod(string method)
+        {
+            if (method.ToLower().Equals("bal"))
             {
                 return (tris, rays, output) =>
                 {
+                    Stopwatch st = new Stopwatch();
                     Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
-                    Console.Write("Starting build... ");
+                    Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY);
-                    Console.WriteLine("done.");
-
-                    Stopwatch st = new Stopwatch();
-                    Console.Write("Starting evaluation... ");
-                    st.Start();
-                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
-                    st.Stop();
-                    Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    StandardRBVHEvaluationReport(build, cost, output);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    return build;
                 };
             }
-            else if (method.ToLower().Equals("sah50"))
+            else if (method.ToLower().Equals("sah"))
             {
                 return (tris, rays, output) =>
                 {
-                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
-                    Console.Write("Starting build... ");
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
-                    Console.WriteLine("done.");
-
                     Stopwatch st = new Stopwatch();
-                    Console.Write("Starting evaluation... ");
-                    st.Start();
-                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
-                    st.Stop();
-                    Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    StandardRBVHEvaluationReport(build, cost, output);
+                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    Console.Write("Starting build... "); st.Start();
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    return build;
                 };
-            }
+            }/*
             else if (method.ToLower().Equals("rtsah"))
             {
                 return (tris, rays, output) => {
@@ -117,34 +115,63 @@ namespace Topaz
                 {
                     output.WriteLine("% Nothing here Yet!");
                 };
-            }
+            }*/
             else if (method.ToLower().Equals("srdh"))
             {
                 return (tris, rays, output) =>
                 {
-                    output.WriteLine("% Nothing here Yet!");/*
+                    Stopwatch st = new Stopwatch();
+                    Console.Write("Starting helper build... "); st.Start();
                     BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, CountAggregator.ONLY, 4, true);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.Write("Starting ray compilation... "); st.Reset(); st.Start();
                     ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays, initialBuild);
-                    RBVH2 build = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));*/
-                };
-            }
-            else if (method.ToLower().Equals("oraclesah"))
-            {
-                return (tris, rays, output) =>
-                {
-                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
-                    Console.Write("Starting build... ");
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
-                    Console.WriteLine("done.");
-                    Console.Write("Starting evaluation... ");
-                    TraceCost cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    Console.WriteLine("done.");
-                    StandardRBVHEvaluationReport(build, cost, output);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.Write("Starting main build... "); st.Reset(); st.Start();
+                    RBVH2 build = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    
+                    return build;
                 };
             }
             else
             {
                 Console.WriteLine("Method \'{0}\' not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
+                return null;
+            }
+        }
+
+        private static Action<RBVH2, RaySet, StreamWriter> GetEvalMethod(string method)
+        {
+            if (method.ToLower().Equals("pq"))
+            {
+                return (build, rays, output) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.Write("Starting standard evaluation... "); st.Start();
+                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    output.WriteLine("\n% PQ-traversal");
+                    StandardRBVHEvaluationReport(build, cost, output);
+                };
+            }
+            else if (method.ToLower().Equals("oracle"))
+            {
+                return (build, rays, output) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.Write("Starting oracle evaluation... "); st.Reset(); st.Start();
+                    TraceCost cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    output.WriteLine("% Oracle traversal");
+                    StandardRBVHEvaluationReport(build, cost, output);
+                };
+            }
+            else
+            {
+                Console.WriteLine("Unrecognized evaluation method \"{0}\".  Acceptible: pq, oracle", method);
                 return null;
             }
         }
@@ -186,7 +213,7 @@ namespace Topaz
             }
         }
 
-        private static Func<RaySet> GetRaysForBuild(string filename)
+        private static Func<RaySet> GetRaysFromFile(string filename)
         {
             if (filename.ToLower().EndsWith(".ray"))
             {
@@ -221,6 +248,26 @@ namespace Topaz
             }
              */
             return () => File.OpenWrite(filename);
+        }
+
+        private static Dictionary<string, IList<string>> ParseCommandOptions(string[] args, int startAt)
+        {
+            Dictionary<string, IList<string>> dict = new Dictionary<string, IList<string>>();
+            int k = startAt;
+            while ( k < args.Length)
+            {
+                string option = args[k];
+                List<string> rest = new List<string>();
+                for (int j = k+1; j < args.Length && !args[j].StartsWith("-"); j++)
+                {
+                    rest.Add(args[j]);
+                    k++;
+                }
+                dict[option] = rest;
+                k++;
+            }
+
+            return dict;
         }
     }
 }

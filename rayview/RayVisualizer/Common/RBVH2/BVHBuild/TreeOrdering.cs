@@ -48,5 +48,16 @@ namespace RayVisualizer.Common
             // calculate the proportion of uniform rays intersecting the parent box which intersect both children.
             return 0f;
         }
+
+        // calculate the proportion of radiance from the surface of source that intersects sink
+        private static float CalculateFormFactor(Box3 source, Box3 sink)
+        {
+            return 0f;
+        }
+
+        private static float OpposingFormFactor(ClosedInterval source_d1, ClosedInterval source_d2, ClosedInterval sink_d1, ClosedInterval sink_d2)
+        {
+            return 0f;
+        }
     }
 }

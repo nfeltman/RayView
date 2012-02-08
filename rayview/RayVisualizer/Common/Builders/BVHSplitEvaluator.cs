@@ -10,11 +10,11 @@ namespace RayVisualizer.Common
         EvalResult<MemoData> EvaluateSplit(Aggregate leftAgg, Box3 leftBox, Aggregate rightAgg, Box3 rightBox, StackState state, Func<BuildTriangle, bool> leftFilter);
     }
 
-    public interface BVHSplitEvaluator<StackState, MemoData, BranchData, EntranceData, Aggregate> : BVHSplitEvaluator<StackState, MemoData, Aggregate>
+    public interface BVHSplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : BVHSplitEvaluator<StackState, MemoData, Aggregate>
     {
-        EntranceData GetDefault();
-        StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, EntranceData parentState);
-        BuildReport<EntranceData, BranchData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
+        TransitionData GetDefault();
+        StackState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, TransitionData parentState);
+        BuildReport<TransitionData, BranchData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
         //ExitData EndBothChildren(ExitData firstChildsExit, ExitData secondChildsExit);
         //ExitData GetLeafExit();
     }
@@ -43,12 +43,12 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class BuildReport<EntranceData, BranchData>
+    public class BuildReport<TransitionData, BranchData>
     {
-        public EntranceData LeftTransition { get; set; }
-        public EntranceData RightTransition { get; set; }
+        public TransitionData LeftTransition { get; set; }
+        public TransitionData RightTransition { get; set; }
         public BranchData BranchBuildData { get; set; }
-        public BuildReport(BranchData branchBuildData, EntranceData leftTransition, EntranceData rightTransition)
+        public BuildReport(BranchData branchBuildData, TransitionData leftTransition, TransitionData rightTransition)
         {
             BranchBuildData = branchBuildData;
             LeftTransition = leftTransition;

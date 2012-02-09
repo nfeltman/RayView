@@ -53,7 +53,7 @@ namespace RayVisualizer.Common
             float x = _xRange.Size;
             float y = _yRange.Size;
             float z = _zRange.Size;
-            _surfaceArea = 2 * (x * y + y * z + z * x);
+            _surfaceArea = _xRange.IsEmpty || _yRange.IsEmpty || _zRange.IsEmpty ? 0 : 2 * (x * y + y * z + z * x);
         }
 
         public Box3(ClosedInterval xRange, ClosedInterval yRange, ClosedInterval zRange)
@@ -65,7 +65,7 @@ namespace RayVisualizer.Common
             float x = _xRange.Size;
             float y = _yRange.Size;
             float z = _zRange.Size;
-            _surfaceArea = 2 * (x * y + y * z + z * x);
+            _surfaceArea = _xRange.IsEmpty || _yRange.IsEmpty || _zRange.IsEmpty ? 0 : 2 * (x * y + y * z + z * x);
         }
 
         public CVector3 GetCenter()
@@ -267,6 +267,11 @@ namespace RayVisualizer.Common
         public static Box3 operator |(Box3 a, Box3 b)
         {
             return new Box3(a._xRange | b._xRange, a._yRange | b._yRange, a._zRange | b._zRange);
+        }
+
+        public static Box3 operator &(Box3 a, Box3 b)
+        {
+            return new Box3(a._xRange & b._xRange, a._yRange & b._yRange, a._zRange & b._zRange);
         }
 
         public static Box3 operator |(Box3 a, CVector3 b)

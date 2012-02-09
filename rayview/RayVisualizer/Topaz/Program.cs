@@ -37,7 +37,8 @@ namespace Topaz
             {
                 Console.WriteLine("Commands: \n{0}",
                     "-h Display this help.",
-                    "-runexp Run an experiment."
+                    "-runexp Run an experiment.",
+                    "-testunif Test uniform box code."
                     );
             }
             else if (command.Equals("-runexp"))
@@ -53,7 +54,7 @@ namespace Topaz
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<RaySet> evalrays = GetRaysFromFile(dict["-evalrays"][0]);
                 Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
-                Action<RBVH2, RaySet, StreamWriter>[] evalMethods = dict["eval"].Select(GetEvalMethod).ToArray();
+                Action<RBVH2, RaySet, StreamWriter>[] evalMethods = dict["-eval"].Select(GetEvalMethod).ToArray();
                 if (build == null || tris == null || buildrays == null || evalrays == null || output == null) return;
                 foreach (var method in evalMethods) if (method == null) return;
                 FileStream fileout = output();
@@ -61,9 +62,14 @@ namespace Topaz
                 {
                     StreamWriter writer = new StreamWriter(fileout);
                     RBVH2 bvh = build(tris(), buildrays(), writer);
-                    foreach (var method in evalMethods) method(bvh, evalrays(), writer);
+                    RaySet eval_rays = evalrays();
+                    foreach (var method in evalMethods) method(bvh, eval_rays, writer);
                     writer.Flush();
                 }
+            }
+            else if (command.Equals("-testunif"))
+            {
+                TestAnalyticUniformFunctions();
             }
             else
             {
@@ -79,7 +85,7 @@ namespace Topaz
 
         private static Func<BuildTriangle[], RaySet, StreamWriter, RBVH2> GetBuildMethod(string method)
         {
-            if (method.ToLower().Equals("bal"))
+            if (method.ToLower().Equals("bal50"))
             {
                 return (tris, rays, output) =>
                 {
@@ -91,7 +97,7 @@ namespace Topaz
                     return build;
                 };
             }
-            else if (method.ToLower().Equals("sah"))
+            else if (method.ToLower().Equals("sah50"))
             {
                 return (tris, rays, output) =>
                 {
@@ -102,13 +108,18 @@ namespace Topaz
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
-            }/*
+            }
             else if (method.ToLower().Equals("rtsah"))
             {
                 return (tris, rays, output) => {
-                    output.WriteLine("% Nothing here Yet!");
+                    Stopwatch st = new Stopwatch();
+                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    Console.Write("Starting build... "); st.Start();
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    return TreeOrdering.ApplyRTSAHOrdering(build);
                 };
-            }
+            }/*
             else if (method.ToLower().Equals("ordsah"))
             {
                 return (tris, rays, output) =>
@@ -138,7 +149,7 @@ namespace Topaz
             }
             else
             {
-                Console.WriteLine("Method \'{0}\' not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
+                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
                 return null;
             }
         }
@@ -165,7 +176,7 @@ namespace Topaz
                     Console.Write("Starting oracle evaluation... "); st.Reset(); st.Start();
                     TraceCost cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    output.WriteLine("% Oracle traversal");
+                    output.WriteLine("\n% Oracle traversal");
                     StandardRBVHEvaluationReport(build, cost, output);
                 };
             }
@@ -268,6 +279,84 @@ namespace Topaz
             }
 
             return dict;
+        }
+
+        private static void TestAnalyticUniformFunctions()
+        {
+            Random r = new Random(971297);
+            int testSize = 2000000;
+
+            for (int j = 0; j < 1000; j++)
+            {
+                Console.WriteLine(j);
+                ClosedInterval range = new ClosedInterval(0, 100);
+                float x1 = range.UniformSample(r), x2 = range.UniformSample(r);
+                float y1 = range.UniformSample(r), y2 = range.UniformSample(r);
+                float z1 = range.UniformSample(r), z2 = range.UniformSample(r);
+                Box3 parent = new Box3(Math.Min(x1, x2), Math.Max(x1, x2), Math.Min(y1, y2), Math.Max(y1, y2), Math.Min(z1, z2), Math.Max(z1, z2));
+                x1 = parent.XRange.UniformSample(r); x2 = parent.XRange.UniformSample(r);
+                y1 = parent.YRange.UniformSample(r); y2 = parent.YRange.UniformSample(r);
+                z1 = parent.ZRange.UniformSample(r); z2 = parent.ZRange.UniformSample(r);
+                Box3 left = new Box3(Math.Min(x1, x2), Math.Max(x1, x2), Math.Min(y1, y2), Math.Max(y1, y2), Math.Min(z1, z2), Math.Max(z1, z2));
+                x1 = parent.XRange.UniformSample(r); x2 = parent.XRange.UniformSample(r);
+                y1 = parent.YRange.UniformSample(r); y2 = parent.YRange.UniformSample(r);
+                z1 = parent.ZRange.UniformSample(r); z2 = parent.ZRange.UniformSample(r);
+                Box3 right = new Box3(Math.Min(x1, x2), Math.Max(x1, x2), Math.Min(y1, y2), Math.Max(y1, y2), Math.Min(z1, z2), Math.Max(z1, z2));
+                //Box3 parent = new Box3(-100, 100, -100, 200, 0, 200);
+                //Box3 left = new Box3(35f, 40f, 10f, 90f, 10f, 90f);
+                //Box3 right = new Box3(10f, 70f, 40f, 45f, 30f, 70f);
+                IntersectionReport est = UniformRays.GetReport(parent, left, right);
+                IntersectionReport mea = new IntersectionReport(0, 0, 0, 0, 0, 0);
+                for (int k = 0; k < testSize; k++)
+                {
+                    Ray3 ray = UniformRays.RandomInternalRay(parent, r);
+                    bool hitsLeft = left.DoesIntersectRay(ray.Origin, ray.Direction);
+                    bool hitsRight = right.DoesIntersectRay(ray.Origin, ray.Direction);
+                    if (hitsLeft)
+                    {
+                        mea.Left++;
+                        if (hitsRight)
+                        {
+                            mea.Right++;
+                            mea.Both++;
+                        }
+                        else
+                        {
+                            mea.JustLeft++;
+                        }
+                    }
+                    else
+                    {
+                        if (hitsRight)
+                        {
+                            mea.Right++;
+                            mea.JustRight++;
+                        }
+                        else
+                        {
+                            mea.Neither++;
+                        }
+                    }
+                }
+                float threshold = 0.002f;
+                if (mea.Left / testSize - est.Left > threshold
+                    || mea.Right / testSize - est.Right > threshold
+                    || mea.JustLeft / testSize - est.JustLeft > threshold
+                    || mea.JustRight / testSize - est.JustRight > threshold
+                    || mea.Both / testSize - est.Both > threshold
+                    || mea.Neither / testSize - est.Neither > threshold)
+                {
+                    Console.WriteLine("+++ {0}\n -> {1}\n -> {2}", parent, left, right);
+                    Console.WriteLine("      Left: {0:0.00000} - {1:0.00000} = {2}", mea.Left / testSize, est.Left, mea.Left / testSize - est.Left);
+                    Console.WriteLine("     Right: {0:0.00000} - {1:0.00000} = {2}", mea.Right / testSize, est.Right, mea.Right / testSize - est.Right);
+                    Console.WriteLine(" Just Left: {0:0.00000} - {1:0.00000} = {2}", mea.JustLeft / testSize, est.JustLeft, mea.JustLeft / testSize - est.JustLeft);
+                    Console.WriteLine("Just Right: {0:0.00000} - {1:0.00000} = {2}", mea.JustRight / testSize, est.JustRight, mea.JustRight / testSize - est.JustRight);
+                    Console.WriteLine("      Both: {0:0.00000} - {1:0.00000} = {2}", mea.Both / testSize, est.Both, mea.Both / testSize - est.Both);
+                    Console.WriteLine("   Neither: {0:0.00000} - {1:0.00000} = {2}", mea.Neither / testSize, est.Neither, mea.Neither / testSize - est.Neither);
+                    Console.WriteLine("===================================");
+                }
+            }
+            Console.ReadLine();
         }
     }
 }

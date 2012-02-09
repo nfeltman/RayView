@@ -7,57 +7,53 @@ namespace RayVisualizer.Common
 {
     public class TreeOrdering
     {
-        public static void ApplyRTSAHOrdering(RBVH2 tree)
+        public static RBVH2 ApplyRTSAHOrdering(RBVH2 tree)
         {
-            tree.RollUp(
+            return new RBVH2(tree.RollUp(
                 (br, left, right) =>
                 {
-                    float P_lr = PierceBoth(br.BBox, left.Box, right.Box);
-                    float P_jl = left.Box.SurfaceArea / br.BBox.SurfaceArea - P_lr;
-                    float P_jr = right.Box.SurfaceArea / br.BBox.SurfaceArea - P_lr;
-                    float P_e = 1 - P_lr - P_jl - P_jr;
-                    float V = P_jl * left.V + P_jr * right.V + P_lr * left.V * right.V + P_e;
+                    IntersectionReport rep = UniformRays.GetReport(br.BBox, left.Box, right.Box);
+
+                    float V = rep.JustLeft * left.V + rep.JustRight * right.V + rep.Both * left.V * right.V + rep.Neither;
                     float C_leftFirst = left.C + left.V * right.C;
                     float C_rightFirst = right.C + right.V * left.C;
-                    br.PLeft = C_leftFirst < C_rightFirst ? 1f : 0f; // go left first if the left cost is lower
-                    float C = 1f + P_jl * left.C + P_jr * right.C + Math.Min(C_leftFirst, C_rightFirst);
-                    return new VisibilityRollUp(V, C, br.BBox); 
+                    float C = 1f + rep.JustLeft * left.C + rep.JustRight * right.C + Math.Min(C_leftFirst, C_rightFirst);
+                    return new VisibilityRollUp(V, C, br.BBox, new Branch<RBVH2Branch, RBVH2Leaf>(left.Tree, right.Tree,
+                        new RBVH2Branch()
+                        {
+                            BBox = br.BBox,
+                            Depth = br.Depth,
+                            ID = br.ID,
+                            PLeft = C_leftFirst < C_rightFirst ? 1f : 0f // go left first if the left cost is lower
+                        }));
                 },
                 le => 
                 {
-                    return new VisibilityRollUp(le.Primitives.Length > 0 ? 0.0f : 1.0f, 1.0f, le.BBox); 
-                });
+                    return new VisibilityRollUp(le.Primitives.Length > 0 ? 0.0f : 1.0f, 1.0f, le.BBox, new Leaf<RBVH2Branch, RBVH2Leaf>(
+                        new RBVH2Leaf() {
+                            BBox = le.BBox,
+                            Depth = le.Depth,
+                            ID = le.ID,
+                            Primitives = le.Primitives.ToArray()
+                        })); 
+                }).Tree, tree.NumBranch);
         }
 
-        private struct VisibilityRollUp
+        private class VisibilityRollUp
         {
             public float V;
             public float C;
             public Box3 Box;
-            public VisibilityRollUp(float v, float c, Box3 box)
+            public TreeNode<RBVH2Branch, RBVH2Leaf> Tree;
+            public VisibilityRollUp(float v, float c, Box3 box, TreeNode<RBVH2Branch, RBVH2Leaf> tree)
             {
                 V = v;
                 C = c;
                 Box = box;
+                Tree = tree;
             }
         }
 
-        private static float PierceBoth(Box3 parent, Box3 left, Box3 right)
-        {
-            // TODO: Fill this in.  It's nasty.  Maybe look at Thiago's implementation.
-            // calculate the proportion of uniform rays intersecting the parent box which intersect both children.
-            return 0f;
-        }
-
-        // calculate the proportion of radiance from the surface of source that intersects sink
-        private static float CalculateFormFactor(Box3 source, Box3 sink)
-        {
-            return 0f;
-        }
-
-        private static float OpposingFormFactor(ClosedInterval source_d1, ClosedInterval source_d2, ClosedInterval sink_d1, ClosedInterval sink_d2)
-        {
-            return 0f;
-        }
+        
     }
 }

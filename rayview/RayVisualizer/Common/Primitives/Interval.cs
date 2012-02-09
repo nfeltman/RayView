@@ -14,7 +14,7 @@ namespace RayVisualizer.Common
         public static readonly ClosedInterval NEGATIVES = new ClosedInterval(float.NegativeInfinity, 0);
         public float Min { get { return _min; } }
         public float Max { get { return _max; } }
-        public float Size { get { return _min > _max ? 0 : (_max - _min); } }
+        public float Size { get { return _min >= _max ? 0 : (_max - _min); } }
         public bool IsEmpty { get { return _min > _max; } }
 
         public ClosedInterval(float min, float max)
@@ -26,6 +26,31 @@ namespace RayVisualizer.Common
         public bool Contains(float val)
         {
             return val >= _min && val <= _max;
+        }
+
+        // x is in the GreaterSpace of T if x if greater than every point in T
+        public ClosedInterval GreaterSpace()
+        {
+            if(IsEmpty)
+                return ALL;
+            if(_max == float.PositiveInfinity)
+                return EMPTY;
+            return new ClosedInterval(_max, float.PositiveInfinity);
+        }
+
+        public float UniformSample(Random r)
+        {
+            return (float)((_max - _min) * r.NextDouble() + _min);
+        }
+
+        // x is in the LesserSpace of T if x if greater than every point in T
+        public ClosedInterval LesserSpace()
+        {
+            if (IsEmpty)
+                return ALL;
+            if (_min == float.NegativeInfinity)
+                return EMPTY;
+            return new ClosedInterval(float.NegativeInfinity, _min);
         }
 
         public static ClosedInterval operator &(ClosedInterval i1, ClosedInterval i2)

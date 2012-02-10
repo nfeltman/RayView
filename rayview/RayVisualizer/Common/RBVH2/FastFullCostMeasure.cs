@@ -17,23 +17,16 @@ namespace RayVisualizer.Common
             bool[] subMask = MaskPool.GetItem();
             Array.Clear(subMask, 0, NumRays);
 
-            int tests = 0;
             int passes = 0;
-            bool hitAll = true;
             for (int k = 0; k < NumRays; k++)
             {
                 if (mask[k])
                 {
-                    tests++;
                    // Console.WriteLine("{0} {1}", branch.Content.BBox, ShadowRays[k]==null);
                     if (branch.Content.BBox.DoesIntersectSegment(ShadowRays[k].Origin, ShadowRays[k].Difference))
                     {
                         subMask[k] = true;
                         passes++;
-                    }
-                    else
-                    {
-                        hitAll = false;
                     }
                 }
             }
@@ -46,7 +39,7 @@ namespace RayVisualizer.Common
                 {
                     results[k] = mask[k] ? new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0))) : new TraceResult();
                 }
-                return new WideTraceResult(tests == 0, results);
+                return new WideTraceResult(results);
             }
 
             if (branch.Content.PLeft == 1 || branch.Content.PLeft == 0)
@@ -55,29 +48,35 @@ namespace RayVisualizer.Common
                 TreeNode<RBVH2Branch, RBVH2Leaf> first = leftFirst ? branch.Left : branch.Right;
                 TreeNode<RBVH2Branch, RBVH2Leaf> second = leftFirst ? branch.Right : branch.Left;
                 WideTraceResult firstResult = first.Accept(this, subMask);
-                if (firstResult.AllHit) // all hits on the first node, so we don't need to test the second node
+                bool allHit = true;
+                for (int k = 0; k < NumRays; k++)
+                    if (mask[k] && !firstResult.Results[k].Hits)
+                    {
+                        allHit = false; break;
+                    }
+                if (allHit) // all hits on the first node, so we don't need to test the second node
                 {
                     MaskPool.ReturnItem(ref subMask);
                     for (int k = 0; k < NumRays; k++)
                         if (mask[k]) firstResult.Results[k].Cost.BBoxTests.ExpectedValue += 1.0;
-                    return new WideTraceResult(firstResult.AllHit && hitAll, firstResult.Results);
+                    return new WideTraceResult(firstResult.Results);
                 }
                 for (int k = 0; k < NumRays; k++)
                     if (subMask[k] && firstResult.Results[k].Hits) subMask[k] = false; // if we hit on the first child, don't traverse with it on the second child
                 WideTraceResult secondResult = second.Accept(this, subMask);
                 for (int k = 0; k < NumRays; k++)
                 {
-                    if (secondResult.Results[k].Hits)
+                    if (subMask[k])
                     {
-                        firstResult.Results[k].Hits = true;
-                        firstResult.Results[k].Cost = secondResult.Results[k].Cost;
+                        firstResult.Results[k].Hits = secondResult.Results[k].Hits;
+                        firstResult.Results[k].Cost = firstResult.Results[k].Cost + secondResult.Results[k].Cost;
                     }
                     if (mask[k])
                         firstResult.Results[k].Cost.BBoxTests.ExpectedValue += 1.0;
                 }
                 ResultPool.ReturnItem(ref secondResult.Results);
                 MaskPool.ReturnItem(ref subMask);
-                return new WideTraceResult(secondResult.AllHit && hitAll, firstResult.Results);
+                return new WideTraceResult(firstResult.Results);
             }
             else
             {
@@ -103,7 +102,6 @@ namespace RayVisualizer.Common
                             }
                             else
                             {
-                                hitAll = false;
                                 leftResult.Results[k].Cost = both;
                             }
                         }
@@ -113,14 +111,13 @@ namespace RayVisualizer.Common
                 }
                 ResultPool.ReturnItem(ref rightResult.Results);
                 MaskPool.ReturnItem(ref subMask);
-                return new WideTraceResult(hitAll, leftResult.Results);
+                return new WideTraceResult(leftResult.Results);
             }
         }
 
         public WideTraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf, bool[] mask)
         {
             Triangle[] prims = leaf.Content.Primitives;
-            bool hitAll = true;
             TraceResult[] results = ResultPool.GetItem();
             for (int j = 0; j < NumRays; j++)
             {
@@ -137,10 +134,6 @@ namespace RayVisualizer.Common
                             k++;
                         }
                         results[j] = new TraceResult(k != prims.Length, new TraceCost(1, 0, primtests, 0));
-                        if (k == prims.Length)
-                        {
-                            hitAll = false;
-                        }
                     }
                     else
                     {
@@ -153,7 +146,7 @@ namespace RayVisualizer.Common
                 }
             }
 
-            return new WideTraceResult(hitAll, results);
+            return new WideTraceResult(results);
         }
 
         public static TraceCost GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows, int ray_width)
@@ -196,12 +189,10 @@ namespace RayVisualizer.Common
 
     public class WideTraceResult
     {
-        public bool AllHit;
         public TraceResult[] Results;
 
-        public WideTraceResult(bool allHit, TraceResult[] results)
+        public WideTraceResult(TraceResult[] results)
         {
-            AllHit = allHit;
             Results = results;
         }
     }

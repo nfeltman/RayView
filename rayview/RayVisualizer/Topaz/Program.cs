@@ -164,8 +164,13 @@ namespace Topaz
                     Console.Write("Starting standard evaluation... "); st.Start();
                     TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    output.WriteLine("\n% PQ-traversal");
+                    Console.Write("Starting slow standard evaluation... "); st.Reset(); st.Start();
+                    TraceCost cost2 = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
+                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    output.WriteLine("\n% PQ-traversal (fast)");
                     StandardRBVHEvaluationReport(build, cost, output);
+                    output.WriteLine("\n% PQ-traversal (slow)");
+                    StandardRBVHEvaluationReport(build, cost2, output);
                 };
             }
             else if (method.ToLower().Equals("oracle"))

@@ -13,11 +13,17 @@ namespace RayVisualizer.Common
             float P_r = right.SurfaceArea / psa;
             float P_l = left.SurfaceArea / psa;
             float P_lr  = (CalculateExternalFormFactor(left, right) + (left & right).SurfaceArea) / psa;
-            float P_lr2 = (CalculateExternalFormFactor(right, left) + (left & right).SurfaceArea) / psa;
+            //float P_lr2 = (CalculateExternalFormFactor(right, left) + (left & right).SurfaceArea) / psa;
+            //if (Math.Abs(P_lr - P_lr2) > .0001) throw new Exception("Internal error!");
             float P_jl = P_l - P_lr;
             float P_jr = P_r - P_lr;
             float P_e = 1 - P_lr - P_jl - P_jr;
-
+            /*
+            if (float.IsNaN(P_e))
+            {
+                Console.WriteLine("+++ {0}\n -> {1}\n -> {2}", parent, left, right);
+                Console.WriteLine("P_jl: {1}, P_jr: {2}, P_lr: {3}, P_e: {4} ", 0, P_jl, P_jr, P_lr, P_e);
+            }*/
             return new IntersectionReport(P_l, P_r, P_jl, P_jr, P_lr, P_e);
         }
 
@@ -82,7 +88,7 @@ namespace RayVisualizer.Common
                             // this is fairly straight forward math; I don't think I need to explain anything
                             // that was a joke; see (http://dasan.sejong.ac.kr/~aschoi/Lab/s-07.pdf)
                             float y = k4 == 0 ? sink_d2.Min : sink_d2.Max;
-
+                            //if (z == 0) Console.WriteLine("z is 0");
                             float a = (x - u) / z;
                             float b = (y - v) / z;
                             double sa = Math.Sqrt(1 + a * a);
@@ -103,7 +109,6 @@ namespace RayVisualizer.Common
         private static float PerpendicularFormFactor(float source_d1, ClosedInterval source_d2, ClosedInterval source_d3, ClosedInterval sink_d1, float sink_d2, ClosedInterval sink_d3)
         {
             //Console.WriteLine("{0} {1} {2} {3} {4} {5}", source_d1, source_d2, source_d3, sink_d1, sink_d2, sink_d3);
-            // I think I only need to check this one
             if (source_d2.Size == 0 || source_d3.Size == 0 || sink_d1.Size == 0 || sink_d3.Size == 0) return 0f;
             double F = 0;
             for (int k1 = 0; k1 <= 1; k1++)
@@ -123,10 +128,14 @@ namespace RayVisualizer.Common
                             float a = (y - v);
                             float b = (source_d1 - z);
                             float c = (x - sink_d2);
-                            double s = Math.Sqrt(c * c + b * b);
-                            double G = a * s * Math.Atan(a / s) + (a * a - b * b - c * c) * Math.Log(a * a + b * b + c * c) / 4;
-                            int sign = ((k1 + k2 + k3 + k4) & 1) == 0 ? 1 : -1;
-                            F += G * sign;
+                            if (a != 0 || b != 0 || c != 0)
+                            {
+                                double s = Math.Sqrt(c * c + b * b);
+                                double G = a * s * Math.Atan2(a, s) + (a * a - b * b - c * c) * Math.Log(a * a + b * b + c * c) / 4;
+                                int sign = ((k1 + k2 + k3 + k4) & 1) == 0 ? 1 : -1;
+                                //if (double.IsNaN(G)) Console.WriteLine("problem here: a = {0}, s = {1}, L = {2}, atan2 = {3}", a, s, a * a + b * b + c * c, Math.Atan2(a, s));
+                                F += G * sign;
+                            }
                         }
                     }
                 }

@@ -31,6 +31,9 @@ obj/
 [Dd]ebug*/
 [Rr]elease*/
 Ankh.NoLoad
+*.pidb
+*.config
+*.userprefs
 
 #Tooling
 _ReSharper*/

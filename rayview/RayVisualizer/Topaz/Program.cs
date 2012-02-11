@@ -90,7 +90,7 @@ namespace Topaz
                 return (tris, rays, output) =>
                 {
                     Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    //Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
@@ -103,7 +103,7 @@ namespace Topaz
                 return (tris, rays, output) =>
                 {
                     Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    //Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
@@ -115,7 +115,7 @@ namespace Topaz
             {
                 return (tris, rays, output) => {
                     Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
+                    //Console.WriteLine("Scene loaded: {0} triangles and {1} rays", tris.Length, "?");
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);

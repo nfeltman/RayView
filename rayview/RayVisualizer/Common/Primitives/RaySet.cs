@@ -32,9 +32,9 @@ namespace RayVisualizer.Common
             return new FilterSet() { r1 = this, castHitFilter = castHitFilter, castMissFilter = castMissFilter, shadowFilter = null };
         }
 
-        public RaySet CastOnlyFilter(Func<CastQuery, int, bool> castHitFilter)
+        public RaySet CastOnlyFilter(Func<CastQuery, int, bool> castFilter)
         {
-            return new FilterSet() { r1 = this, castHitFilter = castHitFilter, castMissFilter = castHitFilter, shadowFilter = null };
+            return new FilterSet() { r1 = this, castHitFilter = (Func<CastHitQuery, int, bool>)castFilter, castMissFilter = (Func<CastMissQuery, int, bool>)castFilter, shadowFilter = null };
         }
 
         public SimpleRaySet FlattenAndCopy()

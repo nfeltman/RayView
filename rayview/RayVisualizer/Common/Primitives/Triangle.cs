@@ -39,5 +39,11 @@ namespace RayVisualizer.Common
                         
             return t;
         }
+
+        public bool IntersectsSegment(CVector3 origin, CVector3 difference)
+        {
+            float res = IntersectRay(origin, difference);
+            return !float.IsNaN(res) && res < 1;
+        }
     }
 }

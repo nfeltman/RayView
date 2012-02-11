@@ -5,62 +5,94 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class OracleCost : NodeVisitor<TraceResult, RBVH2Branch, RBVH2Leaf>
+    public class OracleCost
     {
-        public Segment3 ShadowRay { get; set; }
-
-        public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
+        private class InternalVisitor : NodeVisitor<TraceResult, RBVH2Branch, RBVH2Leaf>
         {
-            if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
+            public Segment3 ShadowRay { get; set; }
 
-            TraceResult left = branch.Left.Accept(this);
-            TraceResult right = branch.Right.Accept(this);
+            public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
+            {
+                if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
+                    return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
 
-            TraceResult res;
-            if (left.Hits && right.Hits)
-            {
-                res = left.Cost.BBoxTests.ExpectedValue < right.Cost.BBoxTests.ExpectedValue ? left : right;
+                TraceResult left = branch.Left.Accept(this);
+                TraceResult right = branch.Right.Accept(this);
+
+                TraceResult res;
+                if (left.Hits && right.Hits)
+                {
+                    res = left.Cost.BBoxTests.ExpectedValue < right.Cost.BBoxTests.ExpectedValue ? left : right;
+                }
+                else if (!left.Hits && right.Hits)
+                {
+                    res = right;
+                }
+                else if (left.Hits && !right.Hits)
+                {
+                    res = left;
+                }
+                else
+                {
+                    res = new TraceResult(false, left.Cost + right.Cost);
+                }
+                res.Cost.BBoxTests.ExpectedValue += 1.0; // to account for the test from this node
+                return res;
             }
-            else if (!left.Hits && right.Hits)
+
+            public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
             {
-                res = right;
+                if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
+                    return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
+                Triangle[] prims = leaf.Content.Primitives;
+                for (int k = 0; k < prims.Length; k++)
+                {
+                    if (prims[k].IntersectsSegment(ShadowRay.Origin, ShadowRay.Difference))
+                        return new TraceResult(true, new TraceCost(new RandomVariable(1, 0), new RandomVariable(1, 0)));
+                }
+                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(prims.Length, 0)));
             }
-            else if (left.Hits && !right.Hits)
-            {
-                res = left;
-            }
-            else
-            {
-                res = new TraceResult(false, left.Cost + right.Cost);
-            }
-            res.Cost.BBoxTests.ExpectedValue += 1.0; // to account for the test from this node
-            return res;
         }
 
-        public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
+        private class TraceResult
         {
-            if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
-            Triangle[] prims = leaf.Content.Primitives;
-            for (int k=0; k < prims.Length;k++)
+            public bool Hits;
+            public TraceCost Cost;
+            public TraceResult(bool hits, TraceCost cost)
             {
-                if (prims[k].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1)
-                    return new TraceResult(true, new TraceCost(new RandomVariable(1, 0), new RandomVariable(1, 0)));
+                Hits = hits;
+                Cost = cost;
             }
-            return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(prims.Length, 0)));
         }
 
-        public static TraceCost GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
+        public static OracleTraceResult GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
         {
-            TraceCost cost = new TraceCost(); //the default value is correct
-            OracleCost measure = new OracleCost();
+            OracleTraceResult cost = new OracleTraceResult(); //the default value is correct
+            InternalVisitor measure = new InternalVisitor();
             foreach (Segment3 shadow in shadows)
             {
                 measure.ShadowRay = shadow;
-                cost = cost + tree.Accept(measure).Cost;
+                TraceResult res = tree.Accept(measure);
+                cost.NumRays++;
+                if (res.Hits)
+                {
+                    cost.Hit += res.Cost;
+                    cost.NumHits++;
+                }
+                else
+                {
+                    cost.NonHit += res.Cost;
+                }
             }
             return cost;
         }
+    }
+
+    public class OracleTraceResult
+    {
+        public int NumRays;
+        public int NumHits;
+        public TraceCost Hit;
+        public TraceCost NonHit;
     }
 }

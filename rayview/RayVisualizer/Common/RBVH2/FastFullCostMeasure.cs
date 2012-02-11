@@ -5,6 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
+    /*
     public class FastFullCostMeasure : NodeVisitor<WideTraceResult, bool[], RBVH2Branch, RBVH2Leaf>
     {
         public Segment3[] ShadowRays { get; set; }
@@ -195,5 +196,5 @@ namespace RayVisualizer.Common
         {
             Results = results;
         }
-    }
+    }*/
 }

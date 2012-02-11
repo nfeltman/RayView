@@ -59,6 +59,7 @@ namespace RayVisualizer.Common
         public int Depth { get; set; }
         public Triangle[] Primitives { get; set; }
 
+        /*
         public HitRecord FindIntersection(CVector3 origin, CVector3 direction, ClosedInterval tInterval)
         {
             Triangle[] triangles = Primitives;
@@ -71,6 +72,6 @@ namespace RayVisualizer.Common
                 }
             }
             return null;
-        }
+        }*/
     }
 }

@@ -94,6 +94,7 @@ namespace Topaz
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    StandardRBVHStatsReport(build, output);
                     return build;
                 };
             }
@@ -106,6 +107,7 @@ namespace Topaz
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    StandardRBVHStatsReport(build, output);
                     return build;
                 };
             }
@@ -117,6 +119,7 @@ namespace Topaz
                     Console.Write("Starting build... "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    StandardRBVHStatsReport(build, output);
                     return TreeOrdering.ApplyRTSAHOrdering(build);
                 };
             }/*
@@ -143,7 +146,8 @@ namespace Topaz
                     Console.Write("Starting main build... "); st.Reset(); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    
+
+                    StandardRBVHStatsReport(build, output);
                     return build;
                 };
             }
@@ -162,15 +166,14 @@ namespace Topaz
                 {
                     Stopwatch st = new Stopwatch();
                     Console.Write("Starting standard evaluation... "); st.Start();
-                    TraceCost cost = FastFullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), 24);
+                    FullTraceResult cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    Console.Write("Starting slow standard evaluation... "); st.Reset(); st.Start();
-                    TraceCost cost2 = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    output.WriteLine("\n% PQ-traversal (fast)");
-                    StandardRBVHEvaluationReport(build, cost, output);
-                    output.WriteLine("\n% PQ-traversal (slow)");
-                    StandardRBVHEvaluationReport(build, cost2, output);
+
+                    PrintSimple("PQ NumRays", cost.NumRays, output);
+                    PrintSimple("PQ NumHits", cost.NumHits, output);
+                    PrintCost("PQ (Spine) ", cost.Spine, output);
+                    PrintCost("PQ (Side) ", cost.SideTrees, output);
+                    PrintCost("PQ (Non-Hit) ", cost.NonHit, output);
                 };
             }
             else if (method.ToLower().Equals("oracle"))
@@ -179,10 +182,13 @@ namespace Topaz
                 {
                     Stopwatch st = new Stopwatch();
                     Console.Write("Starting oracle evaluation... "); st.Reset(); st.Start();
-                    TraceCost cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
+                    OracleTraceResult cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
                     st.Stop(); Console.WriteLine("done. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    output.WriteLine("\n% Oracle traversal");
-                    StandardRBVHEvaluationReport(build, cost, output);
+
+                    PrintSimple("Oracle NumRays", cost.NumRays, output);
+                    PrintSimple("Oracle NumHits", cost.NumHits, output);
+                    PrintCost("Oracle (Hit) ", cost.Hit, output);
+                    PrintCost("Oracle (Non-Hit) ", cost.NonHit, output);
                 };
             }
             else
@@ -192,16 +198,29 @@ namespace Topaz
             }
         }
 
-        private static void StandardRBVHEvaluationReport(RBVH2 build, TraceCost cost, StreamWriter output)
+        private static void StandardRBVHStatsReport(RBVH2 build, StreamWriter output)
         {
-            output.WriteLine("{0} {1} % Number Branches (reported/measured)", build.NumBranch, build.RollUp((b, l, r) => l + r + 1, le => 0));
-            output.WriteLine("{0} {1} % Number Leaves (reported/measured)", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => 1));
-            output.WriteLine("{0} % Number Primitives", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => le.Primitives.Length));
-            output.WriteLine("{0} % Height (1-based)", build.RollUp((b, l, r) => Math.Max(l, r) + 1, le => 1));
-            output.WriteLine("{0} % Exp[BBoxTests]", cost.BBoxTests.ExpectedValue);
-            output.WriteLine("{0} % StD[BBoxTests]", Math.Sqrt(cost.BBoxTests.Variance));
-            output.WriteLine("{0} % Exp[PrimTests]", cost.PrimitiveTests.ExpectedValue);
-            output.WriteLine("{0} % StD[PrimTests]", Math.Sqrt(cost.PrimitiveTests.Variance));
+            //output.WriteLine("{0} {1} % Number Branches (reported/measured)", build.NumBranch, build.RollUp((b, l, r) => l + r + 1, le => 0));
+            //output.WriteLine("{0} {1} % Number Leaves (reported/measured)", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => 1));
+            output.WriteLine("\"Number Leaves\" \"\" {0}", build.NumLeaves, build.RollUp((b, l, r) => l + r, le => le.Primitives.Length));
+            output.WriteLine("\"Height\" \"\" {0}", build.RollUp((b, l, r) => Math.Max(l, r) + 1, le => 1));
+        }
+
+        private static void PrintCost(string statPrefix, TraceCost cost, StreamWriter output)
+        {
+            PrintRandomVariable(statPrefix + "BBox Tests", cost.BBoxTests, output);
+            PrintRandomVariable(statPrefix + "Prim Tests", cost.PrimitiveTests, output);
+        }
+
+        private static void PrintRandomVariable(string stat, RandomVariable rv, StreamWriter output)
+        {
+            output.WriteLine("\"{0}\" \"EXP\" {1}", stat, rv.ExpectedValue);
+            output.WriteLine("\"{0}\" \"STD\" {1}", stat, Math.Sqrt(rv.Variance));
+        }
+
+        private static void PrintSimple(string stat, double d, StreamWriter output)
+        {
+            output.WriteLine("\"{0}\" \"total\" {1}", stat, d);
         }
 
         private static Func<BuildTriangle[]> GetBuildTrianglesForBuild(string filename)

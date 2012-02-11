@@ -6,96 +6,175 @@ using System.Text;
 namespace RayVisualizer.Common
 {
     // does not assume this box has already been hit
-    public class FullCostMeasure : NodeVisitor<TraceResult, RBVH2Branch, RBVH2Leaf>
+    public static class FullCostMeasure
     {
-        public Segment3 ShadowRay { get; set; }
-
-        public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
+        private class InternalVisitor : NodeVisitor<TraceResult, RBVH2Branch, RBVH2Leaf>
         {
-            if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new TraceResult(false, new TraceCost(1, 0, 0, 0));
+            public Segment3 ShadowRay { get; set; }
 
-            TraceResult left;
-            TraceResult right;
-
-            if (branch.Content.PLeft == 1)
+            public TraceResult ForBranch(Branch<RBVH2Branch, RBVH2Leaf> branch)
             {
-                left = branch.Left.Accept(this);
-                if (left.Hits)
+                if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 {
-                    left.Cost.BBoxTests.ExpectedValue += 1.0;
-                    return left;
+                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, 0, 0));
                 }
-                right = branch.Right.Accept(this);
-            }
-            else if (branch.Content.PLeft == 0)
-            {
-                right = branch.Right.Accept(this);
-                if (right.Hits)
+
+                TraceResult left;
+                TraceResult right;
+
+                if (branch.Content.PLeft == 1)
                 {
-                    right.Cost.BBoxTests.ExpectedValue += 1.0;
-                    return right;
+                    left = branch.Left.Accept(this);
+                    if (left.Hits)
+                    {
+                        left.Spine.BBoxTests.ExpectedValue += 1.0;
+                        return left;
+                    }
+                    right = branch.Right.Accept(this);
                 }
-                left = branch.Left.Accept(this);
-            }
-            else
-            {
-                left = branch.Left.Accept(this);
-                right = branch.Right.Accept(this);
+                else if (branch.Content.PLeft == 0)
+                {
+                    right = branch.Right.Accept(this);
+                    if (right.Hits)
+                    {
+                        right.Spine.BBoxTests.ExpectedValue += 1.0;
+                        return right;
+                    }
+                    left = branch.Left.Accept(this);
+                }
+                else
+                {
+                    left = branch.Left.Accept(this);
+                    right = branch.Right.Accept(this);
+                }
+
+                TraceCost bothSpine = left.Spine + right.Spine;
+                TraceCost bothSide = left.Side + right.Side;
+
+                TraceCost resSpine;
+                TraceCost resSide;
+                if (left.Hits && right.Hits)
+                {
+                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, right.Spine);
+                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, right.Side);
+                }
+                else if (!left.Hits && right.Hits)
+                {
+                    if (!left.Spine.IsZero) throw new Exception("This isn't right!");
+                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, bothSpine, right.Spine);
+                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, bothSide, right.Side);
+                }
+                else if (left.Hits && !right.Hits)
+                {
+                    if (!right.Spine.IsZero) throw new Exception("This isn't right!");
+                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, bothSpine);
+                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, bothSide);
+                }
+                else
+                {
+                    if (!bothSpine.IsZero) throw new Exception("This isn't right!");
+                    bothSide.BBoxTests.ExpectedValue += 1.0;
+
+                    return new TraceResult(false, bothSpine, bothSide);
+                }
+                resSpine.BBoxTests.ExpectedValue += 1.0;
+                return new TraceResult(true, resSpine, resSide);
             }
 
-            TraceCost both = left.Cost + right.Cost;
-
-            TraceCost res;
-            if (left.Hits && right.Hits)
+            public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
             {
-                res = TraceCost.RandomSelect(branch.Content.PLeft, left.Cost, right.Cost);
+                if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
+                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, 0, 0));
+                Triangle[] prims = leaf.Content.Primitives;
+                int k = 0;
+                int primtests = 0;
+                while (k < prims.Length)
+                {
+                    primtests++;
+                    if (prims[k].IntersectsSegment(ShadowRay.Origin, ShadowRay.Difference))
+                    {
+                        break;
+                    }
+                    k++;
+                }
+                if (k == prims.Length)
+                {
+                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, prims.Length, 0));
+                }
+                else
+                {
+                    return new TraceResult(true, new TraceCost(1, 0, primtests, 0), new TraceCost());
+                }
             }
-            else if (!left.Hits && right.Hits)
-            {
-                res = TraceCost.RandomSelect(branch.Content.PLeft, both, right.Cost);
-            }
-            else if (left.Hits && !right.Hits)
-            {
-                res = TraceCost.RandomSelect(branch.Content.PLeft, left.Cost, both);
-            }
-            else
-            {
-                res = both;
-            }
-            res.BBoxTests.ExpectedValue += 1.0; // to account for the test from this node
-            return new TraceResult(left.Hits || right.Hits, res);
         }
 
-        public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
+        private class TraceResult
         {
-            if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                return new TraceResult(false, new TraceCost(new RandomVariable(1, 0), new RandomVariable(0, 0)));
-            Triangle[] prims = leaf.Content.Primitives;
-            int k = 0;
-            int primtests=0;
-            while (k < prims.Length)
+            public bool Hits;
+            public TraceCost Spine;
+            public TraceCost Side;
+            public TraceResult(bool hits, TraceCost spine, TraceCost side)
             {
-                primtests++;
-                if (prims[k].IntersectRay(ShadowRay.Origin, ShadowRay.Difference) < 1)
-                {
-                    break;
-                }
-                k++;
+                if (!hits && !spine.IsZero) throw new Exception("Cannot have a non-zero spine cost if we hit.");
+                Hits = hits;
+                Spine = spine;
+                Side = side;
             }
-            return new TraceResult(k != prims.Length, new TraceCost(new RandomVariable(1, 0), new RandomVariable(primtests, 0)));
         }
 
-        public static TraceCost GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
+        public static FullTraceResult GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
         {
-            TraceCost cost = new TraceCost(); //the default value is correct
-            FullCostMeasure measure = new FullCostMeasure();
+            FullTraceResult cost = new FullTraceResult(); //the default value is correct
+            InternalVisitor measure = new InternalVisitor();
             foreach (Segment3 shadow in shadows)
             {
                 measure.ShadowRay = shadow;
-                cost = cost + tree.Accept(measure).Cost;
+                TraceResult res = tree.Accept(measure);
+                cost.NumRays++;
+                if (res.Hits)
+                {
+                    cost.Spine += res.Spine;
+                    cost.SideTrees += res.Side;
+                    cost.NumHits++;
+                }
+                else
+                {
+                    if (!res.Spine.IsZero)
+                    {
+                        throw new Exception("This isn't right!");
+                    }
+                    cost.NonHit += res.Side;
+                }
             }
             return cost;
         }
+    }
+
+    public class FullTraceResult
+    {
+        public int NumRays;
+        public int NumHits;
+        public TraceCost Spine;
+        public TraceCost SideTrees;
+        public TraceCost NonHit;
+        /*
+        public FullTraceResult(int numRays, int numHits, TraceCost spine, TraceCost sideTrees, TraceCost nonHit)
+        {
+            NumRays = numRays;
+            NumHits = numHits;
+            Spine = spine;
+            SideTrees = sideTrees;
+            NonHit = nonHit;
+        }*/
+
+        /*
+        public static bool operator ==(FullTraceResult t1, FullTraceResult t2)
+        {
+            return t1.Hits == t2.Hits && t1.Cost == t2.Cost;
+        }
+        public static bool operator !=(FullTraceResult t1, FullTraceResult t2)
+        {
+            return t1.Hits != t2.Hits || t1.Cost != t2.Cost;
+        }*/
     }
 }

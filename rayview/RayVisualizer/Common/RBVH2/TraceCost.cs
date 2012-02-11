@@ -10,6 +10,8 @@ namespace RayVisualizer.Common
         public RandomVariable BBoxTests;
         public RandomVariable PrimitiveTests;
 
+        public bool IsZero { get { return BBoxTests.IsZero && PrimitiveTests.IsZero; } }
+
         public TraceCost(RandomVariable bbox, RandomVariable prim)
         {
             BBoxTests = bbox;
@@ -34,6 +36,7 @@ namespace RayVisualizer.Common
             return new TraceCost(RandomVariable.RandomSelect(p, x.BBoxTests, y.BBoxTests), RandomVariable.RandomSelect(p, x.PrimitiveTests, y.PrimitiveTests));
         }
 
+        /*
         public static bool operator ==(TraceCost t1, TraceCost t2)
         {
             return t1.BBoxTests.ExpectedValue == t2.BBoxTests.ExpectedValue 
@@ -48,7 +51,7 @@ namespace RayVisualizer.Common
                 || t1.BBoxTests.Variance != t2.BBoxTests.Variance
                 || t1.PrimitiveTests.ExpectedValue != t2.PrimitiveTests.ExpectedValue
                 || t1.PrimitiveTests.Variance != t2.PrimitiveTests.Variance;
-        }
+        }*/
 
         public override string ToString()
         {
@@ -60,6 +63,8 @@ namespace RayVisualizer.Common
     {
         public double ExpectedValue;
         public double Variance;
+
+        public bool IsZero { get { return ExpectedValue == 0 && Variance == 0; } }
 
         public RandomVariable(double e, double v)
         {
@@ -78,27 +83,6 @@ namespace RayVisualizer.Common
             double q = 1 - p;
             double d = x.ExpectedValue - y.ExpectedValue;
             return new RandomVariable(p * x.ExpectedValue + q * y.ExpectedValue, p * x.Variance + q * y.Variance + p * q * d * d);
-        }
-    }
-
-    public struct TraceResult
-    {
-        public bool Hits;
-        public TraceCost Cost;
-
-        public TraceResult(bool h, TraceCost cost)
-        {
-            Hits = h;
-            Cost = cost;
-        }
-
-        public static bool operator ==(TraceResult t1, TraceResult t2)
-        {
-            return t1.Hits == t2.Hits && t1.Cost == t2.Cost;
-        }
-        public static bool operator !=(TraceResult t1, TraceResult t2)
-        {
-            return t1.Hits != t2.Hits || t1.Cost != t2.Cost;
         }
     }
 }

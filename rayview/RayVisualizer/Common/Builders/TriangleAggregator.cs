@@ -14,6 +14,7 @@ namespace RayVisualizer.Common
         void InplaceOp(ref Aggregate val1, Aggregate val2);
         Aggregate GetIdentity();
         Aggregate Roll(BuildTriangle[] tris, int start, int end);
+        Aggregate GetVal(BuildTriangle t);
     }
 
     public class CountAggregator : TriangleAggregator<int>
@@ -52,6 +53,11 @@ namespace RayVisualizer.Common
             val1 = val1 + 1;
             val2 = val2 + 1;
             val3 = val3 + 1;
+        }
+
+        public int GetVal(BuildTriangle t)
+        {
+            return 1;
         }
     }
 
@@ -95,6 +101,15 @@ namespace RayVisualizer.Common
             for (int k = start; k < end; k++)
                 builder.AddTriangle(tris[k].t);
             return new BoundAndCount(end - start, builder.GetBox());
+        }
+
+        public BoundAndCount GetVal(BuildTriangle t)
+        {
+            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+
+            return new BoundAndCount(1, new Box3(point1.Min(point2).Min(point3), point1.Max(point2).Max(point3)));
         }
 
         public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, BuildTriangle t)

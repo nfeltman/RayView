@@ -20,7 +20,7 @@ namespace RayVisualizer
             float prop = .1f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*400, strangeVec*-120, 80, 80 * prop, 3000);
             ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays.AsSegements(1f), initialBuild);
-            RBVH2 rebuild = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+            RBVH2 rebuild = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator.ONLY);
 
             RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(rebuild);
             scene.Viewables.Add(bvhViewer);
@@ -40,7 +40,7 @@ namespace RayVisualizer
             float prop = .4f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec * 120 + new CVector3(300, 0, 0), strangeVec * 120 + new CVector3(-20, .1f, 0), 80, 80 * prop, 3000);
             ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays.AsSegements(1f), initialBuild);
-            RBVH2 rebuild = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+            RBVH2 rebuild = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator.ONLY);
 
             RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(rebuild);
             scene.Viewables.Add(bvhViewer);
@@ -62,7 +62,7 @@ namespace RayVisualizer
             float prop = .4f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(new CVector3(300, 0, 0), strangeVec * 115, 80, 80 * prop, 3000);
             ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays.AsSegements(1f), initialBuild);
-            RBVH2 rebuild = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+            RBVH2 rebuild = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator.ONLY);
 
             RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(rebuild);
             scene.Viewables.Add(bvhViewer);
@@ -82,7 +82,7 @@ namespace RayVisualizer
             float prop = .7f;
             Ray3[] rays = RayDistributions.UnalignedCircularFrustrum(strangeVec*(-250), strangeVec * 250, 100 * prop, 100 * prop, 3000);
             ShadowRayResults res = ShadowRayCompiler.CompileCasts(rays.AsSegements(1f), initialBuild);
-            RBVH2 rebuild = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+            RBVH2 rebuild = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator.ONLY);
 
             RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(rebuild);
             scene.Viewables.Add(bvhViewer);

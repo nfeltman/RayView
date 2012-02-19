@@ -63,6 +63,8 @@ namespace Topaz
                 {
                     StreamWriter writer = new StreamWriter(fileout);
                     RBVH2 bvh = build(tris(), buildrays(), writer);
+                    bvh.Accept(ConsistencyCheck.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
+                    Console.WriteLine("Consistent.");
                     RaySet eval_rays = evalrays();
                     foreach (var method in evalMethods) method(bvh, eval_rays, writer);
                     writer.Flush();
@@ -166,10 +168,10 @@ namespace Topaz
                     Console.WriteLine("Starting RTSAH build. "); st.Start();
                     RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY);
                     StandardRBVHStatsReport(build, output);
-                    build = TreeOrdering.ApplyRTSAHOrdering(build);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    build.Accept(ConsistencyCheck.ONLY, build.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
-                    Console.WriteLine("Consistent.");
+                    Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
+                    build = TreeOrdering.ApplyRTSAHOrdering(build);
+                    st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
                     /*build.PrefixEnumerate(
                         (b) => { if (b.Depth <= 5) Console.WriteLine("[{0} ({3}): {1} {2}]", b.ID, b.PLeft, b.BBox.SurfaceArea, b.Depth); },
                         (l) => { if (l.Depth <= 5) Console.WriteLine("<{0} {1}: {2} {3}>", l.ID, l.Depth, l.Primitives.Length, l.BBox.SurfaceArea); });*/
@@ -189,7 +191,7 @@ namespace Topaz
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator.ONLY, 4, true);
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
@@ -197,7 +199,7 @@ namespace Topaz
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullRBVH(res.Triangles, new ShadowRayCostEvaluator(res, 1f));
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator.ONLY);
                     st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     StandardRBVHStatsReport(build, output);

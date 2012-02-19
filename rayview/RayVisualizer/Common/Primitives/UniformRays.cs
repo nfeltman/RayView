@@ -9,6 +9,7 @@ namespace RayVisualizer.Common
     {
         public static IntersectionReport GetReport(Box3 parent, Box3 left, Box3 right)
         {
+            if (left.IsEmpty || right.IsEmpty || parent.IsEmpty) throw new ArgumentException("Input cannot be empty.");
             float psa = parent.SurfaceArea;
             float P_r = right.SurfaceArea / psa;
             float P_l = left.SurfaceArea / psa;

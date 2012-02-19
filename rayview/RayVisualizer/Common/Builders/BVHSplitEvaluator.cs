@@ -15,8 +15,6 @@ namespace RayVisualizer.Common
         TransitionData GetDefault();
         StackState BeginEvaluations(int startTri, int endTri, Aggregate objectBounds, TransitionData parentState);
         BuildReport<TransitionData, BranchData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
-        //ExitData EndBothChildren(ExitData firstChildsExit, ExitData secondChildsExit);
-        //ExitData GetLeafExit();
     }
 
     public abstract class TransitionlessEvaluator<StackState, BuildMemo, Aggregate> : BVHSplitEvaluator<StackState, BuildMemo, BuildMemo, StackState, Aggregate>
@@ -39,7 +37,7 @@ namespace RayVisualizer.Common
         {
             Data = data;
             Cost = cost;
-            BuildLeftFirst = BuildLeftFirst;
+            BuildLeftFirst = leftFirst;
         }
     }
 
@@ -67,7 +65,7 @@ namespace RayVisualizer.Common
 
         public EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, Unit state, Func<BuildTriangle, bool> leftFilter)
         {
-            return new EvalResult<Unit>(_costEstimator(left.Count, left.Box, right.Count, right.Box), Unit.ONLY, true);
+            return new EvalResult<Unit>(_costEstimator(left.Count, left.Box, right.Count, right.Box), Unit.ONLY, false);
         }
 
         public Unit BeginEvaluations(int startTri, int endTri, BoundAndCount splitCandidate, Unit parentState) { return Unit.ONLY; }

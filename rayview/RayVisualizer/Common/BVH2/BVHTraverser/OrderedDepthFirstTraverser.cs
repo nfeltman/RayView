@@ -53,7 +53,7 @@ namespace RayVisualizer.Common
                     if (leftInterval.Min < rightInterval.Min)
                     {
                         HitRecord leftRes = branch.Left.Accept(this);
-                        if (rightInterval > _c)
+                        if (rightInterval.EntirelyGreater(_c))
                         {
                             return leftRes;
                         }
@@ -67,7 +67,7 @@ namespace RayVisualizer.Common
                     else
                     {
                         HitRecord rightRes = branch.Right.Accept(this);
-                        if (leftInterval > _c)
+                        if (leftInterval.EntirelyGreater(_c))
                         {
                             return rightRes;
                         }

@@ -111,6 +111,7 @@
     <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />
     <Compile Include="Builders\GeneralBVH2Builder.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCompiler.cs" />
+    <Compile Include="RBVH2\ConsistencyCheck.cs" />
     <Compile Include="RBVH2\FastFullCostMeasure.cs" />
     <Compile Include="RBVH2\FullCostMeasure.cs" />
     <Compile Include="RBVH2\OracleCost.cs" />
@@ -133,5 +134,6 @@
     <Reference Include="Mono.Simd">
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Mono-2.10.8\lib\mono\4.0\Mono.Simd.dll</HintPath>
     </Reference>
+    <Reference Include="System" />
   </ItemGroup>
 </Project>

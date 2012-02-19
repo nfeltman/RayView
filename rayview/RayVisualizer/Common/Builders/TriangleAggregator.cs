@@ -65,11 +65,21 @@ namespace RayVisualizer.Common
 
         public void InplaceOp(ref BoundAndCount val, BuildTriangle t)
         {
-            Vector4f min = val.Box.Min;
-            Vector4f max = val.Box.Max;
+            Vector4f min;
+            Vector4f max;
             Vector4f point = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
-            min = min.Min(point);
-            max = max.Max(point);
+            if (val.Box.IsEmpty)
+            {
+                min = point;
+                max = point;
+            }
+            else
+            {
+                min = val.Box.Min;
+                max = val.Box.Max;
+                min = min.Min(point);
+                max = max.Max(point);
+            }
             point = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
             min = min.Min(point);
             max = max.Max(point);
@@ -87,7 +97,7 @@ namespace RayVisualizer.Common
 
         public BoundAndCount Roll(BuildTriangle[] tris, int start, int end)
         {
-            BoundBuilder builder = new BoundBuilder();
+            BoundBuilder builder = new BoundBuilder(true);
             for (int k = start; k < end; k++)
                 builder.AddTriangle(tris[k].t);
             return new BoundAndCount(end - start, builder.GetBox());

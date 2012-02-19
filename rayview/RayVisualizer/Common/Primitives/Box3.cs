@@ -17,8 +17,8 @@ namespace RayVisualizer.Common
 
         private Vector4f _min, _max;
 
-        public Vector4f Min { get { return _min; } }
-        public Vector4f Max { get { return _max; } }
+        public Vector4f Min { get { if (_surfaceArea < 0) throw new InvalidOperationException("Box is empty."); else return _min; } }
+        public Vector4f Max { get { if (_surfaceArea < 0) throw new InvalidOperationException("Box is empty."); else return _max; } }
         public ClosedInterval XRange { get { return new ClosedInterval(_min.X, _max.X); } }
         public ClosedInterval YRange { get { return new ClosedInterval(_min.Y, _max.Y); } }
         public ClosedInterval ZRange { get { return new ClosedInterval(_min.Z, _max.Z); } }
@@ -26,14 +26,14 @@ namespace RayVisualizer.Common
         public float SurfaceArea { get { return _surfaceArea<0? 0 : _surfaceArea; } }
         public bool IsEmpty { get { return _surfaceArea < 0; } }
 
-        public static readonly Box3 EMPTY = new Box3(1, 0, 1, 0, 1, 0);
+        public static readonly Box3 EMPTY = new Box3(1, -1, 1, 0, 1, 0);
 
         public Box3(float minX, float maxX, float minY, float maxY, float minZ, float maxZ)
         {
             if (minX <= maxX && minY <= maxY && minZ <= maxZ)
             {
                 _min = new Vector4f(minX, minY, minZ, 0f);
-                _max = new Vector4f(maxX, maxY, maxZ, 1f);
+                _max = new Vector4f(maxX, maxY, maxZ, 0f);
                 float x = maxX - minX;
                 float y = maxY - minY;
                 float z = maxZ - minZ;
@@ -41,8 +41,8 @@ namespace RayVisualizer.Common
             }
             else
             {
-                _min = new Vector4f(1, 1, 1, 0);
-                _max = new Vector4f(0, 0, 0, 0);
+                _min = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
+                _max = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
                 _surfaceArea = -1;
             }
         }
@@ -54,7 +54,7 @@ namespace RayVisualizer.Common
                 _min = min;
                 _max = max;
                 _min.W = 0;
-                _max.W = 1;
+                _max.W = 0;
                 float x = max.X - min.X;
                 float y = max.Y - min.Y;
                 float z = max.Z - min.Z;
@@ -62,8 +62,8 @@ namespace RayVisualizer.Common
             }
             else
             {
-                _min = new Vector4f(1, 1, 1, 0);
-                _max = new Vector4f(0, 0, 0, 0);
+                _min = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
+                _max = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
                 _surfaceArea = -1;
             }
         }
@@ -72,8 +72,8 @@ namespace RayVisualizer.Common
         {
             if (points.Length == 0)
             {
-                _min = new Vector4f(1, 1, 1, 0);
-                _max = new Vector4f(0, 0, 0, 0);
+                _min = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
+                _max = new Vector4f(float.NaN, float.NaN, float.NaN, 0);
                 _surfaceArea = -1;
             }
             else
@@ -92,7 +92,7 @@ namespace RayVisualizer.Common
                     maxZ = Math.Max(maxZ, points[k].z);
                 }
                 _min = new Vector4f(minX, minY, minZ, 0f);
-                _max = new Vector4f(maxX, maxY, maxZ, 1f);
+                _max = new Vector4f(maxX, maxY, maxZ, 0f);
                 //_xRange = new ClosedInterval(minX, maxX);
                 //_yRange = new ClosedInterval(minY, maxY);
                 //_zRange = new ClosedInterval(minZ, maxZ);
@@ -101,6 +101,12 @@ namespace RayVisualizer.Common
                 float z = maxZ - minZ;
                 _surfaceArea = 2 * (x * y + y * z + z * x);
             }
+        }
+
+        public bool Contains(CVector3 point)
+        {
+            if (IsEmpty) return false;
+            return _min.X <= point.x && _min.Y <= point.y && _min.Z <= point.z && _max.X >= point.x && _max.Y >= point.y && _max.Z >= point.z;
         }
 
         public CVector3 GetCenter()
@@ -115,6 +121,8 @@ namespace RayVisualizer.Common
 
         public CVector3 TripleMin()
         {
+            if (IsEmpty)
+                throw new InvalidOperationException("Box is empty.");
             return new CVector3(_min);
         }
 
@@ -376,6 +384,18 @@ namespace RayVisualizer.Common
             if (a.IsEmpty || b.IsEmpty) return EMPTY;
             return new Box3(a._min.Max(b._min), a._max.Min(b._max));
         }
+
+        public static bool operator <=(Box3 a, Box3 b)
+        {
+            if (a.IsEmpty) return true;
+            return a._min.X >= b._min.X && a._min.Y >= b._min.Y && a._min.Z >= b._min.Z && a._max.X <= b._max.X && a._max.Y <= b._max.Y && a._min.Z <= b._max.Z;
+        }
+
+        public static bool operator >=(Box3 b, Box3 a)
+        {
+            if (a.IsEmpty) return true;
+            return a._min.X >= b._min.X && a._min.Y >= b._min.Y && a._min.Z >= b._min.Z && a._max.X <= b._max.X && a._max.Y <= b._max.Y && a._min.Z <= b._max.Z;
+        }
         /*
         public static Box3 operator |(Box3 a, CVector3 b)
         {
@@ -399,7 +419,9 @@ namespace RayVisualizer.Common
 
         public override string ToString()
         {
-            return String.Format("<[{0}, {1}]x[{2}, {3}]x[{4}, {5}]>", _min.X, _min.Y, _min.Z, _max.X, _max.Y, _max.Z);
+            if (IsEmpty)
+                return "[E]";
+            return String.Format("<[{0}, {1}]x[{2}, {3}]x[{4}, {5}]>", _min.X, _max.X, _min.Y, _max.Y, _min.Z, _max.Z);
         }
     }
 }

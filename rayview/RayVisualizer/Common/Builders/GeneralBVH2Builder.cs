@@ -226,7 +226,6 @@ namespace RayVisualizer.Common
             Box3[] backwardBoxAccumulator = new Box3[numBlocks];
             Aggregate[] backwardAggAccumulator = new Aggregate[numBlocks];
             Aggregate backwardPrevCount = aggregator.GetIdentity();
-            BoundBuilder builder = new BoundBuilder(true);
             for (int k = numBlocks - 1; k >= 0; k--)
             {
                 backwardAggAccumulator[k] = backwardPrevCount = aggregator.Op(backwardPrevCount, blockAggregates[k]);

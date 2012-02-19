@@ -9,6 +9,7 @@ namespace RayVisualizer.Common
     public interface TriangleAggregator<Aggregate>
     {
         void InplaceOp(ref Aggregate val, BuildTriangle t);
+        void InplaceOp3(ref Aggregate val1, ref Aggregate val2, ref Aggregate val3, BuildTriangle t); // to alleviate the cost of a virtual call
         Aggregate Op(Aggregate val1, Aggregate val2);
         void InplaceOp(ref Aggregate val1, Aggregate val2);
         Aggregate GetIdentity();
@@ -45,6 +46,13 @@ namespace RayVisualizer.Common
         {
             return end - start;
         }
+
+        public void InplaceOp3(ref int val1, ref int val2, ref int val3, BuildTriangle t)
+        {
+            val1 = val1 + 1;
+            val2 = val2 + 1;
+            val3 = val3 + 1;
+        }
     }
 
     public class BoundsCountAggregator : TriangleAggregator<BoundAndCount>
@@ -65,28 +73,14 @@ namespace RayVisualizer.Common
 
         public void InplaceOp(ref BoundAndCount val, BuildTriangle t)
         {
-            Vector4f min;
-            Vector4f max;
-            Vector4f point = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
-            if (val.Box.IsEmpty)
-            {
-                min = point;
-                max = point;
-            }
-            else
-            {
-                min = val.Box.Min;
-                max = val.Box.Max;
-                min = min.Min(point);
-                max = max.Max(point);
-            }
-            point = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
-            min = min.Min(point);
-            max = max.Max(point);
-            point = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
-            min = min.Min(point);
-            max = max.Max(point);
-            val = new BoundAndCount(val.Count + 1, new Box3(min, max));
+            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+
+            Vector4f triMax = point1.Max(point2).Max(point3);
+            Vector4f triMin = point1.Min(point2).Min(point3);
+
+            val = new BoundAndCount(val.Count + 1, val.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val.Box.Min.Min(triMin), val.Box.Max.Max(triMax)));
         }
 
         public void InplaceOp(ref BoundAndCount val1, BoundAndCount val2)
@@ -101,6 +95,20 @@ namespace RayVisualizer.Common
             for (int k = start; k < end; k++)
                 builder.AddTriangle(tris[k].t);
             return new BoundAndCount(end - start, builder.GetBox());
+        }
+
+        public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, BuildTriangle t)
+        {
+            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+
+            Vector4f triMax = point1.Max(point2).Max(point3);
+            Vector4f triMin = point1.Min(point2).Min(point3);
+
+            val1 = new BoundAndCount(val1.Count + 1, val1.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val1.Box.Min.Min(triMin), val1.Box.Max.Max(triMax)));
+            val2 = new BoundAndCount(val2.Count + 1, val2.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val2.Box.Min.Min(triMin), val2.Box.Max.Max(triMax)));
+            val3 = new BoundAndCount(val3.Count + 1, val3.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val3.Box.Min.Min(triMin), val3.Box.Max.Max(triMax)));
         }
     }
 

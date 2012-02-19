@@ -175,9 +175,10 @@ namespace RayVisualizer.Common
                 int blockX = Math.Max(0, Math.Min(numBlocks - 1, seriesX.GetPartition(t.center.x)));
                 int blockY = Math.Max(0, Math.Min(numBlocks - 1, seriesY.GetPartition(t.center.y)));
                 int blockZ = Math.Max(0, Math.Min(numBlocks - 1, seriesZ.GetPartition(t.center.z)));
-                aggregator.InplaceOp(ref blockCountsX[blockX], t);
-                aggregator.InplaceOp(ref blockCountsY[blockY], t);
-                aggregator.InplaceOp(ref blockCountsZ[blockZ], t);
+                //aggregator.InplaceOp(ref blockCountsX[blockX], t);
+                //aggregator.InplaceOp(ref blockCountsY[blockY], t);
+                //aggregator.InplaceOp(ref blockCountsZ[blockZ], t);
+                aggregator.InplaceOp3(ref blockCountsX[blockX], ref blockCountsY[blockY], ref blockCountsZ[blockZ], t);
                 if (xDegen && blockX != 0) xDegen = false;
                 if (yDegen && blockY != 0) yDegen = false;
                 if (zDegen && blockZ != 0) zDegen = false;
@@ -279,13 +280,6 @@ namespace RayVisualizer.Common
         {
             public int binPartition;
             public double heuristicValue;
-            public Aggregate leftAggregate, rightAggregate;
-            public EvalResult<BranchData> branchBuildData;
-        }
-
-        private class BestObjectPartition<BranchData, Aggregate>
-        {
-            public int objectPartition;
             public Aggregate leftAggregate, rightAggregate;
             public EvalResult<BranchData> branchBuildData;
         }

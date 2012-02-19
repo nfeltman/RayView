@@ -17,8 +17,8 @@ namespace RayVisualizer.Common
 
         private Vector4f _min, _max;
 
-        public Vector4f Min { get { if (_surfaceArea < 0) throw new InvalidOperationException("Box is empty."); else return _min; } }
-        public Vector4f Max { get { if (_surfaceArea < 0) throw new InvalidOperationException("Box is empty."); else return _max; } }
+        public Vector4f Min { get { return _min; } }
+        public Vector4f Max { get { return _max; } }
         public ClosedInterval XRange { get { return new ClosedInterval(_min.X, _max.X); } }
         public ClosedInterval YRange { get { return new ClosedInterval(_min.Y, _max.Y); } }
         public ClosedInterval ZRange { get { return new ClosedInterval(_min.Z, _max.Z); } }

@@ -168,9 +168,9 @@ namespace Topaz
                     StandardRBVHStatsReport(build, output);
                     build = TreeOrdering.ApplyRTSAHOrdering(build);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    build.PrefixEnumerate(
+                    /*build.PrefixEnumerate(
                         (b) => { if (b.Depth <= 5) Console.WriteLine("[{0} ({3}): {1} {2}]", b.ID, b.PLeft, b.BBox.SurfaceArea, b.Depth); },
-                        (l) => { if (l.Depth <= 5) Console.WriteLine("<{0} {1}: {2} {3}>", l.ID, l.Depth, l.Primitives.Length, l.BBox.SurfaceArea); });
+                        (l) => { if (l.Depth <= 5) Console.WriteLine("<{0} {1}: {2} {3}>", l.ID, l.Depth, l.Primitives.Length, l.BBox.SurfaceArea); });*/
                     return build;
                 };
             }/*

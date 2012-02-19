@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mono.Simd;
 
 namespace RayVisualizer.Common
 {
@@ -54,25 +55,33 @@ namespace RayVisualizer.Common
 
         public BoundAndCount GetIdentity()
         {
-            return new BoundAndCount(0, new BoundBuilder(true));
+            return new BoundAndCount(0, Box3.EMPTY);
         }
 
         public BoundAndCount Op(BoundAndCount val1, BoundAndCount val2)
         {
-            BoundBuilder builder = new BoundBuilder(val1.Builder);
-            builder.AddBox(val2.Builder);
-            return new BoundAndCount(val1.Count + val2.Count, builder);
+            return new BoundAndCount(val1.Count + val2.Count, val1.Box | val2.Box); 
         }
 
         public void InplaceOp(ref BoundAndCount val, BuildTriangle t)
         {
-            val.Builder.AddTriangle(t.t);
-            val.Count++;
+            Vector4f min = val.Box.Min;
+            Vector4f max = val.Box.Max;
+            Vector4f point = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
+            min = min.Min(point);
+            max = max.Max(point);
+            point = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
+            min = min.Min(point);
+            max = max.Max(point);
+            point = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+            min = min.Min(point);
+            max = max.Max(point);
+            val = new BoundAndCount(val.Count + 1, new Box3(min, max));
         }
 
         public void InplaceOp(ref BoundAndCount val1, BoundAndCount val2)
         {
-            val1.Builder.AddBox(val2.Builder);
+            val1.Box = val1.Box | val2.Box;
             val1.Count += val2.Count;
         }
 
@@ -81,19 +90,19 @@ namespace RayVisualizer.Common
             BoundBuilder builder = new BoundBuilder();
             for (int k = start; k < end; k++)
                 builder.AddTriangle(tris[k].t);
-            return new BoundAndCount(end - start, builder);
+            return new BoundAndCount(end - start, builder.GetBox());
         }
     }
 
     public struct BoundAndCount
     {
         public int Count;
-        public BoundBuilder Builder;
+        public Box3 Box;
 
-        public BoundAndCount(int count, BoundBuilder builder)
+        public BoundAndCount(int count, Box3 builder)
         {
             Count = count;
-            Builder = builder;
+            Box = builder;
         }
     }
 }

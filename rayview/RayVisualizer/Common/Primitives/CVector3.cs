@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mono.Simd;
 
 namespace RayVisualizer.Common
 {
@@ -13,6 +14,12 @@ namespace RayVisualizer.Common
             x = x0;
             y = y0;
             z = z0;
+        }
+        public CVector3(Vector4f vec)
+        {
+            x = vec.X;
+            y = vec.Y;
+            z = vec.Z;
         }
         public CVector3 Normalized()
         {

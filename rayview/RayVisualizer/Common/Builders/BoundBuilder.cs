@@ -76,7 +76,7 @@ namespace RayVisualizer.Common
             if (b.yMax > yMax) yMax = b.yMax;
             if (b.zMin < zMin) zMin = b.zMin;
             if (b.zMax > zMax) zMax = b.zMax;
-        }
+        }*/
         public Box3 GetBox()
         {
             return new Box3(xMin, xMax, yMin, yMax, zMin, zMax);

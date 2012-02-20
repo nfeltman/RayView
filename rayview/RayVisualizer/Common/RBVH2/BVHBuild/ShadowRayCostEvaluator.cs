@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator : BVHSplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, ShadowRayCostEvaluator.ShadowRayMemoData, float, ShadowRayCostEvaluator.ShadowRayShuffleState, BoundAndCount>
+    public class ShadowRayCostEvaluator : SplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, ShadowRayCostEvaluator.ShadowRayMemoData, float, ShadowRayCostEvaluator.ShadowRayShuffleState, BoundAndCount>
     {
         private Segment3[] _connected;
         private CompiledShadowRay[] _broken;
@@ -88,7 +88,12 @@ namespace RayVisualizer.Common
             double rightAvoidable = right_maybe_traversal * rightFactor;
             double unavoidablePart = left_sure_traversal * leftFactor + right_sure_traversal * rightFactor;
             //Console.WriteLine("{0,4}-{1,4} m{2} {3} s{4,4} {5,4} u{6}", leftNu, rightNu, left_maybe_traversal, right_maybe_traversal, left_sure_traversal, right_sure_traversal, unavoidablePart);
-            return leftAvoidable < rightAvoidable ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(1f, leftFilter), true)
+            bool traverseLeftFirst = leftAvoidable < rightAvoidable;
+            // the rays that intersect with the non-dominant side are a subset of those that interact with the dominant side
+            // I want to build the non-dominant side first
+            // so that I can freely shuffle within the non-dominant side's active ray set without messing up the dominant side's active ray set
+            // the converse property would not hold
+            return traverseLeftFirst ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(1f, leftFilter), false)
                 : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(0f, t => !leftFilter(t)), true);
         }
 

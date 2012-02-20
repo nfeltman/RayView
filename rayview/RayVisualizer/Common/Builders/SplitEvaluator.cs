@@ -5,19 +5,19 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public interface BVHSplitEvaluator<StackState, MemoData, Aggregate>
+    public interface SplitEvaluator<StackState, MemoData, Aggregate>
     {
         EvalResult<MemoData> EvaluateSplit(Aggregate leftAgg, Aggregate rightAgg, StackState state, Func<BuildTriangle, bool> leftFilter);
     }
 
-    public interface BVHSplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : BVHSplitEvaluator<StackState, MemoData, Aggregate>
+    public interface SplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : SplitEvaluator<StackState, MemoData, Aggregate>
     {
         TransitionData GetDefault();
         StackState BeginEvaluations(int startTri, int endTri, Aggregate objectBounds, TransitionData parentState);
         BuildReport<TransitionData, BranchData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
     }
 
-    public abstract class TransitionlessEvaluator<StackState, BuildMemo, Aggregate> : BVHSplitEvaluator<StackState, BuildMemo, BuildMemo, StackState, Aggregate>
+    public abstract class TransitionlessEvaluator<StackState, BuildMemo, Aggregate> : SplitEvaluator<StackState, BuildMemo, BuildMemo, StackState, Aggregate>
     {
         public abstract StackState GetDefault();
         public abstract StackState BeginEvaluations(int startTri, int endTri, Aggregate objectBounds, StackState parentState);
@@ -33,11 +33,11 @@ namespace RayVisualizer.Common
         public MemoData Data { get; set; }
         public double Cost { get; set; }
         public bool BuildLeftFirst { get; set; }
-        public EvalResult(double cost, MemoData data, bool leftFirst)
+        public EvalResult(double cost, MemoData data, bool buildLeftFirst)
         {
             Data = data;
             Cost = cost;
-            BuildLeftFirst = leftFirst;
+            BuildLeftFirst = buildLeftFirst;
         }
     }
 
@@ -54,7 +54,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class StatelessSplitEvaluator : BVHSplitEvaluator<Unit, Unit, Unit, Unit, BoundAndCount>
+    public class StatelessSplitEvaluator : SplitEvaluator<Unit, Unit, Unit, Unit, BoundAndCount>
     {
         private Func<int, Box3, int, Box3, float> _costEstimator;
 

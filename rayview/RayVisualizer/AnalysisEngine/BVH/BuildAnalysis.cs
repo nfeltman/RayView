@@ -9,6 +9,7 @@ using System.Threading;
 
 namespace AnalysisEngine
 {
+    /*
     static class BuildAnalysis
     {
 
@@ -333,4 +334,5 @@ namespace AnalysisEngine
             writer.Close();
         }
     }
+     */ 
 }

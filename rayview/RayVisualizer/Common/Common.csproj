@@ -11,6 +11,8 @@
     <RootNamespace>RayVisualizer.Common</RootNamespace>
     <AssemblyName>RVCommon</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Mono</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -66,29 +68,23 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Builders\BoundBuilder.cs" />
     <Compile Include="Builders\BuildTools.cs" />
     <Compile Include="Builders\NodeBuilder.cs" />
     <Compile Include="Builders\OBJParser.cs" />
+    <Compile Include="Builders\Splitter.cs" />
+    <Compile Include="Builders\SplitterHelper.cs" />
     <Compile Include="Builders\TriangleAggregator.cs" />
+    <Compile Include="Builders\TripleAASplitter.cs" />
     <Compile Include="BVH2\BVH2Visitors\RayCostVisitor.cs" />
     <Compile Include="BVH2\BVHBuild\BlendedSplitEvaluator.cs" />
     <Compile Include="BVH2\BVHBuild\BVH2Parser.cs" />
     <Compile Include="BVH2\BVHBuild\BVHNodeFactory.cs" />
     <Compile Include="BVH2\BVHBuild\RayCostEvaluator.cs" />
     <Compile Include="BVH2\BVHBuild\RayCompiler.cs" />
-    <Compile Include="Builders\BVHSplitEvaluator.cs" />
+    <Compile Include="Builders\SplitEvaluator.cs" />
     <Compile Include="BVH2\BVHTraverser\RayOrderBoxTestCounter.cs" />
-    <Compile Include="Builders\AASplit.cs" />
+    <Compile Include="Builders\SplitSeries.cs" />
     <Compile Include="Pool.cs" />
     <Compile Include="Primitives\Box3.cs" />
     <Compile Include="BVH2\BVH2.cs" />
@@ -118,6 +114,7 @@
     <Compile Include="RBVH2\BVHBuild\ShadowRayCostEvaluator.cs" />
     <Compile Include="Builders\GeneralBVH2Builder.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCompiler.cs" />
+    <Compile Include="RBVH2\ConsistencyCheck.cs" />
     <Compile Include="RBVH2\FastFullCostMeasure.cs" />
     <Compile Include="RBVH2\FullCostMeasure.cs" />
     <Compile Include="RBVH2\OracleCost.cs" />
@@ -125,7 +122,9 @@
     <Compile Include="RBVH2\TraceCost.cs" />
     <Compile Include="Trees\Nodes.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -134,4 +133,10 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Reference Include="Mono.Simd">
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Mono-2.10.8\lib\mono\4.0\Mono.Simd.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+  </ItemGroup>
 </Project>

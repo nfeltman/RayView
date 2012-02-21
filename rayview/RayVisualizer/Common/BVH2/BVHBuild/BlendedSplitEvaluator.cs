@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class BlendedSplitEvaluator : TransitionlessEvaluator<BlendedSplitEvaluator.RayShuffleState, Unit, int>
+    public class BlendedSplitEvaluator : TransitionlessEvaluator<BlendedSplitEvaluator.RayShuffleState, Unit, BoundAndCount>
     {
         private Segment3[] hits;
         private Ray3[] misses;
@@ -19,13 +19,13 @@ namespace RayVisualizer.Common
             misses = res.Misses;
             w = weightRays;
         }
-        public override RayShuffleState BeginEvaluations(int startTri, int endTri, Box3 toBeSplit, RayShuffleState parentState)
+        public override RayShuffleState BeginEvaluations(int startTri, int endTri, BoundAndCount toBeSplit, RayShuffleState parentState)
         {
             int hitPart = 0;
             int missPart = 0;
             for (int k = 0; k < parentState.hitMax; k++)
             {
-                if (toBeSplit.DoesIntersectSegment(hits[k].Origin, hits[k].Difference))
+                if (toBeSplit.Box.DoesIntersectSegment(hits[k].Origin, hits[k].Difference))
                 {
                     if (hitPart != k)
                     {
@@ -38,7 +38,7 @@ namespace RayVisualizer.Common
             } 
             for (int k = 0; k < parentState.missMax; k++)
             {
-                if (toBeSplit.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
+                if (toBeSplit.Box.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
                 {
                     if (hitPart != k)
                     {
@@ -50,33 +50,33 @@ namespace RayVisualizer.Common
                 }
             }
             
-            return new RayShuffleState() { missMax = missPart, hitMax = hitPart, topSA = toBeSplit.SurfaceArea};
+            return new RayShuffleState() { missMax = missPart, hitMax = hitPart, topSA = toBeSplit.Box.SurfaceArea};
         }
 
-        public override EvalResult<Unit> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, RayShuffleState state, Func<BuildTriangle, bool> leftFilter)
+        public override EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, RayShuffleState state, Func<BuildTriangle, bool> leftFilter)
         {
             int left_collisions = 0;
             int right_collisions = 0;
             for (int k = 0; k < state.hitMax; k++)
             {
-                if (leftBox.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++left_collisions;
-                if (rightBox.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++right_collisions;
+                if (left.Box.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++left_collisions;
+                if (right.Box.DoesIntersectSegment(hits[k].Origin, hits[k].Difference)) ++right_collisions;
             }
             for (int k = 0; k < state.missMax; k++)
             {
-                if (leftBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++left_collisions;
-                if (rightBox.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++right_collisions;
+                if (left.Box.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++left_collisions;
+                if (right.Box.DoesIntersectRay(misses[k].Origin, misses[k].Direction)) ++right_collisions;
             }
 
             int rayMax = state.hitMax + state.missMax;
             double leftRayProp = rayMax == 0 ? 1 : ((double)left_collisions) / rayMax;
             double rightRayProp = rayMax == 0 ? 1 : ((double)right_collisions) / rayMax;
-            double leftSAProp = leftBox.SurfaceArea / state.topSA;
-            double rightSAProp = rightBox.SurfaceArea / state.topSA;
+            double leftSAProp = left.Box.SurfaceArea / state.topSA;
+            double rightSAProp = right.Box.SurfaceArea / state.topSA;
             double leftCombinedProp = leftRayProp * w + leftSAProp * (1 - w);
             double rightCombinedProp = rightRayProp * w + rightSAProp * (1 - w);
 
-            return new EvalResult<Unit>(leftCombinedProp * Math.Pow(leftNu - 1, _expo) + rightCombinedProp * Math.Pow(rightNu - 1, _expo), Unit.ONLY, true);
+            return new EvalResult<Unit>(leftCombinedProp * Math.Pow(left.Count - 1, _expo) + rightCombinedProp * Math.Pow(right.Count - 1, _expo), Unit.ONLY, true);
         }
 
         public override BlendedSplitEvaluator.RayShuffleState GetDefault()

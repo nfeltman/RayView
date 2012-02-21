@@ -13,6 +13,7 @@ namespace RayVisualizer.Common
             xMin = yMin = zMin = float.PositiveInfinity;
             xMax = yMax = zMax = float.NegativeInfinity;
         }
+        /*
         public BoundBuilder(BoundBuilder b)
         {
             xMin = b.xMin;
@@ -35,7 +36,7 @@ namespace RayVisualizer.Common
             if (p.y > yMax) yMax = p.y;
             if (p.z < zMin) zMin = p.z;
             if (p.z > zMax) zMax = p.z;
-        }
+        }*/
         public void AddTriangle(Triangle t)
         {
             if (t.p1.x < xMin) xMin = t.p1.x;
@@ -57,6 +58,7 @@ namespace RayVisualizer.Common
             if (t.p3.z < zMin) zMin = t.p3.z;
             if (t.p3.z > zMax) zMax = t.p3.z;
         }
+        /*
         public void AddBox(Box3 b)
         {
             if (b.XRange.Min < xMin) xMin = b.XRange.Min;
@@ -74,7 +76,7 @@ namespace RayVisualizer.Common
             if (b.yMax > yMax) yMax = b.yMax;
             if (b.zMin < zMin) zMin = b.zMin;
             if (b.zMax > zMax) zMax = b.zMax;
-        }
+        }*/
         public Box3 GetBox()
         {
             return new Box3(xMin, xMax, yMin, yMax, zMin, zMax);

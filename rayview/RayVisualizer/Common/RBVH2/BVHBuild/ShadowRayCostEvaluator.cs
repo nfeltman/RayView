@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator : BVHSplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, ShadowRayCostEvaluator.ShadowRayMemoData, float, ShadowRayCostEvaluator.ShadowRayShuffleState, int>
+    public class ShadowRayCostEvaluator : SplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, ShadowRayCostEvaluator.ShadowRayMemoData, float, ShadowRayCostEvaluator.ShadowRayShuffleState, BoundAndCount>
     {
         private Segment3[] _connected;
         private CompiledShadowRay[] _broken;
@@ -18,16 +18,16 @@ namespace RayVisualizer.Common
             _broken = res.Broken;
         }
 
-        public ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, Box3 objectBounds, ShadowRayShuffleState parentState)
+        public ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, BoundAndCount objectBounds, ShadowRayShuffleState parentState)
         {
             // filter "connected" buffer
-            int connectedPart = BuildTools.SweepPartition(_connected, 0, parentState.connectedMax, seg => objectBounds.DoesIntersectSegment(seg.Origin, seg.Difference));
+            int connectedPart = BuildTools.SweepPartition(_connected, 0, parentState.connectedMax, seg => objectBounds.Box.DoesIntersectSegment(seg.Origin, seg.Difference));
 
             // filter "broken" buffer
             int brokenPart = 0;
             for (int k = 0; k < parentState.brokenMax; k++)
             {
-                if (objectBounds.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
+                if (objectBounds.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
                 {
                     if (connectedPart != k)
                     {
@@ -46,7 +46,7 @@ namespace RayVisualizer.Common
                 bt => (bt.index >= startTri && bt.index < endTri));
         }
 
-        public EvalResult<ShadowRayMemoData> EvaluateSplit(int leftNu, Box3 leftBox, int rightNu, Box3 rightBox, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
+        public EvalResult<ShadowRayMemoData> EvaluateSplit(BoundAndCount left, BoundAndCount right, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
         {
             int left_sure_traversal = 0;
             int right_sure_traversal = 0;
@@ -55,8 +55,8 @@ namespace RayVisualizer.Common
             // test all the faux hits from the "connected" buffer
             for (int k = 0; k < state.connectedMax; k++)
             {
-                if (leftBox.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++left_sure_traversal;
-                if (rightBox.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++right_sure_traversal;
+                if (left.Box.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++left_sure_traversal;
+                if (right.Box.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++right_sure_traversal;
             }
             // test all the (maybe faux) hits from the "broken" buffer
             for (int k = 0; k < state.brokenMax; k++)
@@ -67,28 +67,33 @@ namespace RayVisualizer.Common
                 switch (combo)
                 {
                     case InteractionCombination.HitNeither:
-                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  ++left_sure_traversal;
-                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_sure_traversal; break;
+                        if (left.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  ++left_sure_traversal;
+                        if (right.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_sure_traversal; break;
                     case InteractionCombination.HitBoth:
                         ++left_maybe_traversal;
                         ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyLeft:
                         ++left_sure_traversal;
-                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_maybe_traversal; break;
+                        if (right.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyRight:
                         ++right_sure_traversal;
-                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_maybe_traversal; break;
+                        if (left.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_maybe_traversal; break;
                 }
             }
             // there's a +c_i for every ray which we will neglect to add, since it exists despite the split
             // calculate whether we should do left first or right first
-            double leftFactor = Math.Pow(leftNu, _alpha);
-            double rightFactor = Math.Pow(rightNu, _alpha);
+            double leftFactor = Math.Pow(left.Count, _alpha);
+            double rightFactor = Math.Pow(right.Count, _alpha);
             double leftAvoidable = left_maybe_traversal * leftFactor;
             double rightAvoidable = right_maybe_traversal * rightFactor;
             double unavoidablePart = left_sure_traversal * leftFactor + right_sure_traversal * rightFactor;
             //Console.WriteLine("{0,4}-{1,4} m{2} {3} s{4,4} {5,4} u{6}", leftNu, rightNu, left_maybe_traversal, right_maybe_traversal, left_sure_traversal, right_sure_traversal, unavoidablePart);
-            return leftAvoidable < rightAvoidable ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(1f, leftFilter), true)
+            bool traverseLeftFirst = leftAvoidable < rightAvoidable;
+            // the rays that intersect with the non-dominant side are a subset of those that interact with the dominant side
+            // I want to build the non-dominant side first
+            // so that I can freely shuffle within the non-dominant side's active ray set without messing up the dominant side's active ray set
+            // the converse property would not hold
+            return traverseLeftFirst ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(1f, leftFilter), false)
                 : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(0f, t => !leftFilter(t)), true);
         }
 

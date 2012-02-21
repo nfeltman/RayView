@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace RayVisualizer.Common
-{
+{/*
     public class Pool<T>
         where T : class // There's no point in a pool for value types.
     {
@@ -40,5 +40,5 @@ namespace RayVisualizer.Common
             _available.Push(item);
             item = null;
         }
-    }
+    }*/
 }

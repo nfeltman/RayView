@@ -45,5 +45,10 @@ namespace RayVisualizer.Common
             float res = IntersectRay(origin, difference);
             return !float.IsNaN(res) && res < 1;
         }
+
+        public override string ToString()
+        {
+            return String.Format("[{0}, {1}, {2}]", p1, p2, p3);
+        }
     }
 }

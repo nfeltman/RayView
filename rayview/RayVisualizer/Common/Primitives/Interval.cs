@@ -122,9 +122,9 @@ namespace RayVisualizer.Common
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <returns></returns>
-        public static bool operator <(ClosedInterval i1, ClosedInterval i2)
+        public bool EntirelyLess(ClosedInterval i2)
         {
-            return (i1._max < i2._min || i1.IsEmpty || i2.IsEmpty);
+            return (_max < i2._min || IsEmpty || i2.IsEmpty);
         }
 
         /// <summary>
@@ -133,9 +133,9 @@ namespace RayVisualizer.Common
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <returns></returns>
-        public static bool operator >(ClosedInterval i1, ClosedInterval i2)
+        public bool EntirelyGreater(ClosedInterval i2)
         {
-            return (i1._min > i2._max || i1.IsEmpty || i2.IsEmpty);
+            return (_min > i2._max || IsEmpty || i2.IsEmpty);
         }
 
         public override string ToString()

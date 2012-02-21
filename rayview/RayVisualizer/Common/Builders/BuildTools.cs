@@ -86,13 +86,13 @@ namespace RayVisualizer.Common
             arr[loc2] = temp;
         }
 
-        public static int SweepPartition<T>(T[] arr, int start, int end, Func<T,bool> goesLeft)
+        public static int SweepPartition<T>(T[] arr, int start, int end, Func<T,bool> goesPrior)
         {
             int part = start;
             // filter "connected" buffer
             for (int k = start; k < end; k++)
             {
-                if (goesLeft(arr[k]))
+                if (goesPrior(arr[k]))
                 {
                     if (part != k)
                     {

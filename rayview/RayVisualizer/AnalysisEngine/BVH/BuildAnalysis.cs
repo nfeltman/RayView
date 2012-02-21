@@ -9,6 +9,7 @@ using System.Threading;
 
 namespace AnalysisEngine
 {
+    /*
     static class BuildAnalysis
     {
 
@@ -135,18 +136,6 @@ namespace AnalysisEngine
             writer.Close();
         }
 
-        public static void BasicSAHBuildTest(string tracesPath)
-        {
-            Stopwatch st = new Stopwatch();
-            BVH2 given = BVH2Parser.ReadFromFile(new FileStream(tracesPath + "powerplant\\raw_bvh.txt", FileMode.Open, FileAccess.Read));
-            BuildTriangle[] tris = BuildTools.GetTriangleList(given);
-            st.Start();
-            GeneralBVH2Builder.BuildBVHTest(tris);
-            st.Stop();
-            Console.WriteLine("Took {0:.000} seconds", st.Elapsed.TotalSeconds);
-            Console.ReadLine();
-        }
-
         public static void BasicRDHBuildTest(string tracesPath)
         {
             Stopwatch st = new Stopwatch();
@@ -157,7 +146,7 @@ namespace AnalysisEngine
             FHRayResults res = RayCompiler.CompileCasts(set, given);
             BuildTriangle[] tris = BuildTools.GetTriangleList(given);
             st.Start();
-            GeneralBVH2Builder.BuildStructure(tris, new RayCostEvaluator(res, .9f), BVHNodeFactory.ONLY, CountAggregator.ONLY, 4, false);
+            GeneralBVH2Builder.BuildStructure(tris, new RayCostEvaluator(res, .9f), BVHNodeFactory.ONLY, BoundsCountAggregator.ONLY, 4);
             st.Stop();
             Console.WriteLine("Took {0:.000} seconds", st.Elapsed.TotalSeconds);
             Console.ReadLine();
@@ -345,4 +334,5 @@ namespace AnalysisEngine
             writer.Close();
         }
     }
+     */ 
 }

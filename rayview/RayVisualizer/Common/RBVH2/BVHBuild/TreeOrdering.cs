@@ -30,7 +30,7 @@ namespace RayVisualizer.Common
                             PLeft = C_leftFirst < C_rightFirst ? 1f : 0f // go left first if the left cost is lower
                         }));
                 },
-                le => 
+                le =>
                 {
                     return new VisibilityRollUp(le.Primitives.Length > 0 ? 0.0f : 1.0f, PRIM, le.BBox, new Leaf<RBVH2Branch, RBVH2Leaf>(
                         new RBVH2Leaf() {

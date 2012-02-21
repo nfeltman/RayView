@@ -299,32 +299,10 @@ namespace Topaz
                     
                     ShadowRayCostEvaluator eval = new ShadowRayCostEvaluator(res, 1.0f);
 
-                    output.WriteLine("\"numbins\" \"x\" {0}", numBins);
-                    output.WriteLine("\"splitParamsX\" \"sub\" {0}", centroidBounds.XRange.Min);
-                    output.WriteLine("\"splitParamsX\" \"times\" {0}", numBins / centroidBounds.XRange.Size);
-                    SplitterHelper.RunSplitSweepTest(
-                        (split, cost)=>{
-                            Console.WriteLine(split);
-                            output.WriteLine("\"xSplit\" \"{0}\" {1}", split, cost);
-                        }, tris, new XAASplitSeries(centroidBounds.XRange.Min, numBins / centroidBounds.XRange.Size), numBins, eval, BoundsCountAggregator.ONLY);
-                    output.WriteLine("\"numbins\" \"y\" {0}", numBins);
-                    output.WriteLine("\"splitParamsY\" \"sub\" {0}", centroidBounds.YRange.Min);
-                    output.WriteLine("\"splitParamsY\" \"times\" {0}", numBins / centroidBounds.YRange.Size);
-                    SplitterHelper.RunSplitSweepTest(
-                        (split, cost) =>
-                        {
-                            Console.WriteLine(split);
-                            output.WriteLine("\"ySplit\" \"{0}\" {1}", split, cost);
-                        }, tris, new YAASplitSeries(centroidBounds.YRange.Min, numBins / centroidBounds.YRange.Size), numBins, eval, BoundsCountAggregator.ONLY);
-                    output.WriteLine("\"numbins\" \"z\" {0}", numBins);
-                    output.WriteLine("\"splitParamsZ\" \"sub\" {0}", centroidBounds.ZRange.Min);
-                    output.WriteLine("\"splitParamsZ\" \"times\" {0}", numBins / centroidBounds.ZRange.Size);
-                    SplitterHelper.RunSplitSweepTest(
-                        (split, cost) =>
-                        {
-                            Console.WriteLine(split);
-                            output.WriteLine("\"zSplit\" \"{0}\" {1}", split, cost);
-                        }, tris, new XAASplitSeries(centroidBounds.ZRange.Min, numBins / centroidBounds.ZRange.Size), numBins, eval, BoundsCountAggregator.ONLY);
+                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
+                    SweepTestHelper("X", numBins, centroidBounds.XRange.Min, numBins / centroidBounds.XRange.Size, output, tris, eval, evaluatorState);
+                    SweepTestHelper("Y", numBins, centroidBounds.YRange.Min, numBins / centroidBounds.YRange.Size, output, tris, eval, evaluatorState);
+                    SweepTestHelper("Z", numBins, centroidBounds.ZRange.Min, numBins / centroidBounds.ZRange.Size, output, tris, eval, evaluatorState);                    
                 };
             }
             else
@@ -332,6 +310,27 @@ namespace Topaz
                 Console.WriteLine("Unrecognized split method \"{0}\".  Acceptible: AA3", method);
                 return null;
             }
+        }
+
+        private static void SweepTestHelper(string dim, int numBins, float less, float times, StreamWriter output, BuildTriangle[] tris, ShadowRayCostEvaluator eval, ShadowRayCostEvaluator.ShadowRayShuffleState evaluatorState)
+        {
+            string splits_locs = "";
+            string sah_vals = "";
+            string srdh_vals = "";
+
+            SplitterHelper.RunSplitSweepTest(
+                (split, leftAgg, rightAgg, filter) =>
+                {
+                    var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, filter);
+                    splits_locs += String.Format(" {0}", split / times + less);
+                    sah_vals += String.Format(" {0}", leftAgg.Box.SurfaceArea * (leftAgg.Count * 2 - 1) + rightAgg.Box.SurfaceArea * (rightAgg.Count * 2 - 1));
+                    srdh_vals += String.Format(" {0}", cost.Cost);
+                }, tris, new XAASplitSeries(less, times), numBins, BoundsCountAggregator.ONLY);
+
+            output.WriteLine("\"numSplits{0}\" \"count\" {1}", dim, numBins-1);
+            output.WriteLine("\"splits{0}\" \"array\"{1}", dim, splits_locs);
+            output.WriteLine("\"sah{0}\" \"array\"{1}", dim, sah_vals);
+            output.WriteLine("\"srdh{0}\" \"array\"{1}", dim, srdh_vals);
         }
 
         private static void StandardRBVHStatsReport(RBVH2 build, StreamWriter output)
@@ -418,7 +417,7 @@ namespace Topaz
                 return null;
             }
              */
-            return () => File.OpenWrite(filename);
+            return () => File.Open(filename, FileMode.Truncate, FileAccess.Write);
         }
 
         private static Dictionary<string, IList<string>> ParseCommandOptions(string[] args, int startAt)

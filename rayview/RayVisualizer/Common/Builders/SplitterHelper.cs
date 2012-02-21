@@ -59,7 +59,7 @@ namespace RayVisualizer.Common
             tri[loc2].index = loc2;
         }
 
-        public static void RunSplitSweepTest<StackState, MemoState, BranchData, TransitionData, Aggregate>(Action<int, double> emitter, BuildTriangle[] tris, SplitSeries series, int numBins, SplitEvaluator<StackState, MemoState, BranchData, TransitionData, Aggregate> eval, TriangleAggregator<Aggregate> aggregator)
+        public static void RunSplitSweepTest<Aggregate>(Action<int, Aggregate, Aggregate, Func<BuildTriangle ,bool>> emitter, BuildTriangle[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate> aggregator)
         {
             // initialize counts and bounds
             Aggregate[] blockAggregates = new Aggregate[numBins];
@@ -86,13 +86,11 @@ namespace RayVisualizer.Common
                 backwardAggAccumulator[k] = backwardPrevAgg;
             }
 
-            StackState evaluatorState = eval.BeginEvaluations(0, tris.Length, backwardPrevAgg, eval.GetDefault());
             Aggregate forwardPrevAgg = aggregator.GetIdentity();
             for (int k = 0; k < numBins - 1; k++)
             {
                 aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
-                EvalResult<MemoState> cost = eval.EvaluateSplit(forwardPrevAgg, backwardAggAccumulator[k + 1], evaluatorState, series.GetFilter(k + 1));
-                emitter(k+1, cost.Cost);
+                emitter(k+1, forwardPrevAgg, backwardAggAccumulator[k + 1], series.GetFilter(k+1));
             }
         }
     }

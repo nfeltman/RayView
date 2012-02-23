@@ -122,29 +122,39 @@ namespace RayVisualizer.Common
             }
         }
 
-        public static FullTraceResult GetTotalCost(RBVH2 tree, IEnumerable<Segment3> shadows)
+        public static FullTraceResult GetTotalCost(RBVH2 tree, IEnumerable<ShadowQuery> shadows)
         {
             FullTraceResult cost = new FullTraceResult(); //the default value is correct
             InternalVisitor measure = new InternalVisitor();
-            foreach (Segment3 shadow in shadows)
+            int topazBrok_mantaBrok = 0;
+            int topazBrok_mantaCon = 0;
+            int topazConn_mantaBrok = 0;
+            int topazConn_mantaConn = 0;
+            foreach (ShadowQuery shadow in shadows)
             {
-                measure.ShadowRay = shadow;
-                TraceResult res = tree.Accept(measure);
                 cost.NumRays++;
+                measure.ShadowRay = new Segment3(shadow.Origin, shadow.Difference);
+                TraceResult res = tree.Accept(measure);
                 if (res.Hits)
                 {
                     cost.Spine += res.Spine;
                     cost.SideTrees += res.Side;
-                    cost.NumHits++;
+                    if (shadow.Connected) topazBrok_mantaCon++; else topazBrok_mantaBrok++;
                 }
                 else
                 {
                     if (!res.Spine.IsZero)
-                    {
-                        throw new Exception("This isn't right!");
-                    }
+                        throw new Exception("This isn't right!  Complete miss implies spine cost should be zero.");
                     cost.NonHit += res.Side;
+                    if (shadow.Connected) topazConn_mantaConn++; else topazConn_mantaBrok++;
                 }
+            }
+            cost.NumHits = topazBrok_mantaBrok + topazBrok_mantaCon;
+            double disagreement = ((double)topazConn_mantaBrok + topazBrok_mantaCon) / cost.NumRays; 
+            Console.WriteLine("Disagreement = {0}.  TB/MC = {1}.  TC/MB = {2}. TB/MB = {3}. TC/MC = {4}.", disagreement, topazBrok_mantaCon, topazConn_mantaBrok, topazBrok_mantaBrok, topazConn_mantaConn);    
+            if (cost.NumRays != 0 && disagreement > 0.005)
+            {
+                //throw new Exception("Badly disagree with results from ray file.");
             }
             return cost;
         }

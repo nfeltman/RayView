@@ -39,11 +39,33 @@ namespace RayVisualizer.Common
                         
             return t;
         }
+        
+        public float IntersectLine(CVector3 origin, CVector3 direction, ClosedInterval interval)
+        {
+            CVector3 edge0 = p1 - p3;
+            CVector3 edge1 = p3 - p2;
+            CVector3 normal = edge0 ^ edge1;
+            float rcp = 1.0f / (normal * direction);
+            CVector3 edge2 = p3 - origin;
+            float t = (normal * edge2) * rcp;
+            if (t > interval.Max || t < interval.Min)
+                return float.NaN;
+            CVector3 interm = edge2 ^ direction;
+            float u = (interm * edge1) * rcp;
+            if (u < 0.0f)
+                return float.NaN;
+            float v = (interm * edge0) * rcp;
+            if (u + v > 1.0f || v < 0.0f)
+                return float.NaN;
+
+            return t;
+        }
 
         public bool IntersectsSegment(CVector3 origin, CVector3 difference)
         {
-            float res = IntersectRay(origin, difference);
-            return !float.IsNaN(res) && res < 1;
+            const float T_EPSILON = 0.0001f;
+            float res = IntersectLine(origin, difference, new ClosedInterval(T_EPSILON, 1 - T_EPSILON));
+            return !float.IsNaN(res);
         }
 
         public override string ToString()

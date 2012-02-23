@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RayVisualizer.Common;
+using System.IO;
 
 namespace RayVisualizer
 {
@@ -10,7 +11,25 @@ namespace RayVisualizer
     {
         public static ViewerState InitializeShadow(SceneData scene, List<ViewerState> statesList)
         {
-            return FocusOnSpehere(scene, statesList);
+            return FromFile(scene, statesList);
+        }
+
+        private static ViewerState FromFile(SceneData scene, List<ViewerState> statesList)
+        {
+            RaySet rays = RayFileParser.ReadFromFile2(File.OpenRead("..\\..\\..\\..\\..\\..\\..\\fastrays\\results\\madsci_one\\madsci_one_spp-1_spl-1_aos-0\\madsci_one.ray"));
+            BuildTriangle[] tris = OBJParser.ParseOBJTriangles(File.OpenRead("..\\..\\..\\..\\..\\..\\..\\fastrays\\results\\madsci_one\\madsci_one_spp-1_spl-1_aos-0\\madsci_one.obj")).Select(t=>new Triangle(t.p1*100,t.p2*100,t.p3*100)).ToArray().GetTriangleList();
+            RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, TripleAASplitter.ONLY);
+
+            RBVHTriangleViewer bvhViewer = new RBVHTriangleViewer(build);
+            scene.Viewables.Add(bvhViewer);
+            Segment3[] segs = rays.ShadowQueries.Where(q=>q.Connected).Select(q => new Segment3(q.Origin * 100, q.Difference * 100)).ToArray();
+            Console.WriteLine(segs.Length);
+            scene.Viewables.Add(new RaysViewer(segs));
+
+            // states
+            statesList.Add(new ExploreState());
+            statesList.Add(new RBVHExploreState(bvhViewer));
+            return statesList[0];
         }
 
         private static ViewerState FocusOnSpehere(SceneData scene, List<ViewerState> statesList)

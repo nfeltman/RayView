@@ -19,6 +19,7 @@ namespace Topaz
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+                Environment.Exit(-1);
             }
         }
 
@@ -65,7 +66,7 @@ namespace Topaz
                     StreamWriter writer = new StreamWriter(fileout);
                     RBVH2 bvh = build(tris(), buildrays(), writer);
                     bvh.Accept(ConsistencyCheck.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
-                    Console.WriteLine("Consistent.");
+                    //Console.WriteLine("Consistent.");
                     RaySet eval_rays = evalrays();
                     foreach (var method in evalMethods) method(bvh, eval_rays, writer);
                     writer.Flush();
@@ -244,7 +245,7 @@ namespace Topaz
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting standard PQ evaluation. "); st.Start();
-                    FullTraceResult cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
+                    FullTraceResult cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries);
                     st.Stop(); Console.WriteLine("Done with PQ evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     PrintSimple("PQ NumRays", cost.NumRays, output);
@@ -417,7 +418,7 @@ namespace Topaz
                 return null;
             }
              */
-            return () => File.Open(filename, FileMode.Truncate, FileAccess.Write);
+            return () => File.Open(filename, FileMode.Create, FileAccess.Write);
         }
 
         private static Dictionary<string, IList<string>> ParseCommandOptions(string[] args, int startAt)

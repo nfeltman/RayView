@@ -1,5 +1,5 @@
 ## FORMAT ##
-BVHFile    := BVHNode Sentinel                                    # the node is a single tree plus a sentinel
+BVHFile    := Sentinel BVHNode                                    # the node is a single tree plus a sentinel
 BVHNode    := EBVHBranch | EBVHLeaf | IBVHBranch | IBVHLeaf       # a node is either a leaf or a branch, implicit or explicit
 IBVHBranch := IBranchID left:BVHNode right:BVHNode                # pre-order printing of the tree
 EBVHBranch := EBranchID bounds:BBox left:BVHNode right:BVHNode    # pre-order printing of the tree
@@ -9,6 +9,7 @@ Tri        := p1:Point p2:Point p3:Point                          # three points
 Point      := x:float y:float z:float
 BBox       := x:Range y:Range z:Range
 Range      := min:float max:float                                 # note: bounds might be infinite
+Tri*       :  size_t | unsigned int                               # indices for triangles, which are referenced from another file
 
 ## CONSTANTS ##
 EBranchID   := 0:int

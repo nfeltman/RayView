@@ -59,7 +59,7 @@ namespace RayVisualizer.Common
             return new RayShuffleState() { missMax = missPart, hitMax = hitPart };
         }
 
-        public override EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, RayShuffleState state, Func<BuildTriangle, bool> leftFilter)
+        public override EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, RayShuffleState state, Func<CenterIndexable, bool> leftFilter)
         {
             int left_collisions = 0;
             int right_collisions = 0;

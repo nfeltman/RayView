@@ -30,6 +30,47 @@ namespace RayVisualizer.Common
         }
     }
 
+    public class Tree<TBranch, TLeaf>
+    {
+        private TreeNode<TBranch, TLeaf> _root;
+        private int _numBranches;
+        public TreeNode<TBranch, TLeaf> Root { get { return _root; } }
+        public int NumNodes { get { return _numBranches * 2 + 1; } }
+        public int NumBranch { get { return _numBranches; } }
+        public int NumLeaves { get { return _numBranches + 1; } }
+
+        public Tree(TreeNode<TBranch, TLeaf> root, int numBranches)
+        {
+            _root = root;
+            _numBranches = numBranches;
+        }
+
+        public Ret Accept<Ret>(NodeVisitor<Ret, TBranch, TLeaf> visitor)
+        {
+            return _root.Accept(visitor);
+        }
+        public Ret Accept<Ret, Args>(NodeVisitor<Ret, Args, TBranch, TLeaf> visitor, Args args)
+        {
+            return _root.Accept(visitor, args);
+        }
+        public void PrefixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf)
+        {
+            _root.PrefixEnumerate(forBranch, forLeaf);
+        }
+        public void PostfixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf)
+        {
+            _root.PostfixEnumerate(forBranch, forLeaf);
+        }
+        public T RollUp<T>(Func<TBranch, T, T, T> forBranch, Func<TLeaf, T> forLeaf)
+        {
+            return _root.RollUp(forBranch, forLeaf);
+        }
+        public T RollUpNodes<T>(Func<Branch<TBranch, TLeaf>, T, T, T> forBranch, Func<Leaf<TBranch, TLeaf>, T> forLeaf)
+        {
+            return _root.RollUpNodes(forBranch, forLeaf);
+        }
+    }
+
     public class Branch<TBranch, TLeaf> : TreeNode<TBranch, TLeaf>
     {
         public TreeNode<TBranch, TLeaf> Left { get; set; }
@@ -139,6 +180,21 @@ namespace RayVisualizer.Common
         {
             return forLeaf(Content);
         }
+    }
+
+    public interface Boxed
+    {
+        Box3 BBox { get; set; }
+    }
+
+    public interface Weighted
+    {
+        float PLeft { get; set; }
+    }
+
+    public interface Primitived<Prim>
+    {
+        Prim[] Primitives { get; set; }
     }
 
     public interface NodeVisitor<Ret, TBranch, TLeaf>

@@ -8,18 +8,22 @@ namespace RayVisualizer.Common
 {
     public interface TriangleAggregator<Aggregate>
     {
-        void InplaceOp(ref Aggregate val, BuildTriangle t);
-        void InplaceOp3(ref Aggregate val1, ref Aggregate val2, ref Aggregate val3, BuildTriangle t); // to alleviate the cost of a virtual call
         Aggregate Op(Aggregate val1, Aggregate val2);
         void InplaceOp(ref Aggregate val1, Aggregate val2);
         Aggregate GetIdentity();
-        Aggregate Roll(BuildTriangle[] tris, int start, int end);
-        Aggregate GetVal(BuildTriangle t);
+    }
+    public interface TriangleAggregator<Aggregate, Tri> : TriangleAggregator<Aggregate>
+    {
+        void InplaceOp(ref Aggregate val, Tri t);
+        void InplaceOp3(ref Aggregate val1, ref Aggregate val2, ref Aggregate val3, Tri t); // to alleviate the cost of a virtual call
+
+        Aggregate Roll(Tri[] tris, int start, int end);
+        Aggregate GetVal(Tri t);
     }
 
-    public class CountAggregator : TriangleAggregator<int>
+    public class CountAggregator<Tri> : TriangleAggregator<int, Tri>
     {
-        public static readonly CountAggregator ONLY = new CountAggregator();
+        public static readonly CountAggregator<Tri> ONLY = new CountAggregator<Tri>();
 
         private CountAggregator() { }
 
@@ -38,32 +42,33 @@ namespace RayVisualizer.Common
             return 0;
         }
 
-        public void InplaceOp(ref int val, BuildTriangle t)
+        public void InplaceOp(ref int val, Tri t)
         {
             val++;
         }
 
-        public int Roll(BuildTriangle[] tris, int start, int end)
+        public int Roll(Tri[] tris, int start, int end)
         {
             return end - start;
         }
 
-        public void InplaceOp3(ref int val1, ref int val2, ref int val3, BuildTriangle t)
+        public void InplaceOp3(ref int val1, ref int val2, ref int val3, Tri t)
         {
             val1 = val1 + 1;
             val2 = val2 + 1;
             val3 = val3 + 1;
         }
 
-        public int GetVal(BuildTriangle t)
+        public int GetVal(Tri t)
         {
             return 1;
         }
     }
 
-    public class BoundsCountAggregator : TriangleAggregator<BoundAndCount>
+    public class BoundsCountAggregator<Tri> : TriangleAggregator<BoundAndCount, Tri>
+            where Tri : TriangleContainer
     {
-        public static readonly BoundsCountAggregator ONLY = new BoundsCountAggregator();
+        public static readonly BoundsCountAggregator<Tri> ONLY = new BoundsCountAggregator<Tri>();
 
         private BoundsCountAggregator() { }
 
@@ -77,11 +82,11 @@ namespace RayVisualizer.Common
             return new BoundAndCount(val1.Count + val2.Count, val1.Box | val2.Box); 
         }
 
-        public void InplaceOp(ref BoundAndCount val, BuildTriangle t)
+        public void InplaceOp(ref BoundAndCount val, Tri t)
         {
-            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
 
             Vector4f triMax = point1.Max(point2).Max(point3);
             Vector4f triMin = point1.Min(point2).Min(point3);
@@ -95,28 +100,28 @@ namespace RayVisualizer.Common
             val1.Count += val2.Count;
         }
 
-        public BoundAndCount Roll(BuildTriangle[] tris, int start, int end)
+        public BoundAndCount Roll(Tri[] tris, int start, int end)
         {
             BoundBuilder builder = new BoundBuilder(true);
             for (int k = start; k < end; k++)
-                builder.AddTriangle(tris[k].t);
+                builder.AddTriangle(tris[k].T);
             return new BoundAndCount(end - start, builder.GetBox());
         }
 
-        public BoundAndCount GetVal(BuildTriangle t)
+        public BoundAndCount GetVal(Tri t)
         {
-            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
 
             return new BoundAndCount(1, new Box3(point1.Min(point2).Min(point3), point1.Max(point2).Max(point3)));
         }
 
-        public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, BuildTriangle t)
+        public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, Tri t)
         {
-            Vector4f point1 = new Vector4f(t.t.p1.x, t.t.p1.y, t.t.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.t.p2.x, t.t.p2.y, t.t.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.t.p3.x, t.t.p3.y, t.t.p3.z, 0f);
+            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
+            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
+            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
 
             Vector4f triMax = point1.Max(point2).Max(point3);
             Vector4f triMin = point1.Min(point2).Min(point3);

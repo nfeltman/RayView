@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common.BVH2Visitors
 {
-    public class CollectTrianglesVisitor : NodeVisitor<Unit, BVH2Branch, BVH2Leaf>, NodeVisitor<Unit,RBVH2Branch, RBVH2Leaf>
+    public class CollectTrianglesVisitor<Tri> : NodeVisitor<Unit, BVH2Branch, BVH2Leaf>, NodeVisitor<Unit, RBVH2Branch, RBVH2Leaf>
     {
         private Action<Triangle> _triangleAction;
 

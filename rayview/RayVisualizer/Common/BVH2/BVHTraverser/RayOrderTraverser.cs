@@ -6,6 +6,11 @@ using Common;
 
 namespace RayVisualizer.Common
 {
+    using BVH2 = Tree<BVH2Branch, BVH2Leaf>;
+    using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
+    using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
+    using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+
     // alias, because Union<...,...> is too long
     using QueueItem = Union<TreeNode<BVH2Branch,BVH2Leaf>, HitRecord>;
     

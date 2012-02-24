@@ -30,7 +30,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < numBlocks - 1; k++)
             {
                 aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
-                EvalResult<MemoState> cost = se.EvaluateSplit(forwardPrevAgg, backwardAggAccumulator[k + 1], evaluatorState, split.GetFilter(k + 1));
+                EvalResult<MemoState> cost = se.EvaluateSplit(forwardPrevAgg, backwardAggAccumulator[k + 1], evaluatorState, split.GetFilter<CenterIndexable>(k + 1));
                 if (cost.Cost < minCost)
                 {
                     bestPartition = k + 1;
@@ -50,16 +50,19 @@ namespace RayVisualizer.Common
             };
         }
 
-        public static void Swap(BuildTriangle[] tri, int loc1, int loc2)
+        public static void Swap<Tri>(Tri[] tri, int loc1, int loc2)
+            where Tri : CenterIndexable
         {
-            BuildTriangle temp = tri[loc1];
+            Tri temp = tri[loc1];
             tri[loc1] = tri[loc2];
             tri[loc2] = temp;
-            tri[loc1].index = loc1;
-            tri[loc2].index = loc2;
+            tri[loc1].Index = loc1;
+            tri[loc2].Index = loc2;
         }
 
-        public static void RunSplitSweepTest<Aggregate>(Action<int, Aggregate, Aggregate, Func<BuildTriangle ,bool>> emitter, BuildTriangle[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate> aggregator)
+        public static void RunSplitSweepTest<Aggregate, Tri, TriB>(Action<int, Aggregate, Aggregate, Func<TriB, bool>> emitter, Tri[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate, Tri> aggregator)
+            where Tri : CenterIndexable
+            where TriB : Tri
         {
             // initialize counts and bounds
             Aggregate[] blockAggregates = new Aggregate[numBins];
@@ -71,7 +74,7 @@ namespace RayVisualizer.Common
             // calculate counts and bounds by placing every triangle into a bin
             for (int k = 0; k < tris.Length; k++)
             {
-                BuildTriangle t = tris[k];
+                Tri t = tris[k];
                 int blockX = Math.Max(0, Math.Min(numBins - 1, series.GetBucket(t)));
                 aggregator.InplaceOp(ref blockAggregates[blockX], t);
             }
@@ -90,7 +93,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < numBins - 1; k++)
             {
                 aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
-                emitter(k+1, forwardPrevAgg, backwardAggAccumulator[k + 1], series.GetFilter(k+1));
+                emitter(k+1, forwardPrevAgg, backwardAggAccumulator[k + 1], series.GetFilter<TriB>(k+1));
             }
         }
     }

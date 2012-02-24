@@ -7,40 +7,37 @@ namespace RayVisualizer.Common
 {
     public interface SplitSeries
     {
-        int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold);
-        int GetBucket(BuildTriangle tri);
-        Func<BuildTriangle, bool> GetFilter(int threshold);
+        int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold)
+            where Tri : CenterIndexable;
+        int GetBucket<Tri>(Tri tri)
+            where Tri : CenterIndexable;
+        Func<Tri, bool> GetFilter<Tri>(int threshold)
+            where Tri : CenterIndexable;
     }
-    public abstract class AASplitSeries : SplitSeries
+
+    public class XAASplitSeries : SplitSeries
     {
         protected float Less;
         protected float Times;
 
-        public AASplitSeries(float less, float times)
+        public XAASplitSeries(float less, float times)
         {
             Less = less;
             Times = times;
         }
 
-        public abstract int GetBucket(BuildTriangle tri);
-        public abstract int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold);
-        public abstract Func<BuildTriangle, bool> GetFilter(int threshold);
-    }
-
-    public class XAASplitSeries : AASplitSeries
-    {
-        public XAASplitSeries(float less, float times) : base(less, times){}
-
-        public override int GetBucket(BuildTriangle tri)
+        public int GetBucket<Tri>(Tri tri)
+            where Tri : CenterIndexable
         {
-            return (int)((tri.center.x - Less) * Times);
+            return (int)((tri.Center.x - Less) * Times);
         }
-        public override int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold)
+        public int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold)
+            where Tri : CenterIndexable
         {
             int partLoc = start; // the first larger-than-partVal element
             for (int k = start; k < end; k++)
             {
-                if ((tri[k].center.x - Less) * Times < threshold)
+                if ((tri[k].Center.x - Less) * Times < threshold)
                 {
                     SplitterHelper.Swap(tri, k, partLoc);
                     partLoc++;
@@ -49,27 +46,37 @@ namespace RayVisualizer.Common
 
             return partLoc;
         }
-        public override Func<BuildTriangle, bool> GetFilter(int threshold)
+        public Func<Tri, bool> GetFilter<Tri>(int threshold)
+            where Tri : CenterIndexable
         {
-            return t => ((t.center.x - Less) * Times < threshold);
+            return t => ((t.Center.x - Less) * Times < threshold);
         }
     }
 
-    public class YAASplitSeries : AASplitSeries
+    public class YAASplitSeries : SplitSeries
     {
-        public YAASplitSeries(float less, float times) : base(less, times) { }
+        protected float Less;
+        protected float Times;
 
-        public override int GetBucket(BuildTriangle tri)
+        public YAASplitSeries(float less, float times)
         {
-            return (int)((tri.center.y - Less) * Times);
+            Less = less;
+            Times = times;
         }
-        public override int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold)
+
+        public int GetBucket<Tri>(Tri tri)
+            where Tri : CenterIndexable
+        {
+            return (int)((tri.Center.y - Less) * Times);
+        }
+        public int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold)
+            where Tri : CenterIndexable
         {
             int partLoc = start; // the first larger-than-partVal element
 
             for (int k = start; k < end; k++)
             {
-                if ((tri[k].center.y - Less) * Times < threshold)
+                if ((tri[k].Center.y - Less) * Times < threshold)
                 {
                     SplitterHelper.Swap(tri, k, partLoc);
                     partLoc++;
@@ -78,27 +85,37 @@ namespace RayVisualizer.Common
 
             return partLoc;
         }
-        public override Func<BuildTriangle, bool> GetFilter(int threshold)
+        public Func<Tri, bool> GetFilter<Tri>(int threshold)
+            where Tri : CenterIndexable
         {
-            return t => ((t.center.y - Less) * Times < threshold);
+            return t => ((t.Center.y - Less) * Times < threshold);
         }
     }
 
-    public class ZAASplitSeries : AASplitSeries
+    public class ZAASplitSeries : SplitSeries
     {
-        public ZAASplitSeries(float less, float times) : base(less, times) { }
+        protected float Less;
+        protected float Times;
 
-        public override int GetBucket(BuildTriangle tri)
+        public ZAASplitSeries(float less, float times)
         {
-            return (int)((tri.center.z - Less) * Times);
+            Less = less;
+            Times = times;
         }
-        public override int PerformPartition(BuildTriangle[] tri, int start, int end, int threshold)
+
+        public int GetBucket<Tri>(Tri tri)
+            where Tri : CenterIndexable
+        {
+            return (int)((tri.Center.z - Less) * Times);
+        }
+        public int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold)
+            where Tri : CenterIndexable
         {
             int partLoc = start; // the first larger-than-partVal element
 
             for (int k = start; k < end; k++)
             {
-                if ((tri[k].center.z - Less) * Times < threshold)
+                if ((tri[k].Center.z - Less) * Times < threshold)
                 {
                     SplitterHelper.Swap(tri, k, partLoc);
                     partLoc++;
@@ -107,14 +124,10 @@ namespace RayVisualizer.Common
 
             return partLoc;
         }
-        public override Func<BuildTriangle, bool> GetFilter(int threshold)
+        public Func<Tri, bool> GetFilter<Tri>(int threshold)
+            where Tri : CenterIndexable
         {
-            return t => ((t.center.z - Less) * Times < threshold);
+            return t => ((t.Center.z - Less) * Times < threshold);
         }
-    }
-
-    public enum SplitDimension
-    {
-        SplitX = 0, SplitY = 1, SplitZ = 2
     }
 }

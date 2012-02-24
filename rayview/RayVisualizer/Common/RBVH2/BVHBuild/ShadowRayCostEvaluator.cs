@@ -5,13 +5,14 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator : SplitEvaluator<ShadowRayCostEvaluator.ShadowRayShuffleState, ShadowRayCostEvaluator.ShadowRayMemoData, float, ShadowRayCostEvaluator.ShadowRayShuffleState, BoundAndCount>
+    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, float, ShadowRayShuffleState, BoundAndCount>
+        where Tri : CenterIndexable
     {
         private Segment3[] _connected;
-        private CompiledShadowRay[] _broken;
+        private CompiledShadowRay<Tri>[] _broken;
         private float _alpha;
 
-        public ShadowRayCostEvaluator(ShadowRayResults res, float alpha)
+        public ShadowRayCostEvaluator(ShadowRayResults<Tri> res, float alpha)
         {
             _alpha = alpha;
             _connected = res.Connected;
@@ -40,13 +41,14 @@ namespace RayVisualizer.Common
             return new ShadowRayShuffleState(brokenPart, connectedPart);
         }
 
-        private static void SortHits(CompiledShadowRay ray, int startTri, int endTri)
+        private static void SortHits<Tri2>(CompiledShadowRay<Tri2> ray, int startTri, int endTri)
+            where Tri2 : Indexable
         {
             ray.MaxIntersectedTriangles = BuildTools.SweepPartition(ray.IntersectedTriangles, 0, ray.IntersectedTriangles.Length,
-                bt => (bt.index >= startTri && bt.index < endTri));
+                bt => (bt.Index >= startTri && bt.Index < endTri));
         }
 
-        public EvalResult<ShadowRayMemoData> EvaluateSplit(BoundAndCount left, BoundAndCount right, ShadowRayShuffleState state, Func<BuildTriangle, bool> leftFilter)
+        public EvalResult<ShadowRayMemoData> EvaluateSplit(BoundAndCount left, BoundAndCount right, ShadowRayShuffleState state, Func<CenterIndexable, bool> leftFilter)
         {
             int left_sure_traversal = 0;
             int right_sure_traversal = 0;
@@ -62,7 +64,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < state.brokenMax; k++)
             {
                 // figure out if it hit a child
-                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
+                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, (Tri t) => leftFilter(t));
                 // if it's a hit on the parent, it must be a hit for at least one of the children
                 switch (combo)
                 {
@@ -97,7 +99,8 @@ namespace RayVisualizer.Common
                 : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(0f, t => !leftFilter(t)), true);
         }
 
-        private static InteractionCombination GetInteractionType(BuildTriangle[] points, int max, Func<BuildTriangle,bool> leftFilter)
+        private static InteractionCombination GetInteractionType<Tri2>(Tri2[] points, int max, Func<Tri2, bool> leftFilter)
+            where Tri2 : CenterIndexable
         {
             if (max == 0)
                 return InteractionCombination.HitNeither;
@@ -122,12 +125,12 @@ namespace RayVisualizer.Common
             HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
         }
 
-        public BuildReport<ShadowRayCostEvaluator.ShadowRayShuffleState, float> FinishEvaluations(EvalResult<ShadowRayMemoData> selected, ShadowRayCostEvaluator.ShadowRayShuffleState currentState)
+        public BuildReport<ShadowRayShuffleState, float> FinishEvaluations(EvalResult<ShadowRayMemoData> selected, ShadowRayShuffleState currentState)
         {
             // filter all of the rays which have an intersection on the "dominant" side of this division 
             int part = BuildTools.SweepPartition(_broken, 0, currentState.brokenMax, cRay => 
             {
-                Func<BuildTriangle, bool> selector = selected.Data.DominantSideFilter;
+                Func<CenterIndexable, bool> selector = selected.Data.DominantSideFilter;
                 for (int k = 0; k < cRay.MaxIntersectedTriangles; k++)
                     if (selector(cRay.IntersectedTriangles[k]))
                         return false;
@@ -138,33 +141,33 @@ namespace RayVisualizer.Common
             return new BuildReport<ShadowRayShuffleState, float>(selected.Data.pLeft, left, right);
         }
 
-        public ShadowRayCostEvaluator.ShadowRayShuffleState GetDefault()
+        public ShadowRayShuffleState GetDefault()
         {
             return new ShadowRayShuffleState(_broken.Length, _connected.Length);
-        }
-
-        public struct ShadowRayShuffleState
-        {
-            public int connectedMax;
-            public int brokenMax;
-
-            public ShadowRayShuffleState(int brokenPart, int connectedPart)
-            {
-                brokenMax = brokenPart;
-                connectedMax = connectedPart;
-            }
         }
 
         public struct ShadowRayMemoData
         {
             public float pLeft;
-            public Func<BuildTriangle, bool> DominantSideFilter;
+            public Func<CenterIndexable, bool> DominantSideFilter;
 
-            public ShadowRayMemoData(float p, Func<BuildTriangle, bool> firstSideFilter)
+            public ShadowRayMemoData(float p, Func<CenterIndexable, bool> firstSideFilter)
             {
                 pLeft = p;
                 DominantSideFilter = firstSideFilter;
             }
+        }
+    }
+
+    public struct ShadowRayShuffleState
+    {
+        public int connectedMax;
+        public int brokenMax;
+
+        public ShadowRayShuffleState(int brokenPart, int connectedPart)
+        {
+            brokenMax = brokenPart;
+            connectedMax = connectedPart;
         }
     }
 }

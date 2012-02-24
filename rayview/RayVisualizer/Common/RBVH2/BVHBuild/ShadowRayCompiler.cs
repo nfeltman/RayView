@@ -5,56 +5,72 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
+    using BVH2 = Tree<BVH2Branch, BVH2Leaf>;
+    using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
+    using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
+    using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+
     public class ShadowRayCompiler
     {
-        public static ShadowRayResults CompileCasts(IEnumerable<Segment3> set, BVH2 bvh)
+
+        public static ShadowRayResults<BasicBuildTriangle> CompileCasts(IEnumerable<ShadowQuery> set, BVH2 bvh)
         {
-            List<BuildTriangle> tris = new List<BuildTriangle>();
+            return CompileHelp<Triangle, BasicBuildTriangle, BVH2Branch, BVH2Leaf>(
+                set.Select(q => new Segment3(q.Origin, q.Difference)), 
+                bvh, 
+                bbt => bbt.T, 
+                (tri, counter) => new BasicBuildTriangle(tri, counter));
+        }
+
+        public static ShadowRayResults<OBJBackedBuildTriangle> CompileCasts(IEnumerable<ShadowQuery> set, BackedBVH2 bvh, Func<int, Triangle> realTris)
+        {
+            return CompileHelp<int, OBJBackedBuildTriangle, BackedBVH2Branch, BackedBVH2Leaf>(
+                set.Select(q => new Segment3(q.Origin, q.Difference)), 
+                bvh, 
+                obbt => realTris(obbt.OBJIndex), 
+                (prim, counter)=>new OBJBackedBuildTriangle(counter,realTris(prim),prim));
+        }
+        private static ShadowRayResults<BuildTri> CompileHelp<PrimT, BuildTri, IncBranch, IncLeaf>(IEnumerable<Segment3> set, Tree<IncBranch, IncLeaf> bvh, Func<BuildTri, Triangle> realTris, Func<PrimT, int, BuildTri> makeBuildTri)
+            where IncLeaf : Primitived<PrimT>, Boxed
+            where IncBranch : Boxed
+        {
+            List<BuildTri> tris = new List<BuildTri>();
             int counter = 0;
-            TreeNode<SCBranch, SCLeaf> root = bvh.RollUp<TreeNode<SCBranch, SCLeaf>>(
+            TreeNode<SCBranch, SCLeaf<PrimT, BuildTri>> root = bvh.RollUp<TreeNode<SCBranch, SCLeaf<PrimT, BuildTri>>>(
                 (branch, left, right)
-                    => new Branch<SCBranch, SCLeaf>(left, right, new SCBranch(branch)),
+                    => new Branch<SCBranch, SCLeaf<PrimT, BuildTri>>(left, right, new SCBranch(branch.BBox)),
                 (leaf)
                     =>
-                    {
-                        var ret = new Leaf<SCBranch, SCLeaf>(new SCLeaf(leaf, ref counter));
-                        tris.AddRange(ret.Content.tris);
-                        return ret;
-                    });
+                {
+                    var ret = new Leaf<SCBranch, SCLeaf<PrimT, BuildTri>>(new SCLeaf<PrimT, BuildTri>(leaf.BBox, leaf.Primitives, prim => makeBuildTri(prim, counter++)));
+                    tris.AddRange(ret.Content.tris);
+                    return ret;
+                });
 
             List<Segment3> connected = new List<Segment3>();
-            List<CompiledShadowRay> broken = new List<CompiledShadowRay>();
+            List<CompiledShadowRay<BuildTri>> broken = new List<CompiledShadowRay<BuildTri>>();
 
-            SCIntersector vis = new SCIntersector();
+            SCIntersector<PrimT, BuildTri> vis = new SCIntersector<PrimT, BuildTri>() { RealTri = realTris };
             foreach (Segment3 q in set)
             {
-                vis.Intersected = new List<BuildTriangle>();
+                vis.Intersected = new List<BuildTri>();
                 vis.Ray = new Segment3(q.Origin, q.Difference);
                 if (root.Accept(vis))
                     connected.Add(vis.Ray);
                 else
-                    broken.Add(new CompiledShadowRay() { IntersectedTriangles = vis.Intersected.ToArray(), Ray = vis.Ray });
+                    broken.Add(new CompiledShadowRay<BuildTri>() { IntersectedTriangles = vis.Intersected.ToArray(), Ray = vis.Ray });
             }
 
-            return new ShadowRayResults() { Connected = connected.ToArray(), Broken = broken.ToArray(), Triangles=tris.ToArray() };
+            return new ShadowRayResults<BuildTri>() { Connected = connected.ToArray(), Broken = broken.ToArray(), Triangles = tris.ToArray() };
         }
 
-        public static ShadowRayResults CompileCasts(IEnumerable<ShadowQuery> set, BVH2 bvh)
+        private class SCIntersector<PrimT, Tri> : NodeVisitor<bool, SCBranch, SCLeaf<PrimT, Tri>>
         {
-            return CompileCasts(set.Select(q => new Segment3(q.Origin, q.Difference)), bvh);
-        }
-
-        public static ShadowRayResults CompileCasts(RaySet set, BVH2 bvh)
-        {
-            return CompileCasts(set.ShadowQueries, bvh);
-        }
-
-        private class SCIntersector : NodeVisitor<bool, SCBranch, SCLeaf>
-        {
-            public List<BuildTriangle> Intersected { get; set; }
+            public List<Tri> Intersected { get; set; }
             public Segment3 Ray { get; set; }
+            public Func<Tri, Triangle> RealTri { get; set; }
 
-            public bool ForBranch(Branch<SCBranch, SCLeaf> branch)
+            public bool ForBranch(Branch<SCBranch, SCLeaf<PrimT, Tri>> branch)
             {
                 if (branch.Content.BBox.DoesIntersectSegment(Ray.Origin, Ray.Difference))
                 {
@@ -63,14 +79,14 @@ namespace RayVisualizer.Common
                 return true;
             }
 
-            public bool ForLeaf(Leaf<SCBranch, SCLeaf> leaf)
+            public bool ForLeaf(Leaf<SCBranch, SCLeaf<PrimT, Tri>> leaf)
             {
                 bool ret = true;
                 if (leaf.Content.BBox.DoesIntersectSegment(Ray.Origin, Ray.Difference))
                 {
-                    foreach(BuildTriangle t in leaf.Content.tris)
+                    foreach (Tri t in leaf.Content.tris)
                     {
-                        float intersection = t.t.IntersectRay(Ray.Origin,Ray.Difference);
+                        float intersection = RealTri(t).IntersectRay(Ray.Origin, Ray.Difference);
                         if (intersection > 0 && intersection < 1 && !float.IsNaN(intersection))
                         {
                             Intersected.Add(t);
@@ -86,37 +102,39 @@ namespace RayVisualizer.Common
         private struct SCBranch
         {
             public Box3 BBox;
-            public SCBranch(BVH2Branch br)
+            public SCBranch(Box3 box)
             {
-                BBox = br.BBox;
+                BBox = box;
             }
         }
 
-        private struct SCLeaf
+        private struct SCLeaf<PrimT, Tri>
         {
             public Box3 BBox;
-            public BuildTriangle[] tris;
-            public SCLeaf(BVH2Leaf le, ref int counter)
+            public Tri[] tris;
+            public SCLeaf(Box3 box, PrimT[] prims, Func<PrimT, Tri> cons)
             {
-                BBox = le.BBox;
-                tris = new BuildTriangle[le.Primitives.Length];
+                BBox = box;
+                tris = new Tri[prims.Length];
                 for (int k = 0; k < tris.Length; k++)
-                    tris[k] = new BuildTriangle(le.Primitives[k], counter++);
+                    tris[k] = cons(prims[k]);
             }
         }
     }
 
-    public class CompiledShadowRay
+    public class CompiledShadowRay<Tri>
     {
-        public BuildTriangle[] IntersectedTriangles; // the center of the bounding boxes of intersected triangles
+        public Tri[] IntersectedTriangles; // the center of the bounding boxes of intersected triangles
         public int MaxIntersectedTriangles;
         public Segment3 Ray;
     }
 
-    public class ShadowRayResults
+    public class ShadowRayResults<Tri>
     {
-        public BuildTriangle[] Triangles { get; set; }
+        public Tri[] Triangles { get; set; }
         public Segment3[] Connected { get; set; }
-        public CompiledShadowRay[] Broken { get; set; }
+        public CompiledShadowRay<Tri>[] Broken { get; set; }
     }
+
+
 }

@@ -7,7 +7,7 @@ namespace RayVisualizer.Common
 {
     public interface SplitEvaluator<StackState, MemoData, Aggregate>
     {
-        EvalResult<MemoData> EvaluateSplit(Aggregate leftAgg, Aggregate rightAgg, StackState state, Func<BuildTriangle, bool> leftFilter);
+        EvalResult<MemoData> EvaluateSplit(Aggregate leftAgg, Aggregate rightAgg, StackState state, Func<CenterIndexable, bool> leftFilter);
     }
 
     public interface SplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : SplitEvaluator<StackState, MemoData, Aggregate>
@@ -21,7 +21,7 @@ namespace RayVisualizer.Common
     {
         public abstract StackState GetDefault();
         public abstract StackState BeginEvaluations(int startTri, int endTri, Aggregate objectBounds, StackState parentState);
-        public abstract EvalResult<BuildMemo> EvaluateSplit(Aggregate leftNu, Aggregate rightNu, StackState state, Func<BuildTriangle, bool> leftFilter);
+        public abstract EvalResult<BuildMemo> EvaluateSplit(Aggregate leftNu, Aggregate rightNu, StackState state, Func<CenterIndexable, bool> leftFilter);
         public BuildReport<StackState, BuildMemo> FinishEvaluations(EvalResult<BuildMemo> selected, StackState currentState)
         {
             return new BuildReport<StackState, BuildMemo>(selected.Data, currentState, currentState);
@@ -63,7 +63,7 @@ namespace RayVisualizer.Common
             _costEstimator = costEstimator;
         }
 
-        public EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, Unit state, Func<BuildTriangle, bool> leftFilter)
+        public EvalResult<Unit> EvaluateSplit(BoundAndCount left, BoundAndCount right, Unit state, Func<CenterIndexable, bool> leftFilter)
         {
             return new EvalResult<Unit>(_costEstimator(left.Count, left.Box, right.Count, right.Box), Unit.ONLY, false);
         }

@@ -1,19 +1,30 @@
 ## FORMAT ##
-BVHFile    := Sentinel BVHNode                                    # the node is a single tree plus a sentinel
-BVHNode    := EBVHBranch | EBVHLeaf | IBVHBranch | IBVHLeaf       # a node is either a leaf or a branch, implicit or explicit
-IBVHBranch := IBranchID left:BVHNode right:BVHNode                # pre-order printing of the tree
-EBVHBranch := EBranchID bounds:BBox left:BVHNode right:BVHNode    # pre-order printing of the tree
-IBVHLeaf   := ILeafID numNode:int Tri*                            # number of Tri entries == numNode
-EBVHLeaf   := ELeafID bounds:BBox numNode:int Tri*                # number of Tri entries == numNode
-Tri        := p1:Point p2:Point p3:Point                          # three points of the triangle
-Point      := x:float y:float z:float
-BBox       := x:Range y:Range z:Range
-Range      := min:float max:float                                 # note: bounds might be infinite
-Tri*       :  size_t | unsigned int                               # indices for triangles, which are referenced from another file
+BVHFile     := Header Tree Sentinel                                          # the node is a single tree plus a sentinel
+Tree        := OBJNTree | OBJRTree                                           # the tree is either a normal BVH or RBVH; only OBJ ref trees are supported
+OBJTree     := TypeBVH_OBJ BVHNode
+OBJRTree    := TypeRBVH_OBJ RBVHNode
+
+BVHNode     := EBVHBranch | ELeaf | IBVHBranch | ILeaf                       # a node is either a leaf or a branch, implicit or explicit
+IBVHBranch  := IBranchID left:BVHNode right:BVHNode                          # pre-order printing of the tree
+EBVHBranch  := EBranchID bounds:BBox left:BVHNode right:BVHNode              # pre-order printing of the tree
+
+RBVHNode    := ERBVHBranch | ELeaf | IRBVHBranch | ILeaf                     # a node is either a leaf or a branch, implicit or explicit
+IRBVHBranch := IBranchID p:float left:RBVHNode right:RBVHNode                # pre-order printing of the tree
+ERBVHBranch := EBranchID p:float bounds:BBox left:RBVHNode right:RBVHNode    # pre-order printing of the tree
+
+ILeaf       := ILeafID numNode:int (Tri)*                                    # number of Tri entries == numNode
+ELeaf       := ELeafID bounds:BBox numNode:int (Tri)*                        # number of Tri entries == numNode
+
+TriOBJ      := index:int                                                     # index into an OBJ file
+BBox        := x:Range y:Range z:Range
+Range       := min:float max:float                                           # note: bounds might be infinite
 
 ## CONSTANTS ##
-EBranchID   := 0:int
-ELeafID     := 1:int
-IBranchID   := 2:int
-ILeafID     := 3:int
-Sentinel    := 9215:int
+Header       := 267534:int
+TypeBVH_OBJ  := 201:int
+TypeRBVH_OBJ := 202:int
+EBranchID    := 0:int
+ELeafID      := 1:int
+IBranchID    := 2:int
+ILeafID      := 3:int
+Sentinel     := 9215:int

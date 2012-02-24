@@ -5,13 +5,19 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
+    using BVH2 = Tree<BVH2Branch, BVH2Leaf>;
+    using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
+    using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
+    using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+
     public static class BuildTools
     {
-        public static Box3 FindCentroidBound(BuildTriangle[] tris, int start, int end)
+        public static Box3 FindCentroidBound<Tri>(Tri[] tris, int start, int end)
+            where Tri : Centerable
         {
             if (start == end)
                 return Box3.EMPTY;
-            CVector3 c0 = tris[start].center;
+            CVector3 c0 = tris[start].Center;
             float minX = c0.x;
             float maxX = c0.x;
             float minY = c0.y;
@@ -20,7 +26,7 @@ namespace RayVisualizer.Common
             float maxZ = c0.z;
             for (int k = start + 1; k < end; k++)
             {
-                CVector3 c = tris[k].center;
+                CVector3 c = tris[k].Center;
                 minX = Math.Min(minX, c.x);
                 maxX = Math.Max(maxX, c.x);
                 minY = Math.Min(minY, c.y);
@@ -31,18 +37,10 @@ namespace RayVisualizer.Common
             return new Box3(minX, maxX, minY, maxY, minZ, maxZ);
         }
 
-        public static Box3 FindObjectsBounds(BuildTriangle[] tris, int start, int end)
-        {
-            BoundBuilder b = new BoundBuilder(true);
-            for (int k = start; k < end; k++)
-                b.AddTriangle(tris[k].t);
-            return b.GetBox();
-        }
-
-        public static BuildTriangle[] GetTriangleList(this BVH2 bvh)
+        public static BasicBuildTriangle[] GetTriangleList(this BVH2 bvh)
         {
             int numTris = bvh.RollUp((branch, left, right) => left + right, leaf => leaf.Primitives.Length);
-            BuildTriangle[] list = new BuildTriangle[numTris];
+            BasicBuildTriangle[] list = new BasicBuildTriangle[numTris];
             int counter = 0;
             bvh.PrefixEnumerate(
                 b => { },
@@ -50,7 +48,7 @@ namespace RayVisualizer.Common
                 {
                     foreach (Triangle t in l.Primitives)
                     {
-                        list[counter] = new BuildTriangle(t, counter);
+                        list[counter] = new BasicBuildTriangle(t, counter);
                         ++counter;
                     }
                 });
@@ -59,22 +57,22 @@ namespace RayVisualizer.Common
             return list;
         }
 
-        public static BuildTriangle[] GetTriangleList(this IList<Triangle> tris)
+        public static BasicBuildTriangle[] GetTriangleList(this IList<Triangle> tris)
         {
-            BuildTriangle[] res = new BuildTriangle[tris.Count];
+            BasicBuildTriangle[] res = new BasicBuildTriangle[tris.Count];
             for (int k = 0; k < res.Length; k++)
             {
-                res[k] = new BuildTriangle(tris[k], k);
+                res[k] = new BasicBuildTriangle(tris[k], k);
             }
             return res;
         }
 
-        public static BuildTriangle[] GetTriangleList(this IList<BuildTriangle> tris)
+        public static OBJBackedBuildTriangle[] GetOBJTriangleList(this IList<Triangle> tris)
         {
-            BuildTriangle[] res = new BuildTriangle[tris.Count];
+            OBJBackedBuildTriangle[] res = new OBJBackedBuildTriangle[tris.Count];
             for (int k = 0; k < res.Length; k++)
             {
-                res[k] = new BuildTriangle(tris[k].t, k);
+                res[k] = new OBJBackedBuildTriangle(k, tris[k], k);
             }
             return res;
         }

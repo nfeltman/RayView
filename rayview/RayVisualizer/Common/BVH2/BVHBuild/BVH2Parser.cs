@@ -6,6 +6,11 @@ using System.IO;
 
 namespace RayVisualizer.Common
 {
+    using BVH2 = Tree<BVH2Branch, BVH2Leaf>;
+    using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
+    using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
+    using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+
     public static class BVH2Parser
     {
         public static BVH2 ReadFromFile(Stream stream)
@@ -32,7 +37,7 @@ namespace RayVisualizer.Common
                 TreeNode<BVH2Branch, BVH2Leaf> right = ParseNode(reader, depth + 1, ref branchCounter, ref leafCounter);
                 if (!bbox.HasValue) // implicit branch
                     bbox = left.BBox() | right.BBox();
-                return new Branch<BVH2Branch,BVH2Leaf>(left, right, new BVH2Branch() { BBox = bbox.Value, ID = id, Depth = depth });
+                return new Branch<BVH2Branch, BVH2Leaf>(left, right, new BVH2Branch() { BBox = bbox.Value, ID = id, Depth = depth });
             }
             else if (type == 1 || type == 3) // leaf type
             {
@@ -66,11 +71,11 @@ namespace RayVisualizer.Common
 
         public static void WriteToFile(this BVH2 bvh, BinaryWriter writer)
         {
-            bvh.PrefixEnumerate(br => 
+            bvh.PrefixEnumerate(br =>
             {
                 writer.Write(2);
-            }, 
-            le => 
+            },
+            le =>
             {
                 writer.Write(3);
                 writer.Write(le.Primitives.Length);

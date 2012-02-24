@@ -5,7 +5,12 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class RBVH5050Factory : NodeFactory<RBVH2Branch, RBVH2Leaf, RBVH2, Unit, BoundAndCount>
+    using BVH2 = Tree<BVH2Branch, BVH2Leaf>;
+    using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
+    using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
+    using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+
+    public class RBVH5050Factory : NodeFactory<TriangleContainer, RBVH2Branch, RBVH2Leaf, RBVH2, Unit, BoundAndCount>
     {
         public static readonly RBVH5050Factory ONLY = new RBVH5050Factory();
 
@@ -16,17 +21,44 @@ namespace RayVisualizer.Common
             return new RBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Depth = depth, PLeft = 0.5f };
         }
 
-        public RBVH2Leaf BuildLeaf(BuildTriangle[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
+        public RBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
+            where Tri : TriangleContainer
         {
             Triangle[] prims = new Triangle[end-start];
             for (int k = 0; k < prims.Length; k++)
-                prims[k] = tris[k + start].t;
+                prims[k] = tris[k + start].T;
             return new RBVH2Leaf() { Primitives = prims, ID = leafCounter, Depth = depth, BBox = boundingBox.Box };
         }
 
         public RBVH2 BuildTree(TreeNode<RBVH2Branch, RBVH2Leaf> root, int numBranches)
         {
             return new RBVH2(root, numBranches);
+        }
+    }
+
+    public class BackedRBVH5050Factory : NodeFactory<OBJBacked, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, Unit, BoundAndCount>
+    {
+        public static readonly BackedRBVH5050Factory ONLY = new BackedRBVH5050Factory();
+
+        private BackedRBVH5050Factory() { }
+
+        public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, Unit unit, int branchCounter, int depth, BoundAndCount boundingBox)
+        {
+            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, PLeft = 0.5f };
+        }
+
+        public BackedRBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
+            where Tri : OBJBacked
+        {
+            int[] prims = new int[end - start];
+            for (int k = 0; k < prims.Length; k++)
+                prims[k] = tris[k + start].OBJIndex;
+            return new BackedRBVH2Leaf() { Primitives = prims, ID = leafCounter, BBox = boundingBox.Box };
+        }
+
+        public BackedRBVH2 BuildTree(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> root, int numBranches)
+        {
+            return new BackedRBVH2(root, numBranches);
         }
     }
 }

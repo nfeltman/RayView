@@ -11,7 +11,8 @@ namespace RayVisualizer.Common
 
         private TripleAASplitter() { }
 
-        public BestObjectPartition<MemoState, Aggregate> FindBestPartition<StackState, MemoState, Aggregate>(BuildTriangle[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate> aggregator)
+        public BestObjectPartition<MemoState, Aggregate> FindBestPartition<Tri, StackState, MemoState, Aggregate>(Tri[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator)
+            where Tri : CenterIndexable
         {
             int len = end - start;
 
@@ -41,7 +42,7 @@ namespace RayVisualizer.Common
             // calculate counts and bounds by placing every triangle into a bin
             for (int k = start; k < end; k++)
             {
-                BuildTriangle t = tris[k];
+                Tri t = tris[k];
                 int blockX = Math.Max(0, Math.Min(numBlocks - 1, seriesX.GetBucket(t)));
                 int blockY = Math.Max(0, Math.Min(numBlocks - 1, seriesY.GetBucket(t)));
                 int blockZ = Math.Max(0, Math.Min(numBlocks - 1, seriesZ.GetBucket(t)));
@@ -56,7 +57,7 @@ namespace RayVisualizer.Common
             BestBinPartition<MemoState, Aggregate> resY = yDegen ? null : SplitterHelper.ScorePartitions(blockAggY, eval, aggregator, evaluatorState, seriesY);
             BestBinPartition<MemoState, Aggregate> resZ = zDegen ? null : SplitterHelper.ScorePartitions(blockAggZ, eval, aggregator, evaluatorState, seriesZ);
 
-            AASplitSeries split;
+            SplitSeries split;
             BestBinPartition<MemoState, Aggregate> res;
             // the partition function has a funky signature because it needs to have the EXACT SAME numerical precision properties as the binning check above
             if (!xDegen && (yDegen || resX.heuristicValue <= resY.heuristicValue) && (zDegen || resX.heuristicValue <= resZ.heuristicValue))

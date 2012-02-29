@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public struct RBVH2Branch : Boxed
+    public struct RBVH2Branch : Boxed, Weighted
     {
         public float PLeft { get; set; }
         public int Depth { get; set; }
@@ -19,6 +19,7 @@ namespace RayVisualizer.Common
         public int ID { get; set; }
         public int Depth { get; set; }
         public Triangle[] Primitives { get; set; }
+        public int PrimCount { get { return Primitives.Length; } }
     }
 
     public struct BackedRBVH2Branch : Boxed, Weighted
@@ -33,5 +34,6 @@ namespace RayVisualizer.Common
         public Box3 BBox { get; set; }
         public int ID { get; set; }
         public int[] Primitives { get; set; }
+        public int PrimCount { get { return Primitives.Length; } }
     }
 }

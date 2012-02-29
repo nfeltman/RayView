@@ -45,31 +45,28 @@ namespace RayVisualizer.Common
 
     public interface OBJBacked
     {
-        int OBJIndex { get; set; }
+        int OBJIndex { get; }
     }
 
     public class OBJBackedBuildTriangle : CenterIndexable, OBJBacked, TriangleContainer
     {
         public CVector3 Center { get { return _center; } }
         public int Index { get { return _index; } set { _index = value; } }
-        public int OBJIndex { get; set; }
-
-        public Triangle T
-        {
-            get { return _t; }
-        }
+        public int OBJIndex { get { return _objIndex; } }
+        public Triangle T{get { return _t; }}
 
         private Triangle _t;
         private CVector3 _center;
         private int _index;
+        private int _objIndex;
 
-        public OBJBackedBuildTriangle(int objIndex, Triangle init, int backing)
+        public OBJBackedBuildTriangle(int buildIndex, Triangle init, int objBackingIndex)
         {
             _t = init;
-            _index = backing;
+            _index = buildIndex;
             Box3 box = new Box3(init.p1, init.p2, init.p3);
             _center = box.GetCenter();
-            OBJIndex = objIndex;
+            _objIndex = objBackingIndex;
         }
     }
 }

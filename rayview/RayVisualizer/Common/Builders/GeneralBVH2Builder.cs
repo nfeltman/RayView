@@ -103,7 +103,8 @@ namespace RayVisualizer.Common
                 else
                 {
                     newState = im.eval.BeginEvaluations(start, end, totalAggregate, parentState);
-                    BestObjectPartition<MemoData, Aggregate> res = im.splitter.FindBestPartition(im.tris, start, end, newState, im.eval, im.aggregator);
+                    BestObjectPartition<MemoData, Aggregate> res = im.splitter.PerformBestPartition(im.tris, start, end, newState, im.eval, im.aggregator);
+                    if (res.objectPartition >= end || res.objectPartition <= start) throw new Exception("This shouldn't happen.");
                     objectPartition = res.objectPartition;
                     buildData = res.branchBuildData;
                     leftObjectBounds = res.leftAggregate;

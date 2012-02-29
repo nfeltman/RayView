@@ -5,14 +5,15 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class TripleAASplitter : Splitter
+    public class TripleAASplitter : FullSplitter
     {
         public static readonly TripleAASplitter ONLY = new TripleAASplitter();
 
         private TripleAASplitter() { }
 
-        public BestObjectPartition<MemoState, Aggregate> FindBestPartition<Tri, StackState, MemoState, Aggregate>(Tri[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator)
-            where Tri : CenterIndexable
+        public override BestPartitionFound<Tri, MemoState, Aggregate> 
+            FindBestPartition<Tri, StackState, MemoState, Aggregate>
+            (Tri[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator)
         {
             int len = end - start;
 
@@ -82,14 +83,14 @@ namespace RayVisualizer.Common
                 throw new Exception("Checked for degeneracy above.  Why am I here?!");
             }
 
-            int index = split.PerformPartition(tris, start, end, res.binPartition);
-
-            if (index >= end || index <= start)
+            return new BestPartitionFound<Tri, MemoState, Aggregate>()
             {
-                throw new Exception("This shouldn't happen.");
-            }
-
-            return new BestObjectPartition<MemoState, Aggregate>() { leftAggregate = res.leftAggregate, rightAggregate = res.rightAggregate, branchBuildData = res.branchBuildData, objectPartition = index };
+                leftAggregate = res.leftAggregate,
+                rightAggregate = res.rightAggregate,
+                branchBuildData = res.branchBuildData,
+                heuristicValue = res.heuristicValue,
+                performSplit = () => split.PerformPartition(tris, start, end, res.binPartition)
+            };
         }
     }
 }

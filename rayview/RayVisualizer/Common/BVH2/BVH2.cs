@@ -19,6 +19,7 @@ namespace RayVisualizer.Common
         public int ID { get; set; }
         public int Depth { get; set; }
         public Triangle[] Primitives { get; set; }
+        public int PrimCount { get { return Primitives.Length; } }
 
         public HitRecord FindClosestPositiveIntersection(CVector3 origin, CVector3 direction, ClosedInterval tInterval)
         {
@@ -40,6 +41,7 @@ namespace RayVisualizer.Common
                 return null;
             return new HitRecord(triangles[closestIndex],closestIntersection, ID);
         }
+
     }
 
     public struct BackedBVH2Branch : Boxed
@@ -55,6 +57,7 @@ namespace RayVisualizer.Common
         public int ID { get; set; }
         public int Depth { get; set; }
         public int[] Primitives { get; set; }
+        public int PrimCount { get { return Primitives.Length; } }
     }
 
 }

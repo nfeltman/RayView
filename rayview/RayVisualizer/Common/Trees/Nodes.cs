@@ -10,6 +10,7 @@ namespace RayVisualizer.Common
         Ret Accept<Ret>(NodeVisitor<Ret, TBranch, TLeaf> visitor);
         Ret Accept<Ret, TParam>(NodeVisitor<Ret, TParam, TBranch, TLeaf> visitor, TParam param);
         Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf);
+        void Accept(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf);
         void PrefixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf);
         void PrefixEnumerateNodes(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf);
         void PostfixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf);
@@ -27,6 +28,20 @@ namespace RayVisualizer.Common
         public static Box3 BBox(this TreeNode<BVH2Branch, BVH2Leaf> node)
         {
             return node.Accept(b => b.Content.BBox, l => l.Content.BBox);
+        }
+
+        public static P GetContent<P,B,L>(this TreeNode<B, L> node)
+            where B : P
+            where L : P
+        {
+            return node.Accept((Branch<B,L> b) => (P)b.Content, (Leaf<B,L> l) => (P)l.Content);
+        }
+
+        public static Ret OnContent<P, B, L, Ret>(this TreeNode<B, L> node, Func<P, Ret> func)
+            where B : P
+            where L : P
+        {
+            return node.Accept((Branch<B, L> b) => func(b.Content), (Leaf<B, L> l) => func(l.Content));
         }
     }
 
@@ -75,7 +90,7 @@ namespace RayVisualizer.Common
     {
         public TreeNode<TBranch, TLeaf> Left { get; set; }
         public TreeNode<TBranch, TLeaf> Right { get; set; }
-        public TBranch Content { get; set; }
+        public TBranch Content; // don't use properties since this is likely to be a value type
 
         public Branch(TreeNode<TBranch, TLeaf> left, TreeNode<TBranch, TLeaf> right, TBranch content)
         {
@@ -95,6 +110,10 @@ namespace RayVisualizer.Common
         public Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf)
         {
             return forBranch(this);
+        }
+        public void Accept(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf)
+        {
+            forBranch(this);
         }
         public void PrefixEnumerate(Action<TBranch> forBranch, Action<TLeaf> forLeaf)
         {
@@ -132,7 +151,7 @@ namespace RayVisualizer.Common
 
     public class Leaf<TBranch, TLeaf> : TreeNode<TBranch, TLeaf>
     {
-        public TLeaf Content { get; set; }
+        public TLeaf Content; // don't use properties since this is liekly to be a value type
 
         public Leaf(TLeaf content)
         {
@@ -150,6 +169,10 @@ namespace RayVisualizer.Common
         public Ret Accept<Ret>(Func<Branch<TBranch, TLeaf>, Ret> forBranch, Func<Leaf<TBranch, TLeaf>, Ret> forLeaf)
         {
             return forLeaf(this);
+        }
+        public void Accept(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf)
+        {
+            forLeaf(this);
         }
         public void PrefixEnumerateNodes(Action<Branch<TBranch, TLeaf>> forBranch, Action<Leaf<TBranch, TLeaf>> forLeaf)
         {
@@ -192,7 +215,11 @@ namespace RayVisualizer.Common
         float PLeft { get; set; }
     }
 
-    public interface Primitived<Prim>
+    public interface PrimCountable
+    {
+        int PrimCount { get; }
+    }
+    public interface Primitived<Prim> : PrimCountable
     {
         Prim[] Primitives { get; set; }
     }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -70,10 +70,12 @@
     <Compile Include="Builders\BuildTools.cs" />
     <Compile Include="Builders\NodeBuilder.cs" />
     <Compile Include="Builders\OBJParser.cs" />
-    <Compile Include="Builders\Splitter.cs" />
-    <Compile Include="Builders\SplitterHelper.cs" />
+    <Compile Include="Builders\Splitters\RadialSplitter.cs" />
+    <Compile Include="Builders\Splitters\Splitter.cs" />
+    <Compile Include="Builders\Splitters\SplitterComposer.cs" />
+    <Compile Include="Builders\Splitters\SplitterHelper.cs" />
     <Compile Include="Builders\TriangleAggregator.cs" />
-    <Compile Include="Builders\TripleAASplitter.cs" />
+    <Compile Include="Builders\Splitters\TripleAASplitter.cs" />
     <Compile Include="BVH2\BVH2Visitors\RayCostVisitor.cs" />
     <Compile Include="BVH2\BVHBuild\BlendedSplitEvaluator.cs" />
     <Compile Include="BVH2\BVHBuild\BVH2Parser.cs" />
@@ -82,7 +84,7 @@
     <Compile Include="BVH2\BVHBuild\RayCompiler.cs" />
     <Compile Include="Builders\SplitEvaluator.cs" />
     <Compile Include="BVH2\BVHTraverser\RayOrderBoxTestCounter.cs" />
-    <Compile Include="Builders\SplitSeries.cs" />
+    <Compile Include="Builders\Splitters\SplitSeries.cs" />
     <Compile Include="Pool.cs" />
     <Compile Include="Primitives\Box3.cs" />
     <Compile Include="BVH2\BVH2.cs" />

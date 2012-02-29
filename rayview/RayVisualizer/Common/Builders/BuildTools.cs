@@ -37,6 +37,23 @@ namespace RayVisualizer.Common
             return new Box3(minX, maxX, minY, maxY, minZ, maxZ);
         }
 
+        public static ClosedInterval FindDistanceBound<Tri>(Tri[] tris, CVector3 center, int start, int end)
+            where Tri : Centerable
+        {
+            if (start == end)
+                return ClosedInterval.EMPTY;
+            float d = (tris[start].Center - center).Length();
+            float min = d;
+            float max = d;
+            for (int k = start + 1; k < end; k++)
+            {
+                d = (tris[k].Center - center).Length();
+                min= Math.Min(min, d);
+                max= Math.Max(max, d);
+            }
+            return new ClosedInterval(min, max);
+        }
+
         public static BasicBuildTriangle[] GetTriangleList(this BVH2 bvh)
         {
             int numTris = bvh.RollUp((branch, left, right) => left + right, leaf => leaf.Primitives.Length);

@@ -10,6 +10,7 @@ namespace RayVisualizer.Common
     
     public abstract class RaySet
     {
+        public bool HitsNotAnotated { get; set; }
         public abstract IEnumerable<RayQuery> AllQueries { get; }
         public abstract IEnumerable<CastQuery> AllCastQueries { get; }
         public abstract IEnumerable<CastHitQuery> CastHitQueries { get; }
@@ -133,14 +134,19 @@ namespace RayVisualizer.Common
             List<CastHitQuery> castHits = new List<CastHitQuery>();
             List<CastMissQuery> castMisses = new List<CastMissQuery>();
             List<ShadowQuery> shadows = new List<ShadowQuery>();
-
+            
+            bool readsT;
             BinaryReader reader = new BinaryReader(file);
             int header = reader.ReadInt32();
             if (header != 1234)
                 throw new Exception("Error on first ");
             int version = reader.ReadInt32();
-            if (version != 1)
-                throw new Exception(String.Format("Wrong version! Expected 1, got {0}", version));
+            if (version == 1)
+                readsT = true;
+            else if (version == 2)
+                readsT = false;
+            else
+                throw new Exception(String.Format("Wrong version! Expected 1 or 2, got {0}", version));
             int numRays = reader.ReadInt32();
 
             for (int k = 0; k < numRays; k++)
@@ -158,7 +164,7 @@ namespace RayVisualizer.Common
                     y = reader.ReadSingle(),
                     z = reader.ReadSingle(),
                 };
-                float t = reader.ReadSingle();
+                float t =  readsT? reader.ReadSingle():0;
                 int rayFooter = reader.ReadInt32();
                 if (rayFooter != 0)
                     throw new Exception(String.Format("Ray {0} had bad footer", rayFooter));
@@ -184,7 +190,7 @@ namespace RayVisualizer.Common
                 }
             }
 
-            return new SimpleRaySet() { Shadows = shadows.ToArray(), CastHits = castHits.ToArray(), CastMisses = castMisses.ToArray() };
+            return new SimpleRaySet() { Shadows = shadows.ToArray(), CastHits = castHits.ToArray(), CastMisses = castMisses.ToArray(), HitsNotAnotated = !readsT };
         } 
     }
 

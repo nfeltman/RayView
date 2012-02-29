@@ -176,7 +176,7 @@ namespace Topaz
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, TripleAASplitter.ONLY);
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
@@ -186,15 +186,36 @@ namespace Topaz
                 return (tris, rays) => {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting RTSAH build. "); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, TripleAASplitter.ONLY);
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
-                    build = TreeOrdering.ApplyRTSAHOrdering(build);
+                    TreeOrdering.ApplyRTSAHOrdering(build);
+                    //build.Root.Accept(br => { Console.WriteLine(br.Content.PLeft); }, le => { });
                     st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
             }
             else if (method.ToLower().Equals("srdh"))
+            {
+                return (tris, rays) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
+                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
+                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
+                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
+                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY ));
+                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    return build;
+                };
+            }
+            else if (method.ToLower().Equals("srdh0"))
             {
                 return (tris, rays) =>
                 {
@@ -254,7 +275,7 @@ namespace Topaz
                     BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BackedRBVH5050Factory.ONLY, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
-                    build = TreeOrdering.ApplyRTSAHOrdering(build);
+                    TreeOrdering.ApplyRTSAHOrdering(build);
                     st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
@@ -275,7 +296,7 @@ namespace Topaz
                     Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
                     BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<OBJBackedBuildTriangle>(res, 1f), BackedRBVHNodeFactory.ONLY, BoundsCountAggregator<OBJBackedBuildTriangle>.ONLY, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
+                    
                     return build;
                 };
             }
@@ -355,6 +376,62 @@ namespace Topaz
                     SweepTestHelper("Z", numBins, centroidBounds.ZRange.Min, numBins / centroidBounds.ZRange.Size, output, tris, eval, evaluatorState);                    
                 };
             }
+            else if (method.ToLower().Equals("rad1"))
+            {
+                return (tris, rays, output) =>
+                {
+                    int numBins = 100;
+                    // calculate splits
+                    Stopwatch st = new Stopwatch();
+
+                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
+                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
+                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
+                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    ShadowRayCostEvaluator<BasicBuildTriangle> eval = new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1.0f);
+
+                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<TriangleContainer>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
+
+                    Box3 centroidBounds = BuildTools.FindCentroidBound(tris, 0, tris.Length);
+                    CVector3 center = centroidBounds.GetCenter();
+                    ClosedInterval distBound = BuildTools.FindDistanceBound(tris, center, 0, tris.Length);
+                    if (distBound.IsEmpty) throw new Exception("Distance Bound should not be empty.");
+                    if (distBound.Size == 0)
+                    {
+                        center = tris[0].Center;
+                        distBound = BuildTools.FindDistanceBound(tris, center, 0, tris.Length);
+                    }
+                    //Console.WriteLine("[{0} {1} {2}] <<{3} {4}>>", centroidBounds.XRange.Size, centroidBounds.YRange.Size, centroidBounds.ZRange.Size, distBound.Min, distBound.Max);
+
+                    float offset = distBound.Min;
+                    float factor = numBins / distBound.Size;
+
+
+
+                    string splits_locs = "";
+                    string sah_vals = "";
+                    string srdh_vals = "";
+
+                    SplitterHelper.RunSplitSweepTest(
+                        (int split, BoundAndCount leftAgg, BoundAndCount rightAgg, Func<CenterIndexable, bool> filter) =>
+                        {
+                            //Console.WriteLine("{0}/{1}", leftAgg.Count, rightAgg.Count);
+                            var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, filter);
+                            splits_locs += String.Format(" {0}", split / factor + offset);
+                            sah_vals += String.Format(" {0}", leftAgg.Box.SurfaceArea * (leftAgg.Count * 2 - 1) + rightAgg.Box.SurfaceArea * (rightAgg.Count * 2 - 1));
+                            srdh_vals += String.Format(" {0}", cost.Cost);
+                        }, tris, new RadialSplitSeries(centroidBounds.GetCenter(), offset, factor), numBins, BoundsCountAggregator<BasicBuildTriangle>.ONLY);
+
+                    output.WriteLine("\"numSplits\" \"count\" {0}", numBins - 1);
+                    output.WriteLine("\"splits\" \"array\"{0}", splits_locs);
+                    output.WriteLine("\"sah\" \"array\"{0}", sah_vals);
+                    output.WriteLine("\"srdh\" \"array\"{0}", srdh_vals);
+                };
+            }
             else
             {
                 Console.WriteLine("Unrecognized split method \"{0}\".  Acceptible: AA3", method);
@@ -369,9 +446,9 @@ namespace Topaz
             string srdh_vals = "";
 
             SplitterHelper.RunSplitSweepTest(
-                (int split, BoundAndCount leftAgg, BoundAndCount rightAgg, Func<BasicBuildTriangle, bool> filter) =>
+                (int split, BoundAndCount leftAgg, BoundAndCount rightAgg, Func<CenterIndexable, bool> filter) =>
                 {
-                    var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, (Func<CenterIndexable, bool>) filter);
+                    var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, filter);
                     splits_locs += String.Format(" {0}", split / times + less);
                     sah_vals += String.Format(" {0}", leftAgg.Box.SurfaceArea * (leftAgg.Count * 2 - 1) + rightAgg.Box.SurfaceArea * (rightAgg.Count * 2 - 1));
                     srdh_vals += String.Format(" {0}", cost.Cost);

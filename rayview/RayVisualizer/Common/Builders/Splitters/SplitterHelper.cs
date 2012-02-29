@@ -60,9 +60,9 @@ namespace RayVisualizer.Common
             tri[loc2].Index = loc2;
         }
 
-        public static void RunSplitSweepTest<Aggregate, Tri, TriB>(Action<int, Aggregate, Aggregate, Func<TriB, bool>> emitter, Tri[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate, Tri> aggregator)
+        public static void RunSplitSweepTest<Aggregate, Tri>(Action<int, Aggregate, Aggregate, Func<CenterIndexable, bool>> emitter, Tri[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate, Tri> aggregator)
             where Tri : CenterIndexable
-            where TriB : Tri
+            //where TriB : Tri
         {
             // initialize counts and bounds
             Aggregate[] blockAggregates = new Aggregate[numBins];
@@ -93,7 +93,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < numBins - 1; k++)
             {
                 aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
-                emitter(k+1, forwardPrevAgg, backwardAggAccumulator[k + 1], series.GetFilter<TriB>(k+1));
+                emitter(k+1, forwardPrevAgg, backwardAggAccumulator[k + 1], series.GetFilter<CenterIndexable>(k+1));
             }
         }
     }

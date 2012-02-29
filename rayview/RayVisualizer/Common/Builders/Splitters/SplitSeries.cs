@@ -17,8 +17,8 @@ namespace RayVisualizer.Common
 
     public class XAASplitSeries : SplitSeries
     {
-        protected float Less;
-        protected float Times;
+        private float Less;
+        private float Times;
 
         public XAASplitSeries(float less, float times)
         {
@@ -55,8 +55,8 @@ namespace RayVisualizer.Common
 
     public class YAASplitSeries : SplitSeries
     {
-        protected float Less;
-        protected float Times;
+        private float Less;
+        private float Times;
 
         public YAASplitSeries(float less, float times)
         {
@@ -94,19 +94,19 @@ namespace RayVisualizer.Common
 
     public class ZAASplitSeries : SplitSeries
     {
-        protected float Less;
-        protected float Times;
+        private float _offset;
+        private float _factor;
 
-        public ZAASplitSeries(float less, float times)
+        public ZAASplitSeries(float offset, float factor)
         {
-            Less = less;
-            Times = times;
+            _offset = offset;
+            _factor = factor;
         }
 
         public int GetBucket<Tri>(Tri tri)
             where Tri : CenterIndexable
         {
-            return (int)((tri.Center.z - Less) * Times);
+            return (int)((tri.Center.z - _offset) * _factor);
         }
         public int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold)
             where Tri : CenterIndexable
@@ -115,7 +115,7 @@ namespace RayVisualizer.Common
 
             for (int k = start; k < end; k++)
             {
-                if ((tri[k].Center.z - Less) * Times < threshold)
+                if ((tri[k].Center.z - _offset) * _factor < threshold)
                 {
                     SplitterHelper.Swap(tri, k, partLoc);
                     partLoc++;
@@ -127,7 +127,55 @@ namespace RayVisualizer.Common
         public Func<Tri, bool> GetFilter<Tri>(int threshold)
             where Tri : CenterIndexable
         {
-            return t => ((t.Center.z - Less) * Times < threshold);
+            return t => ((t.Center.z - _offset) * _factor < threshold);
+        }
+    }
+
+    public class RadialSplitSeries : SplitSeries
+    {
+        private CVector3 Center;
+        private float _factor;
+        private float _offset;
+
+        public RadialSplitSeries(CVector3 center, float offset, float factor)
+        {
+            Center = center;
+            _factor = factor;
+            _offset = offset;
+        }
+
+        public int PerformPartition<Tri>(Tri[] tri, int start, int end, int threshold) where Tri : CenterIndexable
+        {
+            int partLoc = start; // the first larger-than-partVal element
+
+            for (int k = start; k < end; k++)
+            {
+                if (((tri[k].Center - Center).Length() - _offset) * _factor < threshold)
+                {
+                    SplitterHelper.Swap(tri, k, partLoc);
+                    partLoc++;
+                }
+            }
+            if (partLoc <= start || partLoc >= end)
+            {
+                Console.WriteLine("bad part. specs: {0} {1} {2} {3} {4} {5}", partLoc, start, end, Center, _offset, _factor);
+                Console.WriteLine("threshold "+threshold);
+                for (int k = start; k < end; k++)
+                {
+                    Console.WriteLine("val [" + k + "] = " + (((tri[k].Center - Center).Length() - _offset) * _factor) + "; center= " + tri[k].Center);
+                }
+            }
+            return partLoc;
+        }
+
+        public int GetBucket<Tri>(Tri tri) where Tri : CenterIndexable
+        {
+            return (int)(((tri.Center - Center).Length() - _offset) * _factor); 
+        }
+
+        public Func<Tri, bool> GetFilter<Tri>(int threshold) where Tri : CenterIndexable
+        {
+            return t => (((t.Center - Center).Length() - _offset) * _factor < threshold);
         }
     }
 }

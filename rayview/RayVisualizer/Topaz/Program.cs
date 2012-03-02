@@ -370,7 +370,7 @@ namespace Topaz
 
                     ShadowRayCostEvaluator<BasicBuildTriangle> eval = new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1.0f);
 
-                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<TriangleContainer>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
+                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<Bounded>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
                     SweepTestHelper("X", numBins, centroidBounds.XRange.Min, numBins / centroidBounds.XRange.Size, output, tris, eval, evaluatorState);
                     SweepTestHelper("Y", numBins, centroidBounds.YRange.Min, numBins / centroidBounds.YRange.Size, output, tris, eval, evaluatorState);
                     SweepTestHelper("Z", numBins, centroidBounds.ZRange.Min, numBins / centroidBounds.ZRange.Size, output, tris, eval, evaluatorState);                    
@@ -394,7 +394,7 @@ namespace Topaz
 
                     ShadowRayCostEvaluator<BasicBuildTriangle> eval = new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1.0f);
 
-                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<TriangleContainer>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
+                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<Bounded>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
 
                     Box3 centroidBounds = BuildTools.FindCentroidBound(tris, 0, tris.Length);
                     CVector3 center = centroidBounds.GetCenter();

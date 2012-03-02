@@ -15,19 +15,19 @@ namespace RayVisualizer.Common
     {
 
         public static BVH2 BuildFullBVH<Tri>(Tri[] tri, Func<int, Box3, int, Box3, float> est, Splitter splitter)
-            where Tri : TriangleContainer, CenterIndexable
+            where Tri : Bounded, CenterIndexable, TriangleContainer
         {
             return BuildFullBVH(tri, new StatelessSplitEvaluator(est), splitter);
         }
 
         public static BVH2 BuildFullBVH<Tri, StackState, MemoState, EntranceData>(Tri[] tri, SplitEvaluator<StackState, MemoState, Unit, EntranceData, BoundAndCount> se, Splitter splitter)
-            where Tri : TriangleContainer, CenterIndexable
+            where Tri : Bounded, CenterIndexable, TriangleContainer
         {
             return BuildFullStructure(tri, se, BVHNodeFactory.ONLY, BoundsCountAggregator<Tri>.ONLY, splitter);
         }
 
         public static Tree BuildFullStructure<Tri, TriB, BranchT, LeafT, Tree>(Tri[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<TriB, BranchT, LeafT, Tree, Unit, BoundAndCount> builder, Splitter splitter)
-            where Tri : TriangleContainer, CenterIndexable, TriB
+            where Tri : Bounded, CenterIndexable, TriB
         {
             return BuildFullStructure(tri, new StatelessSplitEvaluator(est), builder, BoundsCountAggregator<Tri>.ONLY, splitter);
         }

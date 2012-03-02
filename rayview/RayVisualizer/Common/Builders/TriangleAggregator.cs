@@ -73,7 +73,7 @@ namespace RayVisualizer.Common
     }
 
     public class BoundsCountAggregator<Tri> : TriangleAggregator<BoundAndCount, Tri>
-            where Tri : TriangleContainer
+            where Tri : Bounded
     {
         public static readonly BoundsCountAggregator<Tri> ONLY = new BoundsCountAggregator<Tri>();
 
@@ -81,63 +81,55 @@ namespace RayVisualizer.Common
 
         public BoundAndCount GetIdentity()
         {
-            return new BoundAndCount(0, Box3.EMPTY);
+            return new BoundAndCount(0, new Vector4f(float.MaxValue, float.MaxValue, float.MaxValue, 0), new Vector4f(float.MinValue, float.MinValue, float.MinValue, 0));
         }
 
         public BoundAndCount Op(BoundAndCount val1, BoundAndCount val2)
         {
-            return new BoundAndCount(val1.Count + val2.Count, val1.Box | val2.Box); 
+            return new BoundAndCount(val1.Count + val2.Count, val1._min.Min(val2._min), val1._max.Max(val2._max)); 
         }
 
         public void InplaceOp(ref BoundAndCount val, Tri t)
         {
-            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
+            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
 
-            Vector4f triMax = point1.Max(point2).Max(point3);
-            Vector4f triMin = point1.Min(point2).Min(point3);
-
-            val = new BoundAndCount(val.Count + 1, val.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val.Box.Min.Min(triMin), val.Box.Max.Max(triMax)));
+            val = val.Box.IsEmpty ? new BoundAndCount(val.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val.Count + 1, val._min.Min(bounds.Item1), val._max.Max(bounds.Item2));
         }
 
         public void InplaceOp(ref BoundAndCount val1, BoundAndCount val2)
         {
-            val1.Box = val1.Box | val2.Box;
+            val1._min = val1._min.Min(val2._min);
+            val1._max = val1._max.Max(val2._max);
             val1.Count += val2.Count;
         }
 
         public BoundAndCount Roll(Tri[] tris, int start, int end)
         {
-            BoundBuilder builder = new BoundBuilder(true);
-            for (int k = start; k < end; k++)
-                builder.AddTriangle(tris[k].T);
-            return new BoundAndCount(end - start, builder.GetBox());
+            Tuple<Vector4f, Vector4f> bounds0 = tris[start].Bounds;
+            Vector4f min=bounds0.Item1, max = bounds0.Item2;
+            for (int k = start + 1; k < end; k++)
+            {
+                Tuple<Vector4f, Vector4f> bounds = tris[k].Bounds;
+                min = min.Min(bounds.Item1);
+                max = max.Max(bounds.Item2);
+            }
+            return new BoundAndCount(end - start, min, max);
         }
 
         public BoundAndCount GetVal(Tri t)
         {
-            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
-
-            return new BoundAndCount(1, new Box3(point1.Min(point2).Min(point3), point1.Max(point2).Max(point3)));
+            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
+            return new BoundAndCount(1, bounds.Item1, bounds.Item2);
         }
 
         public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, Tri t)
         {
-            Vector4f point1 = new Vector4f(t.T.p1.x, t.T.p1.y, t.T.p1.z, 0f);
-            Vector4f point2 = new Vector4f(t.T.p2.x, t.T.p2.y, t.T.p2.z, 0f);
-            Vector4f point3 = new Vector4f(t.T.p3.x, t.T.p3.y, t.T.p3.z, 0f);
+            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
 
-            Vector4f triMax = point1.Max(point2).Max(point3);
-            Vector4f triMin = point1.Min(point2).Min(point3);
-
-            val1 = new BoundAndCount(val1.Count + 1, val1.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val1.Box.Min.Min(triMin), val1.Box.Max.Max(triMax)));
-            val2 = new BoundAndCount(val2.Count + 1, val2.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val2.Box.Min.Min(triMin), val2.Box.Max.Max(triMax)));
-            val3 = new BoundAndCount(val3.Count + 1, val3.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val3.Box.Min.Min(triMin), val3.Box.Max.Max(triMax)));
+            val1 = val1.Box.IsEmpty ? new BoundAndCount(val1.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val1.Count + 1, val1._min.Min(bounds.Item1), val1._max.Max(bounds.Item2));
+            val2 = val2.Box.IsEmpty ? new BoundAndCount(val2.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val2.Count + 1, val2._min.Min(bounds.Item1), val2._max.Max(bounds.Item2));
+            val3 = val3.Box.IsEmpty ? new BoundAndCount(val3.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val3.Count + 1, val3._min.Min(bounds.Item1), val3._max.Max(bounds.Item2));
         }
-
 
         public bool IsIdentity(BoundAndCount agg)
         {
@@ -148,12 +140,14 @@ namespace RayVisualizer.Common
     public struct BoundAndCount
     {
         public int Count;
-        public Box3 Box;
+        public Box3 Box { get { return new Box3(_min, _max); } }
+        public Vector4f _min, _max;
 
-        public BoundAndCount(int count, Box3 builder)
+        public BoundAndCount(int count, Vector4f min, Vector4f max)
         {
             Count = count;
-            Box = builder;
+            _min = min;
+            _max = max;
         }
     }
 }

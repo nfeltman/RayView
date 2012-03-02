@@ -50,6 +50,9 @@ namespace RayVisualizer.Common
 
         public EvalResult<ShadowRayMemoData> EvaluateSplit(BoundAndCount left, BoundAndCount right, ShadowRayShuffleState state, Func<CenterIndexable, bool> leftFilter)
         {
+            Box3 leftBox = left.Box;
+            Box3 rightBox = right.Box;
+
             int left_sure_traversal = 0;
             int right_sure_traversal = 0;
             int left_maybe_traversal = 0;
@@ -57,8 +60,8 @@ namespace RayVisualizer.Common
             // test all the faux hits from the "connected" buffer
             for (int k = 0; k < state.connectedMax; k++)
             {
-                if (left.Box.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++left_sure_traversal;
-                if (right.Box.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++right_sure_traversal;
+                if (leftBox.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++left_sure_traversal;
+                if (rightBox.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++right_sure_traversal;
             }
             // test all the (maybe faux) hits from the "broken" buffer
             for (int k = 0; k < state.brokenMax; k++)
@@ -69,17 +72,17 @@ namespace RayVisualizer.Common
                 switch (combo)
                 {
                     case InteractionCombination.HitNeither:
-                        if (left.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  ++left_sure_traversal;
-                        if (right.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_sure_traversal; break;
+                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_sure_traversal;
+                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_sure_traversal; break;
                     case InteractionCombination.HitBoth:
                         ++left_maybe_traversal;
                         ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyLeft:
                         ++left_sure_traversal;
-                        if (right.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_maybe_traversal; break;
+                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyRight:
                         ++right_sure_traversal;
-                        if (left.Box.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_maybe_traversal; break;
+                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_maybe_traversal; break;
                 }
             }
             // there's a +c_i for every ray which we will neglect to add, since it exists despite the split

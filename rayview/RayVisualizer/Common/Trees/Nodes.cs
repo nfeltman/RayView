@@ -207,7 +207,7 @@ namespace RayVisualizer.Common
 
     public interface Boxed
     {
-        Box3 BBox { get; set; }
+        Box3 BBox { get; }
     }
 
     public interface Weighted

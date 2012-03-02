@@ -10,6 +10,8 @@ namespace RayVisualizer.Common
         EvalResult<MemoData> EvaluateSplit(Aggregate leftAgg, Aggregate rightAgg, StackState state, Func<CenterIndexable, bool> leftFilter);
     }
 
+    public delegate EvalResult<MemoData> Evaluator<MemoData, Aggregate>(Aggregate leftAgg, Aggregate rightAgg, Func<CenterIndexable, bool> leftFilter);
+
     public interface SplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : SplitEvaluator<StackState, MemoData, Aggregate>
     {
         TransitionData GetDefault();

@@ -103,6 +103,7 @@
     <Compile Include="BVH2\NodeMap.cs" />
     <Compile Include="Primitives\RayDistributions.cs" />
     <Compile Include="Primitives\Shapes.cs" />
+    <Compile Include="Primitives\TriangleBag.cs" />
     <Compile Include="Primitives\UniformRays.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Primitives\RayQuery.cs" />

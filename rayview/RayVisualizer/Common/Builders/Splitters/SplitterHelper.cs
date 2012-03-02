@@ -7,12 +7,11 @@ namespace RayVisualizer.Common
 {
     public static class SplitterHelper
     {
-        public static BestBinPartition<MemoState, Aggregate> ScorePartitions<StackState, MemoState, Aggregate>(Aggregate[] blockAggregates, SplitEvaluator<StackState, MemoState, Aggregate> se, TriangleAggregator<Aggregate> aggregator, StackState evaluatorState, SplitSeries split)
+        public static BestBinPartition<MemoState, Aggregate> ScorePartitions<MemoState, Aggregate>(Aggregate[] blockAggregates, Evaluator<MemoState, Aggregate> evaluator, TriangleAggregator<Aggregate> aggregator, SplitSeries split)
         {
             int numBlocks = blockAggregates.Length;
 
             // build forward and backward box and count accumulators
-            Box3[] backwardBoxAccumulator = new Box3[numBlocks];
             Aggregate[] backwardAggAccumulator = new Aggregate[numBlocks];
             Aggregate backwardPrevAgg = aggregator.GetIdentity();
             for (int k = numBlocks - 1; k >= 0; k--)
@@ -22,19 +21,19 @@ namespace RayVisualizer.Common
             }
 
             // find smallest cost
-            double minCost = double.PositiveInfinity;
-            int bestPartition = -10;
-            EvalResult<MemoState> bestBuildData = null;
-            Aggregate bestForwardAgg = default(Aggregate);
-            Aggregate forwardPrevAgg = aggregator.GetIdentity();
-            for (int k = 0; k < numBlocks - 1; k++)
+            int bestPartition = 1;
+            Aggregate forwardPrevAgg = blockAggregates[0];
+            EvalResult<MemoState> bestBuildData = evaluator(forwardPrevAgg, backwardAggAccumulator[1], split.GetFilter<CenterIndexable>(1));
+            Aggregate bestForwardAgg = forwardPrevAgg;
+            for (int k = 1; k < numBlocks - 1; k++)
             {
+                if (aggregator.IsIdentity(blockAggregates[k]))
+                    continue;
                 aggregator.InplaceOp(ref forwardPrevAgg, blockAggregates[k]);
-                EvalResult<MemoState> cost = se.EvaluateSplit(forwardPrevAgg, backwardAggAccumulator[k + 1], evaluatorState, split.GetFilter<CenterIndexable>(k + 1));
-                if (cost.Cost < minCost)
+                EvalResult<MemoState> cost = evaluator(forwardPrevAgg, backwardAggAccumulator[k + 1], split.GetFilter<CenterIndexable>(k + 1));
+                if (cost.Cost < bestBuildData.Cost)
                 {
                     bestPartition = k + 1;
-                    minCost = cost.Cost;
                     bestBuildData = cost;
                     bestForwardAgg = forwardPrevAgg;
                 }
@@ -43,8 +42,7 @@ namespace RayVisualizer.Common
             return new BestBinPartition<MemoState, Aggregate>()
             {
                 binPartition = bestPartition,
-                heuristicValue = minCost,
-                branchBuildData = bestBuildData,
+                bestEvalResult = bestBuildData,
                 leftAggregate = bestForwardAgg,
                 rightAggregate = backwardAggAccumulator[bestPartition]
             };
@@ -100,10 +98,10 @@ namespace RayVisualizer.Common
 
     public class BestBinPartition<MemoState, Aggregate>
     {
+        public double heuristicValue { get { return bestEvalResult.Cost; } }
         public int binPartition;
-        public double heuristicValue;
         public Aggregate leftAggregate, rightAggregate;
-        public EvalResult<MemoState> branchBuildData;
+        public EvalResult<MemoState> bestEvalResult;
     }
 
 

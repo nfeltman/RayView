@@ -12,8 +12,8 @@ namespace RayVisualizer.Common
         private RadialSplitter() { }
 
         public override BestPartitionFound<Tri, MemoState, Aggregate> 
-            FindBestPartition<Tri, StackState, MemoState, Aggregate>
-            (Tri[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator) 
+            FindBestPartition<Tri, MemoState, Aggregate>
+            (Tri[] tris, int start, int end, Evaluator<MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator) 
         {
             int len = end - start;
             int numBlocks = Math.Min(20, (int)(len * .05f + 4f));
@@ -46,13 +46,12 @@ namespace RayVisualizer.Common
             }
 
             // conditionally score the partition groups
-            BestBinPartition<MemoState, Aggregate> res = SplitterHelper.ScorePartitions(blockAgg, eval, aggregator, evaluatorState, split);
+            BestBinPartition<MemoState, Aggregate> res = SplitterHelper.ScorePartitions(blockAgg, eval, aggregator, split);
             
             return new BestPartitionFound<Tri, MemoState, Aggregate>() { 
                 leftAggregate = res.leftAggregate, 
                 rightAggregate = res.rightAggregate, 
-                branchBuildData = res.branchBuildData,
-                heuristicValue = res.heuristicValue,
+                branchBuildData = res.bestEvalResult,
                 performSplit = () => { return split.PerformPartition(tris, start, end, res.binPartition); }
             };
         }

@@ -11,6 +11,7 @@ namespace RayVisualizer.Common
         Aggregate Op(Aggregate val1, Aggregate val2);
         void InplaceOp(ref Aggregate val1, Aggregate val2);
         Aggregate GetIdentity();
+        bool IsIdentity(Aggregate agg);
     }
     public interface TriangleAggregator<Aggregate, Tri> : TriangleAggregator<Aggregate>
     {
@@ -62,6 +63,12 @@ namespace RayVisualizer.Common
         public int GetVal(Tri t)
         {
             return 1;
+        }
+
+
+        public bool IsIdentity(int agg)
+        {
+            return agg == 0;
         }
     }
 
@@ -129,6 +136,12 @@ namespace RayVisualizer.Common
             val1 = new BoundAndCount(val1.Count + 1, val1.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val1.Box.Min.Min(triMin), val1.Box.Max.Max(triMax)));
             val2 = new BoundAndCount(val2.Count + 1, val2.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val2.Box.Min.Min(triMin), val2.Box.Max.Max(triMax)));
             val3 = new BoundAndCount(val3.Count + 1, val3.Box.IsEmpty ? new Box3(triMin, triMax) : new Box3(val3.Box.Min.Min(triMin), val3.Box.Max.Max(triMax)));
+        }
+
+
+        public bool IsIdentity(BoundAndCount agg)
+        {
+            return agg.Count == 0;
         }
     }
 

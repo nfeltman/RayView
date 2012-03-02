@@ -12,8 +12,8 @@ namespace RayVisualizer.Common
         private TripleAASplitter() { }
 
         public override BestPartitionFound<Tri, MemoState, Aggregate> 
-            FindBestPartition<Tri, StackState, MemoState, Aggregate>
-            (Tri[] tris, int start, int end, StackState evaluatorState, SplitEvaluator<StackState, MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator)
+            FindBestPartition<Tri, MemoState, Aggregate>
+            (Tri[] tris, int start, int end, Evaluator<MemoState, Aggregate> eval, TriangleAggregator<Aggregate, Tri> aggregator)
         {
             int len = end - start;
 
@@ -54,9 +54,9 @@ namespace RayVisualizer.Common
             }
 
             // conditionally score the partition groups
-            BestBinPartition<MemoState, Aggregate> resX = xDegen ? null : SplitterHelper.ScorePartitions(blockAggX, eval, aggregator, evaluatorState, seriesX);
-            BestBinPartition<MemoState, Aggregate> resY = yDegen ? null : SplitterHelper.ScorePartitions(blockAggY, eval, aggregator, evaluatorState, seriesY);
-            BestBinPartition<MemoState, Aggregate> resZ = zDegen ? null : SplitterHelper.ScorePartitions(blockAggZ, eval, aggregator, evaluatorState, seriesZ);
+            BestBinPartition<MemoState, Aggregate> resX = xDegen ? null : SplitterHelper.ScorePartitions(blockAggX, eval, aggregator, seriesX);
+            BestBinPartition<MemoState, Aggregate> resY = yDegen ? null : SplitterHelper.ScorePartitions(blockAggY, eval, aggregator, seriesY);
+            BestBinPartition<MemoState, Aggregate> resZ = zDegen ? null : SplitterHelper.ScorePartitions(blockAggZ, eval, aggregator, seriesZ);
 
             SplitSeries split;
             BestBinPartition<MemoState, Aggregate> res;
@@ -87,8 +87,7 @@ namespace RayVisualizer.Common
             {
                 leftAggregate = res.leftAggregate,
                 rightAggregate = res.rightAggregate,
-                branchBuildData = res.branchBuildData,
-                heuristicValue = res.heuristicValue,
+                branchBuildData = res.bestEvalResult,
                 performSplit = () => split.PerformPartition(tris, start, end, res.binPartition)
             };
         }

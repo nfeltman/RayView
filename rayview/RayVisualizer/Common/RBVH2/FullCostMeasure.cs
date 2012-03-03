@@ -21,18 +21,19 @@ namespace RayVisualizer.Common
             {
                 if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                 {
-                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, 0, 0));
+                    return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, 0, 0));
                 }
 
                 TraceResult left;
                 TraceResult right;
-
+                /*
                 if (branch.Content.PLeft == 1)
                 {
                     left = branch.Left.Accept(this);
                     if (left.Hits)
                     {
                         left.Spine.BBoxTests.ExpectedValue += 1.0;
+                        left.SpineOracle.BBoxTests.ExpectedValue += 1.0;
                         return left;
                     }
                     right = branch.Right.Accept(this);
@@ -43,35 +44,40 @@ namespace RayVisualizer.Common
                     if (right.Hits)
                     {
                         right.Spine.BBoxTests.ExpectedValue += 1.0;
+                        right.SpineOracle.BBoxTests.ExpectedValue += 1.0;
                         return right;
                     }
                     left = branch.Left.Accept(this);
                 }
                 else
-                {
+                {*/
                     left = branch.Left.Accept(this);
                     right = branch.Right.Accept(this);
-                }
+                //}
 
                 TraceCost bothSpine = left.Spine + right.Spine;
                 TraceCost bothSide = left.Side + right.Side;
 
                 TraceCost resSpine;
                 TraceCost resSide;
+                TraceCost resSpineOracle;
                 if (left.Hits && right.Hits)
                 {
+                    resSpineOracle = left.SpineOracle.BBoxTests.ExpectedValue < right.SpineOracle.BBoxTests.ExpectedValue ? left.SpineOracle : right.SpineOracle;
                     resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, right.Spine);
                     resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, right.Side);
                 }
                 else if (!left.Hits && right.Hits)
                 {
                     if (!left.Spine.IsZero) throw new Exception("This isn't right!");
+                    resSpineOracle = right.SpineOracle;
                     resSpine = TraceCost.RandomSelect(branch.Content.PLeft, bothSpine, right.Spine);
                     resSide = TraceCost.RandomSelect(branch.Content.PLeft, bothSide, right.Side);
                 }
                 else if (left.Hits && !right.Hits)
                 {
                     if (!right.Spine.IsZero) throw new Exception("This isn't right!");
+                    resSpineOracle = left.SpineOracle;
                     resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, bothSpine);
                     resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, bothSide);
                 }
@@ -80,16 +86,17 @@ namespace RayVisualizer.Common
                     if (!bothSpine.IsZero) throw new Exception("This isn't right!");
                     bothSide.BBoxTests.ExpectedValue += 1.0;
 
-                    return new TraceResult(false, bothSpine, bothSide);
+                    return new TraceResult(false, new TraceCost(), bothSpine, bothSide);
                 }
                 resSpine.BBoxTests.ExpectedValue += 1.0;
-                return new TraceResult(true, resSpine, resSide);
+                resSpineOracle.BBoxTests.ExpectedValue += 1.0;
+                return new TraceResult(true, resSpineOracle, resSpine, resSide);
             }
 
             public TraceResult ForLeaf(Leaf<RBVH2Branch, RBVH2Leaf> leaf)
             {
                 if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
-                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, 0, 0));
+                    return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, 0, 0));
                 Triangle[] prims = leaf.Content.Primitives;
                 int k = 0;
                 int primtests = 0;
@@ -104,11 +111,11 @@ namespace RayVisualizer.Common
                 }
                 if (k == prims.Length)
                 {
-                    return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, prims.Length, 0));
+                    return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, prims.Length, 0));
                 }
                 else
                 {
-                    return new TraceResult(true, new TraceCost(1, 0, primtests, 0), new TraceCost());
+                    return new TraceResult(true, new TraceCost(1, 0, 1, 0), new TraceCost(1, 0, primtests, 0), new TraceCost());
                 }
             }
         }
@@ -116,14 +123,16 @@ namespace RayVisualizer.Common
         private class TraceResult
         {
             public bool Hits;
+            public TraceCost SpineOracle;
             public TraceCost Spine;
             public TraceCost Side;
-            public TraceResult(bool hits, TraceCost spine, TraceCost side)
+            public TraceResult(bool hits, TraceCost spineOracle, TraceCost spine, TraceCost side)
             {
                 if (!hits && !spine.IsZero) throw new Exception("Cannot have a non-zero spine cost if we hit.");
                 Hits = hits;
                 Spine = spine;
                 Side = side;
+                SpineOracle = spineOracle;
             }
         }
 
@@ -143,6 +152,7 @@ namespace RayVisualizer.Common
                 if (res.Hits)
                 {
                     cost.Spine += res.Spine;
+                    cost.SpineOracle += res.SpineOracle;
                     cost.SideTrees += res.Side;
                     if (shadow.Connected) topazBrok_mantaCon++; else topazBrok_mantaBrok++;
                 }
@@ -169,6 +179,7 @@ namespace RayVisualizer.Common
     {
         public int NumRays;
         public int NumHits;
+        public TraceCost SpineOracle;
         public TraceCost Spine;
         public TraceCost SideTrees;
         public TraceCost NonHit;

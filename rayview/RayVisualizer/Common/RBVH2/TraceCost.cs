@@ -33,6 +33,8 @@ namespace RayVisualizer.Common
 
         public static TraceCost RandomSelect(double p, TraceCost x, TraceCost y)
         {
+            if (p == 1) return x;
+            if (p == 0) return y;
             return new TraceCost(RandomVariable.RandomSelect(p, x.BBoxTests, y.BBoxTests), RandomVariable.RandomSelect(p, x.PrimitiveTests, y.PrimitiveTests));
         }
 

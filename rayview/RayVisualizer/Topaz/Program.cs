@@ -320,6 +320,7 @@ namespace Topaz
 
                     PrintSimple("PQ NumRays", cost.NumRays, output);
                     PrintSimple("PQ NumHits", cost.NumHits, output);
+                    PrintCost("PQ (Spine Oracle) ", cost.SpineOracle, output);
                     PrintCost("PQ (Spine) ", cost.Spine, output);
                     PrintCost("PQ (Side) ", cost.SideTrees, output);
                     PrintCost("PQ (Non-Hit) ", cost.NonHit, output);

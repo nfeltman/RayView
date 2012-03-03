@@ -115,7 +115,6 @@
     <Compile Include="Builders\GeneralBVH2Builder.cs" />
     <Compile Include="RBVH2\BVHBuild\ShadowRayCompiler.cs" />
     <Compile Include="RBVH2\ConsistencyCheck.cs" />
-    <Compile Include="RBVH2\FastFullCostMeasure.cs" />
     <Compile Include="RBVH2\FullCostMeasure.cs" />
     <Compile Include="RBVH2\OracleCost.cs" />
     <Compile Include="RBVH2\RBVH2.cs" />

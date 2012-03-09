@@ -54,7 +54,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sandbox.cs" />
+    <Compile Include="TopazException.cs" />
     <Compile Include="TopazMisc.cs" />
+    <Compile Include="FileParser\TVCParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

@@ -140,13 +140,8 @@ namespace RayVisualizer.Common
         {
             FullTraceResult cost = new FullTraceResult(); //the default value is correct
             InternalVisitor measure = new InternalVisitor();
-            int topazBrok_mantaBrok = 0;
-            int topazBrok_mantaCon = 0;
-            int topazConn_mantaBrok = 0;
-            int topazConn_mantaConn = 0;
             foreach (ShadowQuery shadow in shadows)
             {
-                cost.NumRays++;
                 measure.ShadowRay = new Segment3(shadow.Origin, shadow.Difference);
                 TraceResult res = tree.Accept(measure);
                 if (res.Hits)
@@ -154,20 +149,19 @@ namespace RayVisualizer.Common
                     cost.Spine += res.Spine;
                     cost.SpineOracle += res.SpineOracle;
                     cost.SideTrees += res.Side;
-                    if (shadow.Connected) topazBrok_mantaCon++; else topazBrok_mantaBrok++;
+                    if (shadow.Connected) cost.topazHit_mantaMiss++; else cost.topazHit_mantaHit++;
                 }
                 else
                 {
                     if (!res.Spine.IsZero)
                         throw new Exception("This isn't right!  Complete miss implies spine cost should be zero.");
                     cost.NonHit += res.Side;
-                    if (shadow.Connected) topazConn_mantaConn++; else topazConn_mantaBrok++;
+                    if (shadow.Connected) cost.topazMiss_mantaMiss++; else cost.topazMiss_mantaHit++;
                 }
             }
-            cost.NumHits = topazBrok_mantaBrok + topazBrok_mantaCon;
-            double disagreement = ((double)topazConn_mantaBrok + topazBrok_mantaCon) / cost.NumRays; 
-            Console.WriteLine("Disagreement = {0}.  TB/MC = {1}.  TC/MB = {2}. TB/MB = {3}. TC/MC = {4}.", disagreement, topazBrok_mantaCon, topazConn_mantaBrok, topazBrok_mantaBrok, topazConn_mantaConn);    
-            if (cost.NumRays != 0 && disagreement > 0.005)
+
+            Console.WriteLine("Disagreement = {0}.", cost.Disagreement);
+            if (cost.NumRays != 0 && cost.Disagreement > 0.02)
             {
                 //throw new Exception("Badly disagree with results from ray file.");
             }
@@ -177,12 +171,17 @@ namespace RayVisualizer.Common
 
     public class FullTraceResult
     {
-        public int NumRays;
-        public int NumHits;
+        public int topazHit_mantaHit = 0;
+        public int topazHit_mantaMiss = 0;
+        public int topazMiss_mantaHit = 0;
+        public int topazMiss_mantaMiss = 0;
         public TraceCost SpineOracle;
         public TraceCost Spine;
         public TraceCost SideTrees;
         public TraceCost NonHit;
+
+        public int NumRays { get { return topazMiss_mantaMiss + topazMiss_mantaHit + topazHit_mantaMiss + topazHit_mantaHit; } }
+        public double Disagreement { get { return ((double)topazHit_mantaMiss + topazMiss_mantaHit) / NumRays; } }
         /*
         public FullTraceResult(int numRays, int numHits, TraceCost spine, TraceCost sideTrees, TraceCost nonHit)
         {

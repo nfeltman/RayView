@@ -319,7 +319,11 @@ namespace Topaz
                     st.Stop(); Console.WriteLine("Done with PQ evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     PrintSimple("PQ NumRays", cost.NumRays, output);
-                    PrintSimple("PQ NumHits", cost.NumHits, output);
+                    PrintSimple("PQ NumBothHit", cost.topazHit_mantaHit, output);
+                    PrintSimple("PQ NumBothMiss", cost.topazMiss_mantaMiss, output);
+                    PrintSimple("PQ NumTopazMissMantaHit", cost.topazMiss_mantaHit, output);
+                    PrintSimple("PQ NumTopazHitMantaMiss", cost.topazHit_mantaMiss, output);
+                    PrintSimple("PQ Disagreement", cost.Disagreement, output);
                     PrintCost("PQ (Spine Oracle) ", cost.SpineOracle, output);
                     PrintCost("PQ (Spine) ", cost.Spine, output);
                     PrintCost("PQ (Side) ", cost.SideTrees, output);

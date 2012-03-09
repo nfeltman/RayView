@@ -23,7 +23,7 @@ namespace RayVisualizer.Common
         public static BVH2 BuildFullBVH<Tri, StackState, MemoState, EntranceData>(Tri[] tri, SplitEvaluator<StackState, MemoState, Unit, EntranceData, BoundAndCount> se, Splitter splitter)
             where Tri : Bounded, CenterIndexable, TriangleContainer
         {
-            return BuildFullStructure(tri, se, BVHNodeFactory.ONLY, BoundsCountAggregator<Tri>.ONLY, splitter);
+            return BuildFullStructure(tri, se, BVHNodeFactory<TriangleContainer>.ONLY, BoundsCountAggregator<Tri>.ONLY, splitter);
         }
 
         public static Tree BuildFullStructure<Tri, TriB, BranchT, LeafT, Tree>(Tri[] tri, Func<int, Box3, int, Box3, float> est, NodeFactory<TriB, BranchT, LeafT, Tree, Unit, BoundAndCount> builder, Splitter splitter)

@@ -57,8 +57,8 @@ namespace Topaz
                     Console.WriteLine("Usage: topaz -runexp -build <build method> -eval method_1[ method_k]* -scene <triangle source file> -buildrays <build ray source file> -evalrays <eval ray source file> -o <output file> ");
                     return;
                 }
-                Func<BasicBuildTriangle[], Func<BasicBuildTriangle, Triangle>, Func<Triangle, int, BasicBuildTriangle>, RaySet, RBVH2> build = GetBuildMethod<BasicBuildTriangle, Triangle, TriangleContainer, RBVH2Branch, RBVH2Leaf>
-                    (dict["-build"][0], RBVH5050Factory.ONLY, RBVHNodeFactory.ONLY, RBVH5050Factory.ONLY);
+                Func<BasicBuildTriangle[], Func<BasicBuildTriangle, Triangle>, Func<Triangle, int, BasicBuildTriangle>, RaySet, RBVH2> build = GetBuildMethod<BasicBuildTriangle, Triangle, BasicBuildTriangle, RBVH2Branch, RBVH2Leaf>
+                    (dict["-build"][0], RBVH5050Factory<BasicBuildTriangle>.ONLY, RBVHNodeFactory<BasicBuildTriangle>.ONLY, RBVH5050Factory<BasicBuildTriangle>.ONLY);
                 Func<BasicBuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<RaySet> evalrays = dict.ContainsKey("-evalrays") ? GetRaysFromFile(dict["-evalrays"][0]) : null;
@@ -86,11 +86,11 @@ namespace Topaz
                     Console.WriteLine("Usage: topaz -makebvh -build <build method> -scene <triangle source file> -buildrays <build ray source file> -o <output file> ");
                     return;
                 }
-                Func<OBJBackedBuildTriangle[], Func<OBJBackedBuildTriangle, Triangle>, Func<int, int, OBJBackedBuildTriangle>, RaySet, BackedRBVH2> build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBacked, BackedRBVH2Branch, BackedRBVH2Leaf>
+                Func<OBJBackedBuildTriangle[], Func<OBJBackedBuildTriangle, Triangle>, Func<int, int, OBJBackedBuildTriangle>, RaySet, BackedRBVH2> build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBackedBuildTriangle, BackedRBVH2Branch, BackedRBVH2Leaf>
                     (dict["-build"][0], 
-                    BackedRBVH5050Factory.ONLY, 
-                    BackedRBVHNodeFactory.ONLY, 
-                    BackedRBVH5050Factory.ONLY);
+                    BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY,
+                    BackedRBVHNodeFactory<OBJBackedBuildTriangle>.ONLY,
+                    BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY);
                 Func<Tuple<OBJBackedBuildTriangle[], IList<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
@@ -293,7 +293,7 @@ namespace Topaz
                     Box3 centroidBounds = BuildTools.FindCentroidBound(tris, 0, tris.Length);
 
                     Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory<TriangleContainer>.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
@@ -317,7 +317,7 @@ namespace Topaz
                     Stopwatch st = new Stopwatch();
 
                     Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
+                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory<TriangleContainer>.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();

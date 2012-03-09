@@ -30,6 +30,7 @@ namespace RayVisualizer.Common
                 }
                 else if (words[0].Equals("f"))
                 {
+                    if (words.Length > 4) throw new Exception(String.Format("I only support up to triangles.  Found a face with {0} verteces.", words.Length-1));
                     // things are 1-indexed in the file format; we will work by 0-index
                     int index1 = int.Parse(words[1]) - 1;
                     int index2 = int.Parse(words[2]) - 1;

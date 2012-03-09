@@ -57,7 +57,8 @@ namespace Topaz
                     Console.WriteLine("Usage: topaz -runexp -build <build method> -eval method_1[ method_k]* -scene <triangle source file> -buildrays <build ray source file> -evalrays <eval ray source file> -o <output file> ");
                     return;
                 }
-                Func<BasicBuildTriangle[], RaySet, RBVH2> build = GetBuildMethod(dict["-build"][0]);
+                Func<BasicBuildTriangle[], Func<BasicBuildTriangle, Triangle>, Func<Triangle, int, BasicBuildTriangle>, RaySet, RBVH2> build = GetBuildMethod<BasicBuildTriangle, Triangle, TriangleContainer, RBVH2Branch, RBVH2Leaf>
+                    (dict["-build"][0], RBVH5050Factory.ONLY, RBVHNodeFactory.ONLY, RBVH5050Factory.ONLY);
                 Func<BasicBuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<RaySet> evalrays = dict.ContainsKey("-evalrays") ? GetRaysFromFile(dict["-evalrays"][0]) : null;
@@ -69,7 +70,7 @@ namespace Topaz
                 using (fileout)
                 {
                     StreamWriter writer = new StreamWriter(fileout);
-                    RBVH2 bvh = build(tris(), buildrays());
+                    RBVH2 bvh = build(tris(), t => t.T, (tri, counter) => new BasicBuildTriangle(tri, counter), buildrays());
                     StandardRBVHStatsReport(bvh, writer);
                     bvh.Accept(ConsistencyCheck<RBVH2Branch,RBVH2Leaf>.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
                     RaySet eval_rays = evalrays();
@@ -85,7 +86,11 @@ namespace Topaz
                     Console.WriteLine("Usage: topaz -makebvh -build <build method> -scene <triangle source file> -buildrays <build ray source file> -o <output file> ");
                     return;
                 }
-                Func<OBJBackedBuildTriangle[], Func<int, Triangle>, RaySet, BackedRBVH2> build = GetBackedBuildMethod(dict["-build"][0]);
+                Func<OBJBackedBuildTriangle[], Func<OBJBackedBuildTriangle, Triangle>, Func<int, int, OBJBackedBuildTriangle>, RaySet, BackedRBVH2> build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBacked, BackedRBVH2Branch, BackedRBVH2Leaf>
+                    (dict["-build"][0], 
+                    BackedRBVH5050Factory.ONLY, 
+                    BackedRBVHNodeFactory.ONLY, 
+                    BackedRBVH5050Factory.ONLY);
                 Func<Tuple<OBJBackedBuildTriangle[], IList<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
@@ -95,9 +100,8 @@ namespace Topaz
                 {
                     Tuple<OBJBackedBuildTriangle[], IList<Triangle>> scene = tris();
                     IList<Triangle> backing = scene.Item2;
-                    Func<int, Triangle> mapping = i => backing[i];
-                    BackedRBVH2 bvh = build(scene.Item1, mapping, buildrays());
-                    bvh.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(mapping), bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
+                    BackedRBVH2 bvh = build(scene.Item1, objTri => backing[objTri.OBJIndex], (objIndex, counter) => new OBJBackedBuildTriangle(counter, backing[objIndex], objIndex), buildrays());
+                    bvh.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(i => backing[i]), bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
                     StreamWriter writer = new StreamWriter(fileout);
                     writer.Write("267534 202");
                     bvh.PrefixEnumerate(
@@ -157,36 +161,43 @@ namespace Topaz
             return dict.ContainsKey(command) && dict[command].Count == 1;
         }
 
-        private static Func<BasicBuildTriangle[], RaySet, RBVH2> GetBuildMethod(string method)
+        private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tree<TBranch, TLeaf>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
+            (string method, 
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> fact5050, 
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, float, BoundAndCount> factWeighted, 
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factBVHHelper)
+            where Tri:TriB, CenterIndexable, Bounded
+            where TBranch : Boxed, Weighted
+            where TLeaf : Boxed, PrimCountable, Primitived<PrimT>
         {
             if (method.ToLower().Equals("bal50"))
             {
-                return (tris, rays) =>
+                return (tris, mapping, constructor, rays) =>
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting BAL50 build. "); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), RBVH5050Factory.ONLY, TripleAASplitter.ONLY);
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure<Tri, TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>>(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), fact5050, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with BAL50 build.  Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
             }
             else if (method.ToLower().Equals("sah50"))
             {
-                return (tris, rays) =>
+                return (tris, mapping, constructor, rays) =>
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, fact5050, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
             }
             else if (method.ToLower().Equals("rtsah"))
             {
-                return (tris, rays) => {
+                return (tris, mapping, constructor, rays) => {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting RTSAH build. "); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, RBVH5050Factory.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, fact5050, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
                     TreeOrdering.ApplyRTSAHOrdering(build);
@@ -197,39 +208,20 @@ namespace Topaz
             }
             else if (method.ToLower().Equals("srdh"))
             {
-                return (tris, rays) =>
+                return (tris, mapping, constructor, rays) =>
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
+                    Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
+                        (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
+                    ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT,Tri,TBranch,TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY ));
-                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("srdh0"))
-            {
-                return (tris, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    RBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1f), RBVHNodeFactory.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY);
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
                     st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     return build;
@@ -237,72 +229,7 @@ namespace Topaz
             }
             else
             {
-                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
-                return null;
-            }
-        }
-
-        private static Func<OBJBackedBuildTriangle[], Func<int, Triangle>, RaySet, BackedRBVH2> GetBackedBuildMethod(string method)
-        {
-            if (method.ToLower().Equals("bal50"))
-            {
-                return (tris, backing, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting BAL50 build. "); st.Start();
-                    BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), BackedRBVH5050Factory.ONLY, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with BAL50 build.  Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("sah50"))
-            {
-                return (tris, backing, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting SAH50 build. "); st.Start();
-                    BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BackedRBVH5050Factory.ONLY, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("rtsah"))
-            {
-                return (tris, backing, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting RTSAH build. "); st.Start();
-                    BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, BackedRBVH5050Factory.ONLY, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
-                    TreeOrdering.ApplyRTSAHOrdering(build);
-                    st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("srdh"))
-            {
-                return (tris, backing, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BackedBVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BackedBVHNodeFactory.ONLY, BoundsCountAggregator<OBJBackedBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<OBJBackedBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild, backing);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    BackedRBVH2 build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<OBJBackedBuildTriangle>(res, 1f), BackedRBVHNodeFactory.ONLY, BoundsCountAggregator<OBJBackedBuildTriangle>.ONLY, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    
-                    return build;
-                };
-            }
-            else
-            {
-                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, ordsah, srdh, oraclesah", method);
+                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, srdh", method);
                 return null;
             }
         }

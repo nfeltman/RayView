@@ -12,10 +12,10 @@ namespace RayVisualizer.Common
 
     public class ShadowRayCompiler
     {
-
+        
         public static ShadowRayResults<BasicBuildTriangle> CompileCasts(IEnumerable<ShadowQuery> set, BVH2 bvh)
         {
-            return CompileHelp<Triangle, BasicBuildTriangle, BVH2Branch, BVH2Leaf>(
+            return CompileCasts<Triangle, BasicBuildTriangle, BVH2Branch, BVH2Leaf>(
                 set.Select(q => new Segment3(q.Origin, q.Difference)), 
                 bvh, 
                 bbt => bbt.T, 
@@ -24,13 +24,14 @@ namespace RayVisualizer.Common
 
         public static ShadowRayResults<OBJBackedBuildTriangle> CompileCasts(IEnumerable<ShadowQuery> set, BackedBVH2 bvh, Func<int, Triangle> realTris)
         {
-            return CompileHelp<int, OBJBackedBuildTriangle, BackedBVH2Branch, BackedBVH2Leaf>(
+            return CompileCasts<int, OBJBackedBuildTriangle, BackedBVH2Branch, BackedBVH2Leaf>(
                 set.Select(q => new Segment3(q.Origin, q.Difference)), 
                 bvh, 
                 obbt => realTris(obbt.OBJIndex), 
                 (prim, counter)=>new OBJBackedBuildTriangle(counter,realTris(prim),prim));
         }
-        private static ShadowRayResults<BuildTri> CompileHelp<PrimT, BuildTri, IncBranch, IncLeaf>(IEnumerable<Segment3> set, Tree<IncBranch, IncLeaf> bvh, Func<BuildTri, Triangle> realTris, Func<PrimT, int, BuildTri> makeBuildTri)
+
+        public static ShadowRayResults<BuildTri> CompileCasts<PrimT, BuildTri, IncBranch, IncLeaf>(IEnumerable<Segment3> set, Tree<IncBranch, IncLeaf> bvh, Func<BuildTri, Triangle> realTris, Func<PrimT, int, BuildTri> makeBuildTri)
             where IncLeaf : Primitived<PrimT>, Boxed
             where IncBranch : Boxed
         {

@@ -36,7 +36,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class BackedRBVHNodeFactory : NodeFactory<OBJBackedBuildTriangle, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, float, BoundAndCount>
+    public class BackedRBVHNodeFactory : NodeFactory<OBJBacked, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, float, BoundAndCount>
     {
         public static readonly BackedRBVHNodeFactory ONLY = new BackedRBVHNodeFactory();
 
@@ -48,7 +48,7 @@ namespace RayVisualizer.Common
         }
 
         public BackedRBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
-            where Tri : OBJBackedBuildTriangle
+            where Tri : OBJBacked
         {
             int[] prims = new int[end - start];
             for (int k = 0; k < prims.Length; k++)

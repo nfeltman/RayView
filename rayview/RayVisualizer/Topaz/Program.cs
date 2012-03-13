@@ -221,7 +221,7 @@ namespace Topaz
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY);
                     st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     return build;

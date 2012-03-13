@@ -16,9 +16,15 @@ namespace RayVisualizer.Common
         Triangle T { get; }
     }
 
+    public struct SimpleBounds
+    {
+        public Vector4f upper;
+        public Vector4f lower;
+    }
+
     public interface Bounded
     {
-        Tuple<Vector4f,Vector4f> Bounds { get; }
+        SimpleBounds Bounds { get; }
     }
 
     public interface Indexable
@@ -34,7 +40,7 @@ namespace RayVisualizer.Common
         public Triangle T { get { return _t; } }
         public CVector3 Center { get { return _center; } }
         public int Index { get { return _index; } set { _index = value; } }
-        public Tuple<Vector4f, Vector4f> Bounds
+        public SimpleBounds Bounds
         {
             get
             {
@@ -42,7 +48,7 @@ namespace RayVisualizer.Common
                 Vector4f point2 = new Vector4f(_t.p2.x, _t.p2.y, _t.p2.z, 0f);
                 Vector4f point3 = new Vector4f(_t.p3.x, _t.p3.y, _t.p3.z, 0f);
 
-                return new Tuple<Vector4f, Vector4f>(point1.Min(point2).Min(point3), point1.Max(point2).Max(point3));
+                return new SimpleBounds() { lower = point1.Min(point2).Min(point3), upper = point1.Max(point2).Max(point3) };
             }
         }
 
@@ -69,9 +75,9 @@ namespace RayVisualizer.Common
         public CVector3 Center { get { return _center; } }
         public int Index { get { return _index; } set { _index = value; } }
         public int OBJIndex { get { return _objIndex; } }
-        public Tuple<Vector4f, Vector4f> Bounds {get { return _bounds; }}
+        public SimpleBounds Bounds { get { return _bounds; } }
 
-        private Tuple<Vector4f, Vector4f> _bounds;
+        private SimpleBounds _bounds;
         private CVector3 _center;
         private int _index;
         private int _objIndex;
@@ -90,7 +96,7 @@ namespace RayVisualizer.Common
 
             _center = new CVector3((triMin + triMax) * 0.5f);
 
-            _bounds = new Tuple<Vector4f, Vector4f>(triMin, triMax);
+            _bounds = new SimpleBounds() { lower = triMin, upper = triMax };
         }
     }
 }

@@ -91,9 +91,9 @@ namespace RayVisualizer.Common
 
         public void InplaceOp(ref BoundAndCount val, Tri t)
         {
-            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
+            SimpleBounds bounds = t.Bounds;
 
-            val = val.Box.IsEmpty ? new BoundAndCount(val.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val.Count + 1, val._min.Min(bounds.Item1), val._max.Max(bounds.Item2));
+            val = val.Box.IsEmpty ? new BoundAndCount(val.Count + 1, bounds.lower, bounds.upper) : new BoundAndCount(val.Count + 1, val._min.Min(bounds.lower), val._max.Max(bounds.upper));
         }
 
         public void InplaceOp(ref BoundAndCount val1, BoundAndCount val2)
@@ -105,30 +105,30 @@ namespace RayVisualizer.Common
 
         public BoundAndCount Roll(Tri[] tris, int start, int end)
         {
-            Tuple<Vector4f, Vector4f> bounds0 = tris[start].Bounds;
-            Vector4f min=bounds0.Item1, max = bounds0.Item2;
+            SimpleBounds bounds0 = tris[start].Bounds;
+            Vector4f min = bounds0.lower, max = bounds0.upper;
             for (int k = start + 1; k < end; k++)
             {
-                Tuple<Vector4f, Vector4f> bounds = tris[k].Bounds;
-                min = min.Min(bounds.Item1);
-                max = max.Max(bounds.Item2);
+                SimpleBounds bounds = tris[k].Bounds;
+                min = min.Min(bounds.lower);
+                max = max.Max(bounds.upper);
             }
             return new BoundAndCount(end - start, min, max);
         }
 
         public BoundAndCount GetVal(Tri t)
         {
-            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
-            return new BoundAndCount(1, bounds.Item1, bounds.Item2);
+            SimpleBounds bounds = t.Bounds;
+            return new BoundAndCount(1, bounds.lower, bounds.upper);
         }
 
         public void InplaceOp3(ref BoundAndCount val1, ref BoundAndCount val2, ref BoundAndCount val3, Tri t)
         {
-            Tuple<Vector4f, Vector4f> bounds = t.Bounds;
+            SimpleBounds bounds = t.Bounds;
 
-            val1 = val1.Box.IsEmpty ? new BoundAndCount(val1.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val1.Count + 1, val1._min.Min(bounds.Item1), val1._max.Max(bounds.Item2));
-            val2 = val2.Box.IsEmpty ? new BoundAndCount(val2.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val2.Count + 1, val2._min.Min(bounds.Item1), val2._max.Max(bounds.Item2));
-            val3 = val3.Box.IsEmpty ? new BoundAndCount(val3.Count + 1, bounds.Item1, bounds.Item2) : new BoundAndCount(val3.Count + 1, val3._min.Min(bounds.Item1), val3._max.Max(bounds.Item2));
+            val1 = val1.Box.IsEmpty ? new BoundAndCount(val1.Count + 1, bounds.lower, bounds.upper) : new BoundAndCount(val1.Count + 1, val1._min.Min(bounds.lower), val1._max.Max(bounds.upper));
+            val2 = val2.Box.IsEmpty ? new BoundAndCount(val2.Count + 1, bounds.lower, bounds.upper) : new BoundAndCount(val2.Count + 1, val2._min.Min(bounds.lower), val2._max.Max(bounds.upper));
+            val3 = val3.Box.IsEmpty ? new BoundAndCount(val3.Count + 1, bounds.lower, bounds.upper) : new BoundAndCount(val3.Count + 1, val3._min.Min(bounds.lower), val3._max.Max(bounds.upper));
         }
 
         public bool IsIdentity(BoundAndCount agg)

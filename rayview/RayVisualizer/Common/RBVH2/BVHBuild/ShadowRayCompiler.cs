@@ -85,12 +85,13 @@ namespace RayVisualizer.Common
                 bool ret = true;
                 if (leaf.Content.BBox.DoesIntersectSegment(Ray.Origin, Ray.Difference))
                 {
-                    foreach (Tri t in leaf.Content.tris)
+                    Tri[] tris = leaf.Content.tris;
+                    for (int k = 0; k < tris.Length; k++ )
                     {
-                        float intersection = RealTri(t).IntersectRay(Ray.Origin, Ray.Difference);
+                        float intersection = RealTri(tris[k]).IntersectRay(Ray.Origin, Ray.Difference);
                         if (intersection > 0 && intersection < 1 && !float.IsNaN(intersection))
                         {
-                            Intersected.Add(t);
+                            Intersected.Add(tris[k]);
                             ret = false;
                         }
                     }
@@ -123,7 +124,7 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class CompiledShadowRay<Tri>
+    public struct CompiledShadowRay<Tri>
     {
         public Tri[] IntersectedTriangles; // the center of the bounding boxes of intersected triangles
         public int MaxIntersectedTriangles;

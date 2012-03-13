@@ -67,7 +67,7 @@ namespace RayVisualizer.Common
             for (int k = 0; k < state.brokenMax; k++)
             {
                 // figure out if it hit a child
-                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, (Tri t) => leftFilter(t));
+                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
                 // if it's a hit on the parent, it must be a hit for at least one of the children
                 switch (combo)
                 {
@@ -102,7 +102,7 @@ namespace RayVisualizer.Common
                 : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(0f, t => !leftFilter(t)), true);
         }
 
-        private static InteractionCombination GetInteractionType<Tri2>(Tri2[] points, int max, Func<Tri2, bool> leftFilter)
+        private static InteractionCombination GetInteractionType<Tri2>(Tri2[] points, int max, Func<CenterIndexable, bool> leftFilter)
             where Tri2 : CenterIndexable
         {
             if (max == 0)

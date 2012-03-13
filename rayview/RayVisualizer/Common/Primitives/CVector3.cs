@@ -86,26 +86,28 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class Segment3
+    public struct Segment3
     {
-        public CVector3 Origin { get; set; }
-        public CVector3 Difference { get; set; }
+        private CVector3 _origin, _difference;
+        public CVector3 Origin { get { return _origin; } }
+        public CVector3 Difference { get { return _difference; } }
 
         public Segment3(CVector3 origin, CVector3 difference)
         {
-            Origin = origin;
-            Difference = difference;
+            _origin = origin;
+            _difference = difference;
         }
     }
-    public class Ray3
+    public struct Ray3
     {
-        public CVector3 Origin { get; set; }
-        public CVector3 Direction { get; set; }
+        private CVector3 _origin, _direction;
+        public CVector3 Origin { get { return _origin; } }
+        public CVector3 Direction { get { return _direction; } }
 
         public Ray3(CVector3 origin, CVector3 direction)
         {
-            Origin = origin;
-            Direction = direction;
+            _origin = origin;
+            _direction = direction;
         }
     }
 }

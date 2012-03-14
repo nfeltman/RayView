@@ -34,14 +34,14 @@ namespace RayVisualizer.Common
                     {
                         BuildTools.Swap(_broken, brokenPart, k);
                     }
-                    SortHits(_broken[k], startTri, endTri);
+                    SortHits(ref _broken[k], startTri, endTri);
                     brokenPart++;
                 }
             }
             return new ShadowRayShuffleState(brokenPart, connectedPart);
         }
 
-        private static void SortHits<Tri2>(CompiledShadowRay<Tri2> ray, int startTri, int endTri)
+        private static void SortHits<Tri2>(ref CompiledShadowRay<Tri2> ray, int startTri, int endTri)
             where Tri2 : Indexable
         {
             ray.MaxIntersectedTriangles = BuildTools.SweepPartition(ray.IntersectedTriangles, 0, ray.IntersectedTriangles.Length,

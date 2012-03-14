@@ -62,20 +62,17 @@ namespace Topaz
                 Func<BasicBuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 Func<RaySet> evalrays = dict.ContainsKey("-evalrays") ? GetRaysFromFile(dict["-evalrays"][0]) : null;
-                Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
-                Action<RBVH2, RaySet, StreamWriter>[] evalMethods = dict["-eval"].Select(GetEvalMethod).ToArray();
+                TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
+                Action<RBVH2, RaySet, TopazStreamWriter>[] evalMethods = dict["-eval"].Select(GetEvalMethod).ToArray();
                 if (build == null || tris == null || evalrays == null || output == null) return;
                 foreach (var method in evalMethods) if (method == null) return;
-                FileStream fileout = output();
-                using (fileout)
+                using (output)
                 {
-                    StreamWriter writer = new StreamWriter(fileout);
                     RBVH2 bvh = build(tris(), t => t.T, (tri, counter) => new BasicBuildTriangle(tri, counter), buildrays());
-                    StandardRBVHStatsReport(bvh, writer);
+                    output.StandardRBVHStatsReport(bvh);
                     bvh.Accept(ConsistencyCheck<RBVH2Branch,RBVH2Leaf>.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
                     RaySet eval_rays = evalrays();
-                    foreach (var method in evalMethods) method(bvh, eval_rays, writer);
-                    writer.Flush();
+                    foreach (var method in evalMethods) method(bvh, eval_rays, output);
                 }
             }
             else if (command.Equals("-makebvh"))
@@ -93,30 +90,27 @@ namespace Topaz
                     BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY);
                 Func<Tuple<OBJBackedBuildTriangle[], IList<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
-                Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
+                TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
                 if (build == null || tris == null || output == null) return;
-                FileStream fileout = output();
-                using (fileout)
+                using (output)
                 {
                     Tuple<OBJBackedBuildTriangle[], IList<Triangle>> scene = tris();
                     IList<Triangle> backing = scene.Item2;
                     BackedRBVH2 bvh = build(scene.Item1, objTri => backing[objTri.OBJIndex], (objIndex, counter) => new OBJBackedBuildTriangle(counter, backing[objIndex], objIndex), buildrays());
                     bvh.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(i => backing[i]), bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
-                    StreamWriter writer = new StreamWriter(fileout);
-                    writer.Write("267534 202");
+                    output.Write("267534 202");
                     bvh.PrefixEnumerate(
                         (branch)=>
                         {
-                            writer.Write(" 2 {0}", branch.PLeft);
+                            output.Write(" 2 {0}", branch.PLeft);
                         },
                         (leaf)=>
                         {
-                            writer.Write(" 3 {0}", leaf.Primitives.Length);
+                            output.Write(" 3 {0}", leaf.Primitives.Length);
                             foreach (int i in leaf.Primitives)
-                                writer.Write(" {0}", i);
+                                output.Write(" {0}", i);
                         });
-                    writer.Write(" 9215");
-                    writer.Flush();
+                    output.Write(" 9215");
                 }
             }
             else if (command.Equals("-sweep"))
@@ -129,16 +123,13 @@ namespace Topaz
                     return;
                 }
                 Func<BasicBuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
-                Action<BasicBuildTriangle[], RaySet, StreamWriter> split = GetSplitMethod(dict["-split"][0]);
+                Action<BasicBuildTriangle[], RaySet, TopazStreamWriter> split = GetSplitMethod(dict["-split"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
-                Func<FileStream> output = GetFileWriteStream(dict["-o"][0]);
+                TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
                 if (tris == null || buildrays == null || output == null) return;
-                FileStream fileout = output();
-                using (fileout)
+                using (output)
                 {
-                    StreamWriter writer = new StreamWriter(fileout);
-                    split(tris(), buildrays(), writer);
-                    writer.Flush();
+                    split(tris(), buildrays(), output);
                 }
             }
             else if (command.Equals("-simdtest"))
@@ -234,45 +225,15 @@ namespace Topaz
             }
         }
 
-        private static Action<RBVH2, RaySet, StreamWriter> GetEvalMethod(string method)
+        private static Action<RBVH2, RaySet, TopazStreamWriter> GetEvalMethod(string method)
         {
             if (method.ToLower().Equals("pq"))
             {
-                return (build, rays, output) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting standard PQ evaluation. "); st.Start();
-                    FullTraceResult cost = FullCostMeasure.GetTotalCost(build, rays.ShadowQueries);
-                    st.Stop(); Console.WriteLine("Done with PQ evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    PrintSimple("PQ NumRays", cost.NumRays, output);
-                    PrintSimple("PQ NumBothHit", cost.topazHit_mantaHit, output);
-                    PrintSimple("PQ NumBothMiss", cost.topazMiss_mantaMiss, output);
-                    PrintSimple("PQ NumTopazMissMantaHit", cost.topazMiss_mantaHit, output);
-                    PrintSimple("PQ NumTopazHitMantaMiss", cost.topazHit_mantaMiss, output);
-                    PrintSimple("PQ Disagreement", cost.Disagreement, output);
-                    PrintCost("PQ (Spine Oracle) ", cost.SpineOracle, output);
-                    PrintCost("PQ (Spine) ", cost.Spine, output);
-                    PrintCost("PQ (Side) ", cost.SideTrees, output);
-                    PrintCost("PQ (Non-Hit) ", cost.NonHit, output);
-                    PrintCost("PQ (Total) ", cost.Spine + cost.SideTrees + cost.NonHit, output);
-                };
+                return EvalMethods.PerformPQEvaluation;
             }
             else if (method.ToLower().Equals("oracle"))
             {
-                return (build, rays, output) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting oracle evaluation. "); st.Reset(); st.Start();
-                    OracleTraceResult cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-                    st.Stop(); Console.WriteLine("Done with Oracle evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    PrintSimple("Oracle NumRays", cost.NumRays, output);
-                    PrintSimple("Oracle NumHits", cost.NumHits, output);
-                    PrintCost("Oracle (Hit) ", cost.Hit, output);
-                    PrintCost("Oracle (Non-Hit) ", cost.NonHit, output);
-                    PrintCost("Oracle (Total) ", cost.NonHit + cost.Hit, output); 
-                };
+                return EvalMethods.PerformOracleEvaluation;
             }
             else
             {
@@ -281,139 +242,22 @@ namespace Topaz
             }
         }
 
-        private static Action<BasicBuildTriangle[], RaySet, StreamWriter> GetSplitMethod(string method)
+        private static Action<BasicBuildTriangle[], RaySet, TopazStreamWriter> GetSplitMethod(string method)
         {
             if (method.ToLower().Equals("aa3"))
             {
-                return (tris, rays, output) =>
-                {
-                    int numBins = 100;
-                    // calculate splits
-                    Stopwatch st = new Stopwatch();
-                    Box3 centroidBounds = BuildTools.FindCentroidBound(tris, 0, tris.Length);
-
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory<TriangleContainer>.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    ShadowRayCostEvaluator<BasicBuildTriangle> eval = new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1.0f);
-
-                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<Bounded>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
-                    SweepTestHelper("X", numBins, centroidBounds.XRange.Min, numBins / centroidBounds.XRange.Size, output, tris, eval, evaluatorState);
-                    SweepTestHelper("Y", numBins, centroidBounds.YRange.Min, numBins / centroidBounds.YRange.Size, output, tris, eval, evaluatorState);
-                    SweepTestHelper("Z", numBins, centroidBounds.ZRange.Min, numBins / centroidBounds.ZRange.Size, output, tris, eval, evaluatorState);                    
-                };
+                return SweepTests.PerformAA3SweepTest;
             }
             else if (method.ToLower().Equals("rad1"))
             {
-                return (tris, rays, output) =>
-                {
-                    int numBins = 100;
-                    // calculate splits
-                    Stopwatch st = new Stopwatch();
-
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    BVH2 initialBuild = GeneralBVH2Builder.BuildStructure(tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), BVHNodeFactory<TriangleContainer>.ONLY, BoundsCountAggregator<BasicBuildTriangle>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<BasicBuildTriangle> res = ShadowRayCompiler.CompileCasts(rays.ShadowQueries, initialBuild);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    ShadowRayCostEvaluator<BasicBuildTriangle> eval = new ShadowRayCostEvaluator<BasicBuildTriangle>(res, 1.0f);
-
-                    var evaluatorState = eval.BeginEvaluations(0, tris.Length, BoundsCountAggregator<Bounded>.ONLY.Roll(tris, 0, tris.Length), eval.GetDefault());
-
-                    Box3 centroidBounds = BuildTools.FindCentroidBound(tris, 0, tris.Length);
-                    CVector3 center = centroidBounds.GetCenter();
-                    ClosedInterval distBound = BuildTools.FindDistanceBound(tris, center, 0, tris.Length);
-                    if (distBound.IsEmpty) throw new Exception("Distance Bound should not be empty.");
-                    if (distBound.Size == 0)
-                    {
-                        center = tris[0].Center;
-                        distBound = BuildTools.FindDistanceBound(tris, center, 0, tris.Length);
-                    }
-                    //Console.WriteLine("[{0} {1} {2}] <<{3} {4}>>", centroidBounds.XRange.Size, centroidBounds.YRange.Size, centroidBounds.ZRange.Size, distBound.Min, distBound.Max);
-
-                    float offset = distBound.Min;
-                    float factor = numBins / distBound.Size;
-
-
-
-                    string splits_locs = "";
-                    string sah_vals = "";
-                    string srdh_vals = "";
-
-                    SplitterHelper.RunSplitSweepTest(
-                        (int split, BoundAndCount leftAgg, BoundAndCount rightAgg, Func<CenterIndexable, bool> filter) =>
-                        {
-                            //Console.WriteLine("{0}/{1}", leftAgg.Count, rightAgg.Count);
-                            var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, filter);
-                            splits_locs += String.Format(" {0}", split / factor + offset);
-                            sah_vals += String.Format(" {0}", leftAgg.Box.SurfaceArea * (leftAgg.Count * 2 - 1) + rightAgg.Box.SurfaceArea * (rightAgg.Count * 2 - 1));
-                            srdh_vals += String.Format(" {0}", cost.Cost);
-                        }, tris, new RadialSplitSeries(centroidBounds.GetCenter(), offset, factor), numBins, BoundsCountAggregator<BasicBuildTriangle>.ONLY);
-
-                    output.WriteLine("\"numSplits\" \"count\" {0}", numBins - 1);
-                    output.WriteLine("\"splits\" \"array\"{0}", splits_locs);
-                    output.WriteLine("\"sah\" \"array\"{0}", sah_vals);
-                    output.WriteLine("\"srdh\" \"array\"{0}", srdh_vals);
-                };
+                return SweepTests.PerformRadialSweepTest;
             }
             else
             {
                 Console.WriteLine("Unrecognized split method \"{0}\".  Acceptible: AA3", method);
                 return null;
             }
-        }
-
-        private static void SweepTestHelper(string dim, int numBins, float less, float times, StreamWriter output, BasicBuildTriangle[] tris, ShadowRayCostEvaluator<BasicBuildTriangle> eval, ShadowRayShuffleState evaluatorState)
-        {
-            string splits_locs = "";
-            string sah_vals = "";
-            string srdh_vals = "";
-
-            SplitterHelper.RunSplitSweepTest(
-                (int split, BoundAndCount leftAgg, BoundAndCount rightAgg, Func<CenterIndexable, bool> filter) =>
-                {
-                    var cost = eval.EvaluateSplit(leftAgg, rightAgg, evaluatorState, filter);
-                    splits_locs += String.Format(" {0}", split / times + less);
-                    sah_vals += String.Format(" {0}", leftAgg.Box.SurfaceArea * (leftAgg.Count * 2 - 1) + rightAgg.Box.SurfaceArea * (rightAgg.Count * 2 - 1));
-                    srdh_vals += String.Format(" {0}", cost.Cost);
-                }, tris, new XAASplitSeries(less, times), numBins, BoundsCountAggregator<BasicBuildTriangle>.ONLY);
-
-            output.WriteLine("\"numSplits{0}\" \"count\" {1}", dim, numBins-1);
-            output.WriteLine("\"splits{0}\" \"array\"{1}", dim, splits_locs);
-            output.WriteLine("\"sah{0}\" \"array\"{1}", dim, sah_vals);
-            output.WriteLine("\"srdh{0}\" \"array\"{1}", dim, srdh_vals);
-        }
-
-        private static void StandardRBVHStatsReport(RBVH2 build, StreamWriter output)
-        {
-            PrintSimple("Number Leaves", build.NumLeaves, output);
-            PrintSimple("Height", build.RollUp((b, l, r) => Math.Max(l, r) + 1, le => 1), output);
-        }
-
-        private static void PrintCost(string statPrefix, TraceCost cost, StreamWriter output)
-        {
-            PrintRandomVariable(statPrefix + "BBox Tests", cost.BBoxTests, output);
-            PrintRandomVariable(statPrefix + "Prim Tests", cost.PrimitiveTests, output);
-        }
-
-        private static void PrintRandomVariable(string stat, RandomVariable rv, StreamWriter output)
-        {
-            output.WriteLine("\"{0}\" \"EXP\" {1}", stat, rv.ExpectedValue);
-            output.WriteLine("\"{0}\" \"STD\" {1}", stat, Math.Sqrt(rv.Variance));
-        }
-
-        private static void PrintSimple(string stat, double d, StreamWriter output)
-        {
-            output.WriteLine("\"{0}\" \"total\" {1}", stat, d);
-        }
+        }        
 
         private static Func<BasicBuildTriangle[]> GetBuildTrianglesForBuild(string filename)
         {
@@ -491,7 +335,7 @@ namespace Topaz
             }
         }
 
-        private static Func<FileStream> GetFileWriteStream(string filename)
+        private static TopazStreamWriter GetFileWriteStream(string filename)
         {
             /*
             if (!Directory.Exists(filename))
@@ -500,7 +344,7 @@ namespace Topaz
                 return null;
             }
              */
-            return () => File.Open(filename, FileMode.Create, FileAccess.Write);
+            return new TopazStreamWriter(filename);
         }
 
         private static Dictionary<string, IList<string>> ParseCommandOptions(string[] args, int startAt)

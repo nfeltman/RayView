@@ -12,6 +12,8 @@ namespace Topaz
     using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
     using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
     using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+    using System.Security.Permissions;
+    using Topaz.FileParser;
     
     static class Program
     {
@@ -40,37 +42,36 @@ namespace Topaz
 
             if (command.Equals("-h") || command.Equals("-help") || command.Equals("-?"))
             {
-                Console.WriteLine("Commands: \n{0}",
-                    "-makebvh Builds and outputs a bvh.",
-                    "-h Display this help.",
-                    "-runexp Run a full build and evaluate experiment.",
-                    "-simdtest Run a test of simd capabilities.",
-                    "-sweep Run a sweep experiment.",
+                Console.WriteLine("Commands: \n" +
+                    "-h Display this help.\n" +
+                    "-makebvh Builds and outputs a bvh.\n" +
+                    "-runexp Run a full build and evaluate experiment.\n" +
+                    "-simdtest Run a test of simd capabilities.\n" +
+                    "-sweep Run a sweep experiment.\n" +
                     "-testunif Test uniform box code."
                     );
             }
-            else if (command.Equals("-runexp"))
+            else if (command.Equals("-evalbvh"))
             {
                 var dict = ParseCommandOptions(args, 1);
-                if (!dict.HasOne("-build") || !dict.ContainsKey("-eval") || dict["-eval"].Count == 0 || !dict.HasOne("-scene") || !dict.HasOne("-evalrays") || !dict.HasOne("-o"))
+                //foreach (string s in dict.Keys) Console.WriteLine(s+": "+dict[s].Count);
+                if (!dict.HasPositive("-method") || !dict.HasOne("-bvh") || !dict.HasOne("-scene") || !dict.HasOne("-evalrays") || !dict.HasOne("-o"))
                 {
-                    Console.WriteLine("Usage: topaz -runexp -build <build method> -eval method_1[ method_k]* -scene <triangle source file> -buildrays <build ray source file> -evalrays <eval ray source file> -o <output file> ");
+                    Console.WriteLine("Usage: topaz -evalbvh -method method_1[ method_k]* -bvh <bvh file> -scene <triangle source file> -evalrays <eval ray source file> -o <output file> ");
                     return;
                 }
-                Func<BasicBuildTriangle[], Func<BasicBuildTriangle, Triangle>, Func<Triangle, int, BasicBuildTriangle>, RaySet, RBVH2> build = GetBuildMethod<BasicBuildTriangle, Triangle, BasicBuildTriangle, RBVH2Branch, RBVH2Leaf>
-                    (dict["-build"][0], RBVH5050Factory<BasicBuildTriangle>.ONLY, RBVHNodeFactory<BasicBuildTriangle>.ONLY, RBVH5050Factory<BasicBuildTriangle>.ONLY);
-                Func<BasicBuildTriangle[]> tris = GetBuildTrianglesForBuild(dict["-scene"][0]);
-                Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
+                Func<List<Triangle>, Tree<RBVH2Branch, RBVH2Leaf>> build = GetBVHFromFile(dict["-bvh"][0]);
+                Func<Tuple<OBJBackedBuildTriangle[], List<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> evalrays = dict.ContainsKey("-evalrays") ? GetRaysFromFile(dict["-evalrays"][0]) : null;
                 TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
-                Action<RBVH2, RaySet, TopazStreamWriter>[] evalMethods = dict["-eval"].Select(GetEvalMethod).ToArray();
+                Action<RBVH2, RaySet, TopazStreamWriter>[] evalMethods = dict["-method"].Select(GetEvalMethod).ToArray();
                 if (build == null || tris == null || evalrays == null || output == null) return;
                 foreach (var method in evalMethods) if (method == null) return;
                 using (output)
                 {
-                    RBVH2 bvh = build(tris(), t => t.T, (tri, counter) => new BasicBuildTriangle(tri, counter), buildrays());
+                    RBVH2 bvh = build(tris().Item2);
+                    bvh.Accept(ConsistencyCheck<RBVH2Branch, RBVH2Leaf>.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
                     output.StandardRBVHStatsReport(bvh);
-                    bvh.Accept(ConsistencyCheck<RBVH2Branch,RBVH2Leaf>.ONLY, bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
                     RaySet eval_rays = evalrays();
                     foreach (var method in evalMethods) method(bvh, eval_rays, output);
                 }
@@ -88,29 +89,17 @@ namespace Topaz
                     BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY,
                     BackedRBVHNodeFactory<OBJBackedBuildTriangle>.ONLY,
                     BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY);
-                Func<Tuple<OBJBackedBuildTriangle[], IList<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
+                Func<Tuple<OBJBackedBuildTriangle[], List<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
                 if (build == null || tris == null || output == null) return;
                 using (output)
                 {
-                    Tuple<OBJBackedBuildTriangle[], IList<Triangle>> scene = tris();
+                    Tuple<OBJBackedBuildTriangle[], List<Triangle>> scene = tris();
                     IList<Triangle> backing = scene.Item2;
                     BackedRBVH2 bvh = build(scene.Item1, objTri => backing[objTri.OBJIndex], (objIndex, counter) => new OBJBackedBuildTriangle(counter, backing[objIndex], objIndex), buildrays());
                     bvh.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(i => backing[i]), bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
-                    output.Write("267534 202");
-                    bvh.PrefixEnumerate(
-                        (branch)=>
-                        {
-                            output.Write(" 2 {0}", branch.PLeft);
-                        },
-                        (leaf)=>
-                        {
-                            output.Write(" 3 {0}", leaf.Primitives.Length);
-                            foreach (int i in leaf.Primitives)
-                                output.Write(" {0}", i);
-                        });
-                    output.Write(" 9215");
+                    BVHTextParser.WriteBVH_Text(bvh, output);
                 }
             }
             else if (command.Equals("-sweep"))
@@ -150,6 +139,10 @@ namespace Topaz
         private static bool HasOne<T,U>(this Dictionary<T, IList<U>> dict, T command)
         {
             return dict.ContainsKey(command) && dict[command].Count == 1;
+        }
+        private static bool HasPositive<T, U>(this Dictionary<T, IList<U>> dict, T command)
+        {
+            return dict.ContainsKey(command) && dict[command].Count > 0;
         }
 
         private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tree<TBranch, TLeaf>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
@@ -218,9 +211,30 @@ namespace Topaz
                     return build;
                 };
             }
+            else if (method.ToLower().Equals("srdhv2"))
+            {
+                return (tris, mapping, constructor, rays) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
+                    Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
+                        (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
+                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
+                    ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
+                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
+                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+                    return build;
+                };
+            }
             else
             {
-                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, srdh", method);
+                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, srdh, srdhv2", method);
                 return null;
             }
         }
@@ -284,7 +298,8 @@ namespace Topaz
             }
         }
 
-        private static Func<Tuple<OBJBackedBuildTriangle[], IList<Triangle>>> GetOBJBuildTrianglesForBuild(string filename)
+
+        private static Func<Tuple<OBJBackedBuildTriangle[], List<Triangle>>> GetOBJBuildTrianglesForBuild(string filename)
         {
             if (filename.ToLower().EndsWith(".obj"))
             {
@@ -298,14 +313,39 @@ namespace Topaz
                 {
                     using (f)
                     {
-                        IList<Triangle> backing = OBJParser.ParseOBJTriangles(f);
-                        return new Tuple<OBJBackedBuildTriangle[], IList<Triangle>>(backing.GetOBJTriangleList(), backing);
+                        List<Triangle> backing = OBJParser.ParseOBJTriangles(f);
+                        return new Tuple<OBJBackedBuildTriangle[], List<Triangle>>(backing.GetOBJTriangleList(), backing);
                     }
                 };
             }
             else
             {
                 Console.WriteLine("Requires OBJ source file. Found extension: {0}", filename.ToLower());
+                return null;
+            }
+        }
+
+        private static Func<List<Triangle>, Tree<RBVH2Branch, RBVH2Leaf>> GetBVHFromFile(string filename)
+        {
+            if (filename.ToLower().EndsWith(".bvh"))
+            {
+                if (!File.Exists(filename))
+                {
+                    Console.WriteLine("Could not find .bvh file: {0}", filename);
+                    return null;
+                }
+                FileStream f = File.OpenRead(filename);
+                return (tris) =>
+                {
+                    using (f)
+                    {
+                        return BVHTextParser.ReadRBVH_Text(new StreamReader(f), tris);
+                    }
+                };
+            }
+            else
+            {
+                Console.WriteLine("Unrecognized extension for bvh file: {0}", filename.ToLower());
                 return null;
             }
         }
@@ -337,13 +377,6 @@ namespace Topaz
 
         private static TopazStreamWriter GetFileWriteStream(string filename)
         {
-            /*
-            if (!Directory.Exists(filename))
-            {
-                Console.WriteLine("Directory for file does not exist: {0}", filename);
-                return null;
-            }
-             */
             return new TopazStreamWriter(filename);
         }
 

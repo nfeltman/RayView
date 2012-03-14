@@ -69,32 +69,6 @@ namespace RayVisualizer.Common
             }
         }
 
-        public static void WriteToFile(this BVH2 bvh, BinaryWriter writer)
-        {
-            bvh.PrefixEnumerate(br =>
-            {
-                writer.Write(2);
-            },
-            le =>
-            {
-                writer.Write(3);
-                writer.Write(le.Primitives.Length);
-                foreach (Triangle t in le.Primitives)
-                {
-                    writer.Write(t.p1.x);
-                    writer.Write(t.p1.y);
-                    writer.Write(t.p1.z);
-                    writer.Write(t.p2.x);
-                    writer.Write(t.p2.y);
-                    writer.Write(t.p2.z);
-                    writer.Write(t.p3.x);
-                    writer.Write(t.p3.y);
-                    writer.Write(t.p3.z);
-                }
-            });
-            writer.Write(9215);
-        }
-
         private static Box3 ReadBoundingBox(BinaryReader reader)
         {
             return new Box3(reader.ReadSingle(),

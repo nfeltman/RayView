@@ -59,6 +59,12 @@ namespace Topaz
             _output.WriteLine("\"{0}\" \"total\" {1}", stat, d);
         }
 
+        public void PrintArray(string stat, int[] d)
+        {
+            OpenStream();
+            _output.WriteLine("\"{0}\" \"array\" {1}", stat, String.Join(" ", d));
+        }
+
         public void WriteLine(string format, params object[] args)
         {
             OpenStream();

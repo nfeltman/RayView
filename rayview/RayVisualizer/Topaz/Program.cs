@@ -249,6 +249,10 @@ namespace Topaz
             {
                 return EvalMethods.PerformOracleEvaluation;
             }
+            else if (method.ToLower().Equals("rayhisto"))
+            {
+                return EvalMethods.PerformRayHistogramEvaluation;
+            }
             else
             {
                 Console.WriteLine("Unrecognized evaluation method \"{0}\".  Acceptible: pq, oracle", method);

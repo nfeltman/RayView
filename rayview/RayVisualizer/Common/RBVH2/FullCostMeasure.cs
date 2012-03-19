@@ -139,11 +139,13 @@ namespace RayVisualizer.Common
         public static FullTraceResult GetTotalCost(RBVH2 tree, IEnumerable<ShadowQuery> shadows)
         {
             FullTraceResult cost = new FullTraceResult(); //the default value is correct
+            cost.badqueries = new List<ShadowQuery>();
             InternalVisitor measure = new InternalVisitor();
             foreach (ShadowQuery shadow in shadows)
             {
                 measure.ShadowRay = new Segment3(shadow.Origin, shadow.Difference);
                 TraceResult res = tree.Accept(measure);
+                //if (res.Hits == shadow.Connected) cost.badqueries.Add(shadow); //Console.WriteLine("Error case ({0}/{1}): {2} -> {3}", res.Hits, !shadow.Connected, shadow.Origin, shadow.Difference);
                 if (res.Hits)
                 {
                     cost.Spine += res.Spine;
@@ -179,6 +181,7 @@ namespace RayVisualizer.Common
         public TraceCost Spine;
         public TraceCost SideTrees;
         public TraceCost NonHit;
+        public List<ShadowQuery> badqueries;
 
         public int NumRays { get { return topazMiss_mantaMiss + topazMiss_mantaHit + topazHit_mantaMiss + topazHit_mantaHit; } }
         public double Disagreement { get { return ((double)topazHit_mantaMiss + topazMiss_mantaHit) / NumRays; } }

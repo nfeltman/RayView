@@ -33,6 +33,8 @@ namespace Topaz
             output.PrintCost("PQ (Side) ", cost.SideTrees);
             output.PrintCost("PQ (Non-Hit) ", cost.NonHit);
             output.PrintCost("PQ (Total) ", cost.Spine + cost.SideTrees + cost.NonHit);
+
+            
         }
 
         public static void PerformOracleEvaluation(RBVH2 build, RaySet rays, TopazStreamWriter output)
@@ -47,6 +49,21 @@ namespace Topaz
             output.PrintCost("Oracle (Hit) ", cost.Hit);
             output.PrintCost("Oracle (Non-Hit) ", cost.NonHit);
             output.PrintCost("Oracle (Total) ", cost.NonHit + cost.Hit); 
+        }
+
+        public static void PerformRayHistogramEvaluation(RBVH2 build, RaySet rays, TopazStreamWriter output)
+        {
+            Stopwatch st = new Stopwatch();
+            Console.WriteLine("Starting ray histogram evaluation. "); st.Reset(); st.Start();
+            RayCostHistogram cost = CostHistogramMeasure.GetTotalCost(build, rays.ShadowQueries);
+            st.Stop(); Console.WriteLine("Done with ray histogram evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
+
+            output.PrintArray("BBoxTest Histogram (Hits)", cost.bboxCostBinsHits);
+            output.PrintArray("BBoxTest Histogram (Misses)", cost.bboxCostBinsMisses);
+            output.PrintArray("BBoxTest Histogram (Both)", cost.bboxCostBinsBoth);
+            output.PrintSimple("BBoxTest OutOfRange (Hits)", cost.outOfRangeHits);
+            output.PrintSimple("BBoxTest OutOfRange (Misses)", cost.outOfRangeMisses);
+            output.PrintSimple("BBoxTest OutOfRange (Both)", cost.outOfRangeBoth);
         }
     }
 }

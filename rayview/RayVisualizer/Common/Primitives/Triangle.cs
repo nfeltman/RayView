@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Mono.Simd;
 
 namespace RayVisualizer.Common
 {
@@ -65,6 +66,13 @@ namespace RayVisualizer.Common
         {
             const float T_EPSILON = 0.0001f;
             float res = IntersectLine(origin, difference, new ClosedInterval(T_EPSILON, 1 - T_EPSILON));
+            return !float.IsNaN(res);
+        }
+
+        public bool IntersectsSegment(Vector4f origin, Vector4f difference)
+        {
+            const float T_EPSILON = 0.0001f;
+            float res = IntersectLine(new CVector3(origin), new CVector3(difference), new ClosedInterval(T_EPSILON, 1 - T_EPSILON));
             return !float.IsNaN(res);
         }
 

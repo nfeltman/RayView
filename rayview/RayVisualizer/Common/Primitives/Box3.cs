@@ -141,17 +141,17 @@ namespace RayVisualizer.Common
             return IntersectInterval(orig, dir, ClosedInterval.ALL);
         }
 
-        public bool DoesIntersectSegment(CVector3 orig, CVector3 diff)
+        public bool DoesIntersectSegment(Vector4f orig, Vector4f diff)
         {
             return DoesIntersectInterval(orig, diff, new ClosedInterval(0, 1));
         }
 
-        public bool DoesIntersectRay(CVector3 orig, CVector3 dir)
+        public bool DoesIntersectRay(Vector4f orig, Vector4f dir)
         {
             return DoesIntersectInterval(orig, dir, ClosedInterval.POSITIVES);
         }
 
-        public bool DoesIntersectLine(CVector3 orig, CVector3 dir)
+        public bool DoesIntersectLine(Vector4f orig, Vector4f dir)
         {
             return DoesIntersectInterval(orig, dir, ClosedInterval.ALL);
         }
@@ -242,8 +242,8 @@ namespace RayVisualizer.Common
 
             return new ClosedInterval(min,max);
         }
-        
-        public bool DoesIntersectInterval(CVector3 orig, CVector3 dir, ClosedInterval t_interval)
+
+        public bool DoesIntersectInterval(Vector4f orig, Vector4f dir, ClosedInterval t_interval)
         {
             if (IsEmpty)
                 return false;
@@ -342,15 +342,13 @@ namespace RayVisualizer.Common
             return max >= min;
         }
 
-        private bool DoesIntersectInterval_SIMD(CVector3 origin, CVector3 direction, ClosedInterval t_interval)
+        private bool DoesIntersectInterval_SIMD(Vector4f origin, Vector4f direction, ClosedInterval t_interval)
         {
-            if(direction.x !=0 && direction.y!=0 && direction.z!=0)
+            if(direction.X !=0 && direction.Y!=0 && direction.Z!=0)
             {
-                Vector4f dir = new Vector4f(direction.x, direction.y, direction.z, 1f);
-                Vector4f ori = new Vector4f(origin.x, origin.y, origin.z, 1f);
-                
-                Vector4f pmin0 = ( _min - ori) / dir;
-                Vector4f pmax0 = ( _max - ori) / dir;
+
+                Vector4f pmin0 = (_min - origin) / direction;
+                Vector4f pmax0 = (_max - origin) / direction;
                 pmin0.W = t_interval.Min;
                 pmax0.W = t_interval.Max;
 
@@ -369,7 +367,7 @@ namespace RayVisualizer.Common
                 pmin = pmin.Shuffle(ShuffleSel.RotateRight);
                 return pmin.CompareNotLessEqual(pmax) == Vector4f.Zero;
             }
-            return DoesIntersectInterval_Slow(origin, direction, t_interval);
+            return DoesIntersectInterval_Slow(new CVector3(origin), new CVector3(direction), t_interval);
         }
         
         public static Box3 operator |(Box3 a, Box3 b)

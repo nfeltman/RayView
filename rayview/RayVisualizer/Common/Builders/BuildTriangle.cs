@@ -44,9 +44,9 @@ namespace RayVisualizer.Common
         {
             get
             {
-                Vector4f point1 = new Vector4f(_t.p1.x, _t.p1.y, _t.p1.z, 0f);
-                Vector4f point2 = new Vector4f(_t.p2.x, _t.p2.y, _t.p2.z, 0f);
-                Vector4f point3 = new Vector4f(_t.p3.x, _t.p3.y, _t.p3.z, 0f);
+                Vector4f point1 = _t.p1.Vec;
+                Vector4f point2 = _t.p2.Vec;
+                Vector4f point3 = _t.p3.Vec;
 
                 return new SimpleBounds() { lower = point1.Min(point2).Min(point3), upper = point1.Max(point2).Max(point3) };
             }
@@ -87,9 +87,9 @@ namespace RayVisualizer.Common
             _index = buildIndex;
             _objIndex = objBackingIndex;
 
-            Vector4f point1 = new Vector4f(init.p1.x, init.p1.y, init.p1.z, 0f);
-            Vector4f point2 = new Vector4f(init.p2.x, init.p2.y, init.p2.z, 0f);
-            Vector4f point3 = new Vector4f(init.p3.x, init.p3.y, init.p3.z, 0f);
+            Vector4f point1 = init.p1.Vec;
+            Vector4f point2 = init.p2.Vec;
+            Vector4f point3 = init.p3.Vec;
 
             Vector4f triMax = point1.Max(point2).Max(point3);
             Vector4f triMin = point1.Min(point2).Min(point3);

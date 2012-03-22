@@ -9,6 +9,7 @@ namespace RayVisualizer.Common
     using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
     using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
     using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
+    using Mono.Simd;
 
     public static class BuildTools
     {
@@ -18,23 +19,15 @@ namespace RayVisualizer.Common
             if (start == end)
                 return Box3.EMPTY;
             CVector3 c0 = tris[start].Center;
-            float minX = c0.x;
-            float maxX = c0.x;
-            float minY = c0.y;
-            float maxY = c0.y;
-            float minZ = c0.z;
-            float maxZ = c0.z;
+            Vector4f min = c0.Vec;
+            Vector4f max = min;
             for (int k = start + 1; k < end; k++)
             {
-                CVector3 c = tris[k].Center;
-                minX = Math.Min(minX, c.x);
-                maxX = Math.Max(maxX, c.x);
-                minY = Math.Min(minY, c.y);
-                maxY = Math.Max(maxY, c.y);
-                minZ = Math.Min(minZ, c.z);
-                maxZ = Math.Max(maxZ, c.z);
+                Vector4f c = tris[k].Center.Vec;
+                min = min.Min(c);
+                max = max.Max(c);
             }
-            return new Box3(minX, maxX, minY, maxY, minZ, maxZ);
+            return new Box3(min, max);
         }
 
         public static ClosedInterval FindDistanceBound<Tri>(Tri[] tris, CVector3 center, int start, int end)

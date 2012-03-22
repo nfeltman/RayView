@@ -91,18 +91,8 @@ namespace RayVisualizer.Common
                 if (type == 9215) // the end of file sentinel
                     break;
                 int depth = reader.ReadInt32();
-                CVector3 origin = new CVector3()
-                {
-                    x = reader.ReadSingle(),
-                    y = reader.ReadSingle(),
-                    z = reader.ReadSingle(),
-                };
-                CVector3 dir = new CVector3()
-                {
-                    x = reader.ReadSingle(),
-                    y = reader.ReadSingle(),
-                    z = reader.ReadSingle(),
-                };
+                CVector3 origin = new CVector3(reader.ReadSingle(),reader.ReadSingle(),reader.ReadSingle());
+                CVector3 dir = new CVector3(reader.ReadSingle(),reader.ReadSingle(),reader.ReadSingle());
 
                 if (type == 0)
                 {
@@ -152,19 +142,9 @@ namespace RayVisualizer.Common
             for (int k = 0; k < numRays; k++)
             {
                 int type = reader.ReadInt32();
-                CVector3 origin = new CVector3()
-                {
-                    x = reader.ReadSingle(),
-                    y = reader.ReadSingle(),
-                    z = reader.ReadSingle(),
-                };
-                CVector3 dir = new CVector3()
-                {
-                    x = reader.ReadSingle(),
-                    y = reader.ReadSingle(),
-                    z = reader.ReadSingle(),
-                };
-                float t =  readsT? reader.ReadSingle():0;
+                CVector3 origin = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                CVector3 dir = new CVector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                float t = readsT ? reader.ReadSingle() : 0;
                 int rayFooter = reader.ReadInt32();
                 if (rayFooter != 0)
                     throw new Exception(String.Format("Ray {0} had bad footer", rayFooter));

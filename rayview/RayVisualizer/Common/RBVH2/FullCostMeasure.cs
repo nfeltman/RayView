@@ -24,36 +24,8 @@ namespace RayVisualizer.Common
                     return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, 0, 0));
                 }
 
-                TraceResult left;
-                TraceResult right;
-                /*
-                if (branch.Content.PLeft == 1)
-                {
-                    left = branch.Left.Accept(this);
-                    if (left.Hits)
-                    {
-                        left.Spine.BBoxTests.ExpectedValue += 1.0;
-                        left.SpineOracle.BBoxTests.ExpectedValue += 1.0;
-                        return left;
-                    }
-                    right = branch.Right.Accept(this);
-                }
-                else if (branch.Content.PLeft == 0)
-                {
-                    right = branch.Right.Accept(this);
-                    if (right.Hits)
-                    {
-                        right.Spine.BBoxTests.ExpectedValue += 1.0;
-                        right.SpineOracle.BBoxTests.ExpectedValue += 1.0;
-                        return right;
-                    }
-                    left = branch.Left.Accept(this);
-                }
-                else
-                {*/
-                    left = branch.Left.Accept(this);
-                    right = branch.Right.Accept(this);
-                //}
+                TraceResult left = branch.Left.Accept(this);
+                TraceResult right = branch.Right.Accept(this);
 
                 TraceCost bothSpine = left.Spine + right.Spine;
                 TraceCost bothSide = left.Side + right.Side;
@@ -103,7 +75,7 @@ namespace RayVisualizer.Common
                 while (k < prims.Length)
                 {
                     primtests++;
-                    if (prims[k].IntersectsSegment(ShadowRay.Origin, ShadowRay.Difference))
+                    if (prims[k].IntersectsSegment(new CVector3(ShadowRay.Origin), new CVector3(ShadowRay.Difference)))
                     {
                         break;
                     }
@@ -120,7 +92,7 @@ namespace RayVisualizer.Common
             }
         }
 
-        private class TraceResult
+        private struct TraceResult
         {
             public bool Hits;
             public TraceCost SpineOracle;
@@ -139,7 +111,7 @@ namespace RayVisualizer.Common
         public static FullTraceResult GetTotalCost(RBVH2 tree, IEnumerable<ShadowQuery> shadows)
         {
             FullTraceResult cost = new FullTraceResult(); //the default value is correct
-            cost.badqueries = new List<ShadowQuery>();
+            //cost.badqueries = new List<ShadowQuery>();
             InternalVisitor measure = new InternalVisitor();
             foreach (ShadowQuery shadow in shadows)
             {
@@ -181,7 +153,7 @@ namespace RayVisualizer.Common
         public TraceCost Spine;
         public TraceCost SideTrees;
         public TraceCost NonHit;
-        public List<ShadowQuery> badqueries;
+        //public List<ShadowQuery> badqueries;
 
         public int NumRays { get { return topazMiss_mantaMiss + topazMiss_mantaHit + topazHit_mantaMiss + topazHit_mantaHit; } }
         public double Disagreement { get { return ((double)topazHit_mantaMiss + topazMiss_mantaHit) / NumRays; } }

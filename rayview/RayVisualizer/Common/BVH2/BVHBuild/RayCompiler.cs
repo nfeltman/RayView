@@ -51,7 +51,7 @@ namespace RayVisualizer.Common
             NullRayOrderOperations ops = new NullRayOrderOperations();
             foreach (Ray3 ray in allCasts)
             {
-                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, ray.Origin, ray.Direction, ops);
+                HitRecord rec = RayOrderTraverser.RunTooledTraverser(bvh, new CVector3(ray.Origin), new CVector3(ray.Direction), ops);
                 if (rec == null)
                 {
                     misses.Add(new Ray3(ray.Origin, ray.Direction));

@@ -8,18 +8,19 @@ namespace RayVisualizer.Common
 {
     public struct CVector3
     {
-        public float x, y, z;
+        private Vector4f _vec;
+        public float x { get { return _vec.X; } }
+        public float y { get { return _vec.Y; } }
+        public float z { get { return _vec.Z; } }
+        public Vector4f Vec { get { return _vec; } }
+
         public CVector3(float x0, float y0, float z0)
         {
-            x = x0;
-            y = y0;
-            z = z0;
+            _vec = new Vector4f(x0, y0, z0, 0);
         }
         public CVector3(Vector4f vec)
         {
-            x = vec.X;
-            y = vec.Y;
-            z = vec.Z;
+            _vec = vec;
         }
         public CVector3 Normalized()
         {
@@ -27,19 +28,21 @@ namespace RayVisualizer.Common
         }
         public float Length()
         {
-            return (float)Math.Sqrt(x * x + y * y + z * z);
+            Vector4f sq = _vec * _vec;
+            return (float)Math.Sqrt(sq.X + sq.Y + sq.Z);
         }
         public float LengthSq()
         {
-            return x * x + y * y + z * z;
+            Vector4f sq = _vec * _vec;
+            return sq.X + sq.Y + sq.Z;
         }
         public static CVector3 operator +(CVector3 v1, CVector3 v2)
         {
-            return new CVector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+            return new CVector3(v1._vec + v2._vec);
         }
         public static CVector3 operator -(CVector3 v1, CVector3 v2)
         {
-            return new CVector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+            return new CVector3(v1._vec - v2._vec);
         }
         public static CVector3 operator ^(CVector3 v1, CVector3 v2)
         {
@@ -47,15 +50,16 @@ namespace RayVisualizer.Common
         }
         public static float operator *(CVector3 v1, CVector3 v2)
         {
-            return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+            Vector4f dot = v1._vec * v2._vec;
+            return dot.X + dot.Y + dot.Z;
         }
         public static CVector3 operator *(float c, CVector3 v)
         {
-            return new CVector3(v.x * c, v.y * c, v.z * c);
+            return new CVector3(v._vec * c);
         }
         public static CVector3 operator *(CVector3 v, float c)
         {
-            return new CVector3(v.x * c, v.y * c, v.z * c);
+            return new CVector3(v._vec * c);
         }
         public static CVector3 operator /(CVector3 v, float c)
         {
@@ -88,26 +92,38 @@ namespace RayVisualizer.Common
 
     public struct Segment3
     {
-        private CVector3 _origin, _difference;
-        public CVector3 Origin { get { return _origin; } }
-        public CVector3 Difference { get { return _difference; } }
+        private Vector4f _origin, _difference;
+        public Vector4f Origin { get { return _origin; } }
+        public Vector4f Difference { get { return _difference; } }
 
-        public Segment3(CVector3 origin, CVector3 difference)
+        public Segment3(Vector4f origin, Vector4f difference)
         {
             _origin = origin;
             _difference = difference;
         }
+
+        public Segment3(CVector3 origin, CVector3 difference)
+        {
+            _origin = origin.Vec;
+            _difference = difference.Vec;
+        }
     }
     public struct Ray3
     {
-        private CVector3 _origin, _direction;
-        public CVector3 Origin { get { return _origin; } }
-        public CVector3 Direction { get { return _direction; } }
+        private Vector4f _origin, _direction;
+        public Vector4f Origin { get { return _origin; } }
+        public Vector4f Direction { get { return _direction; } }
 
-        public Ray3(CVector3 origin, CVector3 direction)
+        public Ray3(Vector4f origin, Vector4f direction)
         {
             _origin = origin;
             _direction = direction;
+        }
+
+        public Ray3(CVector3 origin, CVector3 direction)
+        {
+            _origin = origin.Vec;
+            _direction = direction.Vec;
         }
     }
 }

@@ -154,8 +154,9 @@ namespace RayVisualizer.Common
                 {
                     // do nothing
                 }
-                else if (type == 1)
+                else if (type == 1 || type == 5)
                 {
+					// type == 1 is a shadow ray.  type == 5 is an ambient occlusion ray
                     shadows.Add(new ShadowQuery()
                     {
                         Origin = origin,

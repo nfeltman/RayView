@@ -88,8 +88,7 @@ namespace RayVisualizer.Common
                     Tri[] tris = leaf.Content.tris;
                     for (int k = 0; k < tris.Length; k++ )
                     {
-                        float intersection = RealTri(tris[k]).IntersectRay(new CVector3(Ray.Origin), new CVector3(Ray.Difference));
-                        if (intersection > 0 && intersection < 1 && !float.IsNaN(intersection))
+                        if (RealTri(tris[k]).IntersectsSegment(Ray.Origin, Ray.Difference))
                         {
                             Intersected.Add(tris[k]);
                             ret = false;

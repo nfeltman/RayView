@@ -154,24 +154,18 @@ namespace Topaz
             where TBranch : Boxed, Weighted
             where TLeaf : Boxed, PrimCountable, Primitived<PrimT>
         {
-            if (method.ToLower().Equals("bal50"))
-            {
-                return (tris, mapping, constructor, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting BAL50 build. "); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure<Tri, TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>>(tris, (ln, lb, rn, rb) => Math.Abs(ln - rn), fact5050, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with BAL50 build.  Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("sah50"))
+            if (method.ToLower().Equals("sah50"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, fact5050, TripleAASplitter.ONLY);
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris, 
+                        new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), 
+                        fact5050, 
+                        BoundsCountAggregator<Tri>.ONLY, 
+                        TripleAASplitter.ONLY, 
+                        1);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
                 };
@@ -181,7 +175,13 @@ namespace Topaz
                 return (tris, mapping, constructor, rays) => {
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting RTSAH build. "); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(tris, (ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea, fact5050, TripleAASplitter.ONLY);
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
+                        tris, 
+                        new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), 
+                        fact5050, 
+                        BoundsCountAggregator<Tri>.ONLY,
+                        TripleAASplitter.ONLY,
+                        1);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
                     TreeOrdering.ApplyRTSAHOrdering(build);
@@ -205,28 +205,13 @@ namespace Topaz
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY);
-                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("srdhv2"))
-            {
-                return (tris, mapping, constructor, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
-                        (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildFullStructure(res.Triangles, new ShadowRayCostEvaluator<Tri>(res, 1f), factWeighted, BoundsCountAggregator<Tri>.ONLY, new SplitterComposer(TripleAASplitter.ONLY, RadialSplitter.ONLY));
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
+                        res.Triangles,
+                        new ShadowRayCostEvaluator<Tri>(res, 1f), 
+                        factWeighted, 
+                        BoundsCountAggregator<Tri>.ONLY, 
+                        TripleAASplitter.ONLY, 
+                        1);
                     st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
 
                     return build;
@@ -234,7 +219,7 @@ namespace Topaz
             }
             else
             {
-                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: bal50, sah50, rtsah, srdh, srdhv2", method);
+                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: sah50, rtsah, srdh", method);
                 return null;
             }
         }

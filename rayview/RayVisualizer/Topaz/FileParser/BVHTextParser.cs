@@ -54,10 +54,16 @@ namespace Topaz.FileParser
             }
             else if (nodetype == 3)
             {
-                if (tok.ReadInt() != 1) throw new IOException("Expect leaf length of 1.");
-                Triangle t = triangles[tok.ReadInt()];
-                bounds = new Box3(t.p1, t.p2, t.p3);
-                return new Leaf<RBVH2Branch, RBVH2Leaf>(new RBVH2Leaf() { BBox = bounds, Primitives = new Triangle[] { t }, Depth = depth, ID = leafID++ });
+                int leafSize = tok.ReadInt();
+                Triangle[] prims = new Triangle[leafSize];
+                BoundBuilder builder = new BoundBuilder(true);
+                for (int k = 0; k < leafSize; k++)
+                {
+                    prims[k] = triangles[tok.ReadInt()];
+                    builder.AddTriangle(prims[k]);
+                }
+                bounds = builder.GetBox();
+                return new Leaf<RBVH2Branch, RBVH2Leaf>(new RBVH2Leaf() { BBox = bounds, Primitives = prims, Depth = depth, ID = leafID++ });
             }
             else
             {

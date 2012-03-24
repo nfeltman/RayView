@@ -70,25 +70,22 @@ namespace RayVisualizer.Common
                 if (!leaf.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                     return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, 0, 0));
                 Triangle[] prims = leaf.Content.Primitives;
-                int k = 0;
-                int primtests = 0;
-                while (k < prims.Length)
+                for (int k = 0; k < prims.Length; k++ )
                 {
-                    primtests++;
                     if (prims[k].IntersectsSegment(new CVector3(ShadowRay.Origin), new CVector3(ShadowRay.Difference)))
                     {
-                        break;
+                        return new TraceResult(true, new TraceCost(1, 0, 1, 0), new TraceCost(1, 0, k + 1, 0), new TraceCost());
                     }
-                    k++;
                 }
-                if (k == prims.Length)
-                {
-                    return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, prims.Length, 0));
-                }
-                else
-                {
-                    return new TraceResult(true, new TraceCost(1, 0, 1, 0), new TraceCost(1, 0, primtests, 0), new TraceCost());
-                }
+                return new TraceResult(false, new TraceCost(), new TraceCost(), new TraceCost(1, 0, prims.Length, 0));
+            }
+
+            // if you have a string {0,1}^m with n 1s, and you randomly permute the string, what is the average depth of the first 1?
+            private float z(int n, int m)
+            {
+                if (n > m) throw new ArgumentException("n cannot be greater than m");
+                if (n == m) return 1;
+                return 1 + (m - n) * z(n, m - 1) / m;
             }
         }
 

@@ -19,6 +19,8 @@ namespace RayVisualizer.Common
 
         public float IntersectRay(CVector3 origin, CVector3 direction)
         {
+            throw new Exception("probably bad implementation! don't use this!");
+            /*
             // form a tetrahedron with the triangle and the ray origin
             CVector3 e1 = p1 - origin;
             CVector3 e2 = p2 - origin;
@@ -39,6 +41,7 @@ namespace RayVisualizer.Common
             float t = ((p1 - origin) * norm) / (direction * norm);
                         
             return t;
+             */
         }
         
         public float IntersectLine(CVector3 origin, CVector3 direction, ClosedInterval interval)

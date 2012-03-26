@@ -32,20 +32,20 @@ namespace RayVisualizer.Common
             return BuildFullStructure(tri, new StatelessSplitEvaluator(est), builder, BoundsCountAggregator<Tri>.ONLY, splitter);
         }
 
-        public static Tree BuildFullStructure<Tri, TriB, StackState, MemoState, BranchData, EntranceData, BranchT, LeafT, Tree, Aggregate>(Tri[] tri, SplitEvaluator<StackState, MemoState, BranchData, EntranceData, Aggregate> se, NodeFactory<TriB, BranchT, LeafT, Tree, BranchData, Aggregate> builder, TriangleAggregator<Aggregate, Tri> aggregator, Splitter splitter)
+        public static Tree BuildFullStructure<Tri, TriB, StackState, MemoState, KernelData, EntranceData, BranchT, LeafT, Tree, Aggregate>(Tri[] tri, SplitEvaluator<StackState, MemoState, KernelData, EntranceData, Aggregate> se, NodeFactory<TriB, BranchT, LeafT, Tree, KernelData, Aggregate> builder, TriangleAggregator<Aggregate, Tri> aggregator, Splitter splitter)
             where Tri : CenterIndexable, TriB
         {
             return BuildStructure(tri, se, builder, aggregator, splitter, 1);
         }
 
-        public static Tree BuildStructure<Tri, TriB, StackState, MemoState, BranchData, EntranceData, BranchT, LeafT, Tree, Aggregate>(Tri[] tri, SplitEvaluator<StackState, MemoState, BranchData, EntranceData, Aggregate> splitEvaluator, NodeFactory<TriB, BranchT, LeafT, Tree, BranchData, Aggregate> nodeBuilder, TriangleAggregator<Aggregate, Tri> aggregator, Splitter splitter, int mandatoryLeafSize)
+        public static Tree BuildStructure<Tri, TriB, StackState, MemoState, KernelData, EntranceData, BranchT, LeafT, Tree, Aggregate>(Tri[] tri, SplitEvaluator<StackState, MemoState, KernelData, EntranceData, Aggregate> splitEvaluator, NodeFactory<TriB, BranchT, LeafT, Tree, KernelData, Aggregate> nodeBuilder, TriangleAggregator<Aggregate, Tri> aggregator, Splitter splitter, int mandatoryLeafSize)
             where Tri : CenterIndexable, TriB
         {
             if (tri.Length == 0)
                 throw new ArgumentException("BVH Cannot be empty");
             if (mandatoryLeafSize < 1)
                 throw new ArgumentException("Mandatory leaf size cannot be less than 1.");
-            BuildImmutables<Tri, TriB, StackState, MemoState, BranchData, EntranceData, BranchT, LeafT, Aggregate> im = new BuildImmutables<Tri, TriB, StackState, MemoState, BranchData, EntranceData, BranchT, LeafT, Aggregate>()
+            BuildImmutables<Tri, TriB, StackState, MemoState, KernelData, EntranceData, BranchT, LeafT, Aggregate> im = new BuildImmutables<Tri, TriB, StackState, MemoState, KernelData, EntranceData, BranchT, LeafT, Aggregate>()
             { 
                 tris = tri,
                 branchCounter = 0,
@@ -60,7 +60,7 @@ namespace RayVisualizer.Common
             return nodeBuilder.BuildTree(root, im.branchCounter);
         }
 
-        private static TreeNode<BranchT, LeafT> BuildNodeSegment<Tri, TriB, StackState, MemoData, BranchData, TransitionData, BranchT, LeafT, Aggregate>(int start, int end, int depth, Aggregate totalAggregate, TransitionData parentState, BuildImmutables<Tri, TriB, StackState, MemoData, BranchData, TransitionData, BranchT, LeafT, Aggregate> im)
+        private static TreeNode<BranchT, LeafT> BuildNodeSegment<Tri, TriB, StackState, MemoData, KernelData, TransitionData, BranchT, LeafT, Aggregate>(int start, int end, int depth, Aggregate totalAggregate, TransitionData parentState, BuildImmutables<Tri, TriB, StackState, MemoData, KernelData, TransitionData, BranchT, LeafT, Aggregate> im)
             where Tri : CenterIndexable, TriB
         {
             int numTris = end - start;
@@ -77,7 +77,7 @@ namespace RayVisualizer.Common
                 Aggregate rightAgg = im.aggregator.GetVal(im.tris[start + 1]);
                 StackState newState = im.eval.BeginEvaluations(start, end, totalAggregate, parentState);
                 EvalResult<MemoData> evaluation = im.eval.EvaluateSplit(leftAgg, rightAgg, newState, t => t.Index == start);
-                BuildReport<TransitionData, BranchData> report = im.eval.FinishEvaluations(evaluation, newState);
+                BuildReport<TransitionData, KernelData> report = im.eval.FinishEvaluations(evaluation, newState);
                 Leaf<BranchT, LeafT> left = new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, start + 1, im.leafCounter++, depth + 1, leftAgg));
                 Leaf<BranchT, LeafT> right = new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start + 1, end, im.leafCounter++, depth + 1, rightAgg));
                 return new Branch<BranchT, LeafT>(left, right, im.fact.BuildBranch(left, right, report.BranchBuildData, im.branchCounter++, depth, totalAggregate));
@@ -112,7 +112,7 @@ namespace RayVisualizer.Common
                 }
 
                 // recursive case
-                BuildReport<TransitionData, BranchData> childTransitions = im.eval.FinishEvaluations(buildData, newState);
+                BuildReport<TransitionData, KernelData> childTransitions = im.eval.FinishEvaluations(buildData, newState);
                 int id = im.branchCounter++;
                 TreeNode<BranchT, LeafT> left;
                 TreeNode<BranchT, LeafT> right;
@@ -142,14 +142,14 @@ namespace RayVisualizer.Common
             return true;
         }
 
-        private class BuildImmutables<Tri, TriB, StackState, MemoState, BranchData, EntranceData, BranchT, LeafT, Aggregate>
+        private class BuildImmutables<Tri, TriB, StackState, MemoState, KernalData, EntranceData, BranchT, LeafT, Aggregate>
         {
             public Tri[] tris;
             public int mandatoryLeafSize;
             public int branchCounter;
             public int leafCounter;
-            public SplitEvaluator<StackState, MemoState, BranchData, EntranceData, Aggregate> eval;
-            public NodeFactory<TriB, BranchT, LeafT, BranchData, Aggregate> fact;
+            public SplitEvaluator<StackState, MemoState, KernalData, EntranceData, Aggregate> eval;
+            public NodeFactory<TriB, BranchT, LeafT, KernalData, Aggregate> fact;
             public TriangleAggregator<Aggregate, Tri> aggregator;
             public Splitter splitter;
         }

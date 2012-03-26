@@ -12,11 +12,11 @@ namespace RayVisualizer.Common
 
     public delegate EvalResult<MemoData> Evaluator<MemoData, Aggregate>(Aggregate leftAgg, Aggregate rightAgg, Func<CenterIndexable, bool> leftFilter);
 
-    public interface SplitEvaluator<StackState, MemoData, BranchData, TransitionData, Aggregate> : SplitEvaluator<StackState, MemoData, Aggregate>
+    public interface SplitEvaluator<StackState, MemoData, KernelData, TransitionData, Aggregate> : SplitEvaluator<StackState, MemoData, Aggregate>
     {
         TransitionData GetDefault();
         StackState BeginEvaluations(int startTri, int endTri, Aggregate objectBounds, TransitionData parentState);
-        BuildReport<TransitionData, BranchData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
+        BuildReport<TransitionData, KernelData> FinishEvaluations(EvalResult<MemoData> selected, StackState currentState);
     }
 
     public abstract class TransitionlessEvaluator<StackState, BuildMemo, Aggregate> : SplitEvaluator<StackState, BuildMemo, BuildMemo, StackState, Aggregate>

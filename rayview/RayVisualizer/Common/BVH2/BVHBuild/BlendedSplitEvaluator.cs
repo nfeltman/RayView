@@ -40,7 +40,7 @@ namespace RayVisualizer.Common
             {
                 if (toBeSplit.Box.DoesIntersectRay(misses[k].Origin, misses[k].Direction))
                 {
-                    if (hitPart != k)
+                    if (missPart != k)
                     {
                         Ray3 temp = misses[k];
                         misses[k] = misses[missPart];

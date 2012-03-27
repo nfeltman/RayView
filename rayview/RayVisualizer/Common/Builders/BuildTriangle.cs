@@ -29,7 +29,7 @@ namespace RayVisualizer.Common
 
     public interface Indexable
     {
-        int Index { get; set; }
+        int BuildIndex { get; set; }
     }
 
     public interface CenterIndexable : Indexable, Centerable
@@ -39,7 +39,7 @@ namespace RayVisualizer.Common
     {
         public Triangle T { get { return _t; } }
         public CVector3 Center { get { return _center; } }
-        public int Index { get { return _index; } set { _index = value; } }
+        public int BuildIndex { get { return _index; } set { _index = value; } }
         public SimpleBounds Bounds
         {
             get
@@ -73,7 +73,7 @@ namespace RayVisualizer.Common
     public class OBJBackedBuildTriangle : CenterIndexable, OBJBacked, Bounded
     {
         public CVector3 Center { get { return _center; } }
-        public int Index { get { return _index; } set { _index = value; } }
+        public int BuildIndex { get { return _index; } set { _index = value; } }
         public int OBJIndex { get { return _objIndex; } }
         public SimpleBounds Bounds { get { return _bounds; } }
 
@@ -97,6 +97,11 @@ namespace RayVisualizer.Common
             _center = new CVector3((triMin + triMax) * 0.5f);
 
             _bounds = new SimpleBounds() { lower = triMin, upper = triMax };
+        }
+
+        public override string ToString()
+        {
+            return String.Format("[({0},{1})x({2},{3})x({4},{5})]", _bounds.lower.X, _bounds.upper.X, _bounds.lower.Y, _bounds.upper.Y, _bounds.lower.Z, _bounds.upper.Z);
         }
     }
 }

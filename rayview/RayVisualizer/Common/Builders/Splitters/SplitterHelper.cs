@@ -54,8 +54,8 @@ namespace RayVisualizer.Common
             Tri temp = tri[loc1];
             tri[loc1] = tri[loc2];
             tri[loc2] = temp;
-            tri[loc1].Index = loc1;
-            tri[loc2].Index = loc2;
+            tri[loc1].BuildIndex = loc1;
+            tri[loc2].BuildIndex = loc2;
         }
 
         public static void RunSplitSweepTest<Aggregate, Tri>(Action<int, Aggregate, Aggregate, Func<CenterIndexable, bool>> emitter, Tri[] tris, SplitSeries series, int numBins, TriangleAggregator<Aggregate, Tri> aggregator)

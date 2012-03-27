@@ -5,14 +5,14 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, TraversalKernel, ShadowRayShuffleState, BoundAndCount>
-        where Tri : CenterIndexable, Bounded
+    public class SRDHEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, SRDHEvaluator<Tri>.ShadowRayMemoData, TraversalKernel, ShadowRayShuffleState, BoundAndCount>
+        where Tri : CenterIndexable
     {
         private Segment3[] _connected;
         private CompiledShadowRay<Tri>[] _broken;
         private float _alpha;
 
-        public ShadowRayCostEvaluator(ShadowRayResults<Tri> res, float alpha)
+        public SRDHEvaluator(ShadowRayResults<Tri> res, float alpha)
         {
             _alpha = alpha;
             _connected = res.Connected;
@@ -21,7 +21,6 @@ namespace RayVisualizer.Common
 
         public ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, BoundAndCount objectBounds, ShadowRayShuffleState parentState)
         {
-
             // filter "connected" buffer
             int connectedPart = BuildTools.SweepPartition(_connected, 0, parentState.connectedMax, seg => objectBounds.Box.DoesIntersectSegment(seg.Origin, seg.Difference));
 
@@ -35,23 +34,8 @@ namespace RayVisualizer.Common
                     {
                         BuildTools.Swap(_broken, brokenPart, k);
                     }
-                    SortHits(ref _broken[brokenPart], startTri, endTri);
+                    SortHits(ref _broken[k], startTri, endTri);
                     brokenPart++;
-                }
-            }
-            
-            // check that I didn't screw that up
-            for (int j = 0; j < brokenPart; j++)
-            {
-                for (int k = 0; k < _broken[j].IntersectedTriangles.Length; k++)
-                {
-                    if ((_broken[j].IntersectedTriangles[k].BuildIndex >= startTri && _broken[j].IntersectedTriangles[k].BuildIndex < endTri) != k < _broken[j].MaxIntersectedTriangles)
-                    {
-                        Console.WriteLine("chcking rays 0 through " + brokenPart);
-                        Console.WriteLine("ray " + j + " (" + _broken[j].MaxIntersectedTriangles + "/" + _broken[j].IntersectedTriangles.Length + ") tri " + k);
-                        Console.WriteLine("has index "+ _broken[j].IntersectedTriangles[k].BuildIndex + " [" + startTri + "," + endTri + ") ");
-                        throw new Exception("error in this here partition ");
-                    }
                 }
             }
             return new ShadowRayShuffleState(brokenPart, connectedPart);
@@ -91,16 +75,12 @@ namespace RayVisualizer.Common
                         if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_sure_traversal;
                         if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_sure_traversal; break;
                     case InteractionCombination.HitBoth:
-                        //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  throw new Exception("uh oh 1");
-                        //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 2");
-                        ++left_maybe_traversal; 
-                        ++right_maybe_traversal;  break;
+                        ++left_maybe_traversal;
+                        ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyLeft:
-                        //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 3");
                         ++left_sure_traversal;
                         if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++right_maybe_traversal; break;
                     case InteractionCombination.HitOnlyRight:
-                        //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 4");
                         ++right_sure_traversal;
                         if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++left_maybe_traversal; break;
                 }
@@ -179,18 +159,6 @@ namespace RayVisualizer.Common
                 kernel = p;
                 DominantSideFilter = firstSideFilter;
             }
-        }
-    }
-
-    public struct ShadowRayShuffleState
-    {
-        public int connectedMax;
-        public int brokenMax;
-
-        public ShadowRayShuffleState(int brokenPart, int connectedPart)
-        {
-            brokenMax = brokenPart;
-            connectedMax = connectedPart;
         }
     }
 }

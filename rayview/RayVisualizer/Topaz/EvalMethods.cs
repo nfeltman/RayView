@@ -28,27 +28,11 @@ namespace Topaz
             output.PrintSimple("PQ NumTopazMissMantaHit", cost.topazMiss_mantaHit);
             output.PrintSimple("PQ NumTopazHitMantaMiss", cost.topazHit_mantaMiss);
             output.PrintSimple("PQ Disagreement", cost.Disagreement);
-            output.PrintCost("PQ (Spine Oracle) ", cost.SpineOracle);
+            output.PrintSimple("Oracle BBox", cost.SpineOracleBBox);
             output.PrintCost("PQ (Spine) ", cost.Spine);
             output.PrintCost("PQ (Side) ", cost.SideTrees);
             output.PrintCost("PQ (Non-Hit) ", cost.NonHit);
             output.PrintCost("PQ (Total) ", cost.Spine + cost.SideTrees + cost.NonHit);
-
-            
-        }
-
-        public static void PerformOracleEvaluation(RBVH2 build, RaySet rays, TopazStreamWriter output)
-        {
-            Stopwatch st = new Stopwatch();
-            Console.WriteLine("Starting oracle evaluation. "); st.Reset(); st.Start();
-            OracleTraceResult cost = OracleCost.GetTotalCost(build, rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)));
-            st.Stop(); Console.WriteLine("Done with Oracle evaluation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-            output.PrintSimple("Oracle NumRays", cost.NumRays);
-            output.PrintSimple("Oracle NumHits", cost.NumHits);
-            output.PrintCost("Oracle (Hit) ", cost.Hit);
-            output.PrintCost("Oracle (Non-Hit) ", cost.NonHit);
-            output.PrintCost("Oracle (Total) ", cost.NonHit + cost.Hit); 
         }
 
         public static void PerformRayHistogramEvaluation(RBVH2 build, RaySet rays, TopazStreamWriter output)

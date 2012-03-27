@@ -76,7 +76,7 @@ namespace RayVisualizer.Common
                 Aggregate leftAgg = im.aggregator.GetVal(im.tris[start]);
                 Aggregate rightAgg = im.aggregator.GetVal(im.tris[start + 1]);
                 StackState newState = im.eval.BeginEvaluations(start, end, totalAggregate, parentState);
-                EvalResult<MemoData> evaluation = im.eval.EvaluateSplit(leftAgg, rightAgg, newState, t => t.Index == start);
+                EvalResult<MemoData> evaluation = im.eval.EvaluateSplit(leftAgg, rightAgg, newState, t => t.BuildIndex == start);
                 BuildReport<TransitionData, KernelData> report = im.eval.FinishEvaluations(evaluation, newState);
                 Leaf<BranchT, LeafT> left = new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start, start + 1, im.leafCounter++, depth + 1, leftAgg));
                 Leaf<BranchT, LeafT> right = new Leaf<BranchT, LeafT>(im.fact.BuildLeaf(im.tris, start + 1, end, im.leafCounter++, depth + 1, rightAgg));
@@ -98,7 +98,7 @@ namespace RayVisualizer.Common
                     rightObjectBounds = im.aggregator.Roll(im.tris, objectPartition, end);
                     Aggregate leftAggregate = im.aggregator.Roll(im.tris, start, objectPartition);
                     Aggregate rightAggregate = im.aggregator.Roll(im.tris, objectPartition, end);
-                    buildData = im.eval.EvaluateSplit(leftAggregate, rightAggregate, newState, t => t.Index < objectPartition);
+                    buildData = im.eval.EvaluateSplit(leftAggregate, rightAggregate, newState, t => t.BuildIndex < objectPartition);
                 }
                 else
                 {

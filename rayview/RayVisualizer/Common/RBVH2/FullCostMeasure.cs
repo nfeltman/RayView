@@ -33,25 +33,26 @@ namespace RayVisualizer.Common
                 TraceCost resSpine;
                 TraceCost resSide;
                 TraceCost resSpineOracle;
+                float pLeft = branch.Content.Kernel.GetProbLeftFirst(ShadowRay.Origin, ShadowRay.Difference);
                 if (left.Hits && right.Hits)
                 {
                     resSpineOracle = left.SpineOracle.BBoxTests.ExpectedValue < right.SpineOracle.BBoxTests.ExpectedValue ? left.SpineOracle : right.SpineOracle;
-                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, right.Spine);
-                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, right.Side);
+                    resSpine = TraceCost.RandomSelect(pLeft, left.Spine, right.Spine);
+                    resSide = TraceCost.RandomSelect(pLeft, left.Side, right.Side);
                 }
                 else if (!left.Hits && right.Hits)
                 {
                     if (!left.Spine.IsZero) throw new Exception("This isn't right!");
                     resSpineOracle = right.SpineOracle;
-                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, bothSpine, right.Spine);
-                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, bothSide, right.Side);
+                    resSpine = TraceCost.RandomSelect(pLeft, bothSpine, right.Spine);
+                    resSide = TraceCost.RandomSelect(pLeft, bothSide, right.Side);
                 }
                 else if (left.Hits && !right.Hits)
                 {
                     if (!right.Spine.IsZero) throw new Exception("This isn't right!");
                     resSpineOracle = left.SpineOracle;
-                    resSpine = TraceCost.RandomSelect(branch.Content.PLeft, left.Spine, bothSpine);
-                    resSide = TraceCost.RandomSelect(branch.Content.PLeft, left.Side, bothSide);
+                    resSpine = TraceCost.RandomSelect(pLeft, left.Spine, bothSpine);
+                    resSide = TraceCost.RandomSelect(pLeft, left.Side, bothSide);
                 }
                 else
                 {

@@ -23,7 +23,20 @@ namespace RayVisualizer.Common
                 if (!branch.Content.BBox.DoesIntersectSegment(ShadowRay.Origin, ShadowRay.Difference))
                     return new SimpleTraceResult(false, 1);
 
-                TreeNode<RBVH2Branch, RBVH2Leaf> firstChild = rand.NextDouble() < branch.Content.PLeft ? branch.Left : branch.Right;
+                
+                TreeNode<RBVH2Branch, RBVH2Leaf> firstChild;
+                switch(branch.Content.Kernel)
+                {
+                    case TraversalKernel.LeftFirst:
+                        firstChild = branch.Left; break;
+                    case TraversalKernel.RightFirst:
+                        firstChild = branch.Right; break;
+                    case TraversalKernel.UniformRandom:
+                        firstChild = rand.NextDouble() < 0.5 ? branch.Left : branch.Right; break;
+                    default:
+                        throw new Exception("unsupported kernel!");
+                }
+                
 
                 SimpleTraceResult firstRes = firstChild.Accept(this);
                 firstRes.NumBBoxTests++;

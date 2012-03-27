@@ -10,16 +10,16 @@ namespace RayVisualizer.Common
     using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
     using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
 
-    public class RBVHNodeFactory<T> : NodeFactory<T, RBVH2Branch, RBVH2Leaf, RBVH2, float, BoundAndCount>
+    public class RBVHNodeFactory<T> : NodeFactory<T, RBVH2Branch, RBVH2Leaf, RBVH2, TraversalKernel, BoundAndCount>
         where T : TriangleContainer
     {
         public static readonly RBVHNodeFactory<T> ONLY = new RBVHNodeFactory<T>();
 
         private RBVHNodeFactory() { }
 
-        public RBVH2Branch BuildBranch(TreeNode<RBVH2Branch, RBVH2Leaf> left, TreeNode<RBVH2Branch, RBVH2Leaf> right, float pLeft, int branchCounter, int depth, BoundAndCount boundingBox)
+        public RBVH2Branch BuildBranch(TreeNode<RBVH2Branch, RBVH2Leaf> left, TreeNode<RBVH2Branch, RBVH2Leaf> right, TraversalKernel kernel, int branchCounter, int depth, BoundAndCount boundingBox)
         {
-            return new RBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Depth = depth, PLeft = pLeft };
+            return new RBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Kernel = kernel, Depth = depth }; 
         }
 
         public RBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
@@ -37,16 +37,16 @@ namespace RayVisualizer.Common
         }
     }
 
-    public class BackedRBVHNodeFactory<T> : NodeFactory<T, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, float, BoundAndCount>
+    public class BackedRBVHNodeFactory<T> : NodeFactory<T, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, TraversalKernel, BoundAndCount>
         where T : OBJBacked
     {
         public static readonly BackedRBVHNodeFactory<T> ONLY = new BackedRBVHNodeFactory<T>();
 
         private BackedRBVHNodeFactory() { }
 
-        public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, float pLeft, int branchCounter, int depth, BoundAndCount boundingBox)
+        public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, TraversalKernel kernel, int branchCounter, int depth, BoundAndCount boundingBox)
         {
-            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, PLeft = pLeft };
+            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Kernel = kernel };
         }
 
         public BackedRBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, float, ShadowRayShuffleState, BoundAndCount>
+    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, TraversalKernel, ShadowRayShuffleState, BoundAndCount>
         where Tri : CenterIndexable
     {
         private Segment3[] _connected;
@@ -98,8 +98,8 @@ namespace RayVisualizer.Common
             // I want to build the non-dominant side first
             // so that I can freely shuffle within the non-dominant side's active ray set without messing up the dominant side's active ray set
             // the converse property would not hold
-            return traverseLeftFirst ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(1f, leftFilter), false)
-                : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(0f, t => !leftFilter(t)), true);
+            return traverseLeftFirst ? new EvalResult<ShadowRayMemoData>(leftAvoidable + unavoidablePart, new ShadowRayMemoData(TraversalKernel.LeftFirst, leftFilter), false)
+                : new EvalResult<ShadowRayMemoData>(rightAvoidable + unavoidablePart, new ShadowRayMemoData(TraversalKernel.RightFirst, t => !leftFilter(t)), true);
         }
 
         private static InteractionCombination GetInteractionType<Tri2>(Tri2[] points, int max, Func<CenterIndexable, bool> leftFilter)
@@ -128,7 +128,7 @@ namespace RayVisualizer.Common
             HitOnlyLeft, HitOnlyRight, HitBoth, HitNeither
         }
 
-        public BuildReport<ShadowRayShuffleState, float> FinishEvaluations(EvalResult<ShadowRayMemoData> selected, ShadowRayShuffleState currentState)
+        public BuildReport<ShadowRayShuffleState, TraversalKernel> FinishEvaluations(EvalResult<ShadowRayMemoData> selected, ShadowRayShuffleState currentState)
         {
             // filter all of the rays which have an intersection on the "dominant" side of this division 
             int part = BuildTools.SweepPartition(_broken, 0, currentState.brokenMax, cRay => 
@@ -141,7 +141,7 @@ namespace RayVisualizer.Common
             });
             ShadowRayShuffleState left = selected.BuildLeftFirst ? new ShadowRayShuffleState(part, currentState.connectedMax) : new ShadowRayShuffleState(currentState.brokenMax, currentState.connectedMax);
             ShadowRayShuffleState right = selected.BuildLeftFirst ? new ShadowRayShuffleState(currentState.brokenMax, currentState.connectedMax) : new ShadowRayShuffleState(part, currentState.connectedMax);
-            return new BuildReport<ShadowRayShuffleState, float>(selected.Data.pLeft, left, right);
+            return new BuildReport<ShadowRayShuffleState, TraversalKernel>(selected.Data.kernel, left, right);
         }
 
         public ShadowRayShuffleState GetDefault()
@@ -151,12 +151,12 @@ namespace RayVisualizer.Common
 
         public struct ShadowRayMemoData
         {
-            public float pLeft;
+            public TraversalKernel kernel;
             public Func<CenterIndexable, bool> DominantSideFilter;
 
-            public ShadowRayMemoData(float p, Func<CenterIndexable, bool> firstSideFilter)
+            public ShadowRayMemoData(TraversalKernel p, Func<CenterIndexable, bool> firstSideFilter)
             {
-                pLeft = p;
+                kernel = p;
                 DominantSideFilter = firstSideFilter;
             }
         }

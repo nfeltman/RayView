@@ -7,7 +7,7 @@ namespace RayVisualizer.Common
 {
     public struct RBVH2Branch : Boxed, Weighted
     {
-        public float PLeft { get; set; }
+        public TraversalKernel Kernel { get; set; }
         public int Depth { get; set; }
         public Box3 BBox { get; set; }
         public int ID { get; set; }
@@ -24,7 +24,7 @@ namespace RayVisualizer.Common
 
     public struct BackedRBVH2Branch : Boxed, Weighted
     {
-        public float PLeft { get; set; }
+        public TraversalKernel Kernel { get; set; }
         public Box3 BBox { get; set; }
         public int ID { get; set; }
     }

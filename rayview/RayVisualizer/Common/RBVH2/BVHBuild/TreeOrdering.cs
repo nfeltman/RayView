@@ -24,7 +24,7 @@ namespace RayVisualizer.Common
                     double C_rightFirst = TRAV + P.Right * right.C + (P.JustLeft + P.Both * right.V) * (TRAV + left.C) + P.Neither * TRAV;
                     double C = Math.Min(C_leftFirst, C_rightFirst);
                     // since br.content can be a value type, I have to play some stupid games here to get the copy to carry through
-                    br.Content.PLeft = C_leftFirst < C_rightFirst ? 1f : 0f; // go left first if the left cost is lower
+                    br.Content.Kernel = C_leftFirst < C_rightFirst ? TraversalKernel.LeftFirst : TraversalKernel.RightFirst; // go left first if the left cost is lower
                     return new VisibilityRollUp(V, C, br.Content.BBox);
                 },
                 le =>

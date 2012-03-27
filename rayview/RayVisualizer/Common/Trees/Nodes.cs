@@ -212,7 +212,7 @@ namespace RayVisualizer.Common
 
     public interface Weighted
     {
-        float PLeft { get; set; }
+        TraversalKernel Kernel { get; set; }
     }
 
     public interface PrimCountable

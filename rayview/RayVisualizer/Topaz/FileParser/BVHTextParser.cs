@@ -15,7 +15,7 @@ namespace Topaz.FileParser
             bvh.PrefixEnumerate(
                 (branch) =>
                 {
-                    output.Write(" 2 {0}", branch.PLeft);
+                    output.Write(" 2 {0}", (int)branch.Kernel);
                 },
                 (leaf) =>
                 {
@@ -44,13 +44,13 @@ namespace Topaz.FileParser
             int nodetype = tok.ReadInt();
             if (nodetype == 2)
             {
-                float pLeft = tok.ReadFloat();
+                TraversalKernel kernel = (TraversalKernel)tok.ReadInt();
                 Box3 leftBounds;
                 Box3 rightBounds;
                 TreeNode<RBVH2Branch, RBVH2Leaf> left = ParseNode(tok, triangles, ref branchID, ref leafID, depth + 1, out leftBounds);
                 TreeNode<RBVH2Branch, RBVH2Leaf> right = ParseNode(tok, triangles, ref branchID, ref leafID, depth + 1, out rightBounds);
                 bounds = leftBounds | rightBounds;
-                return new Branch<RBVH2Branch, RBVH2Leaf>(left, right, new RBVH2Branch() { PLeft = pLeft, BBox = bounds, Depth = depth, ID = branchID++ });
+                return new Branch<RBVH2Branch, RBVH2Leaf>(left, right, new RBVH2Branch() { Kernel = kernel, BBox = bounds, Depth = depth, ID = branchID++ });
             }
             else if (nodetype == 3)
             {

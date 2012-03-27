@@ -19,7 +19,7 @@ namespace RayVisualizer.Common
 
         public RBVH2Branch BuildBranch(TreeNode<RBVH2Branch, RBVH2Leaf> left, TreeNode<RBVH2Branch, RBVH2Leaf> right, Unit unit, int branchCounter, int depth, BoundAndCount boundingBox)
         {
-            return new RBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Depth = depth, PLeft = 0.5f };
+            return new RBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Depth = depth, Kernel = TraversalKernel.UniformRandom };
         }
 
         public RBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)
@@ -46,7 +46,7 @@ namespace RayVisualizer.Common
 
         public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, Unit unit, int branchCounter, int depth, BoundAndCount boundingBox)
         {
-            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, PLeft = 0.5f };
+            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Kernel = TraversalKernel.UniformRandom };
         }
 
         public BackedRBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)

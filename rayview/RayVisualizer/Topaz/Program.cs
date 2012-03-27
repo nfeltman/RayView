@@ -147,8 +147,8 @@ namespace Topaz
 
         private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tree<TBranch, TLeaf>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
             (string method, 
-            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> fact5050, 
-            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, float, BoundAndCount> factWeighted, 
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> fact5050,
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, TraversalKernel, BoundAndCount> factWeighted, 
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factBVHHelper)
             where Tri:TriB, CenterIndexable, Bounded
             where TBranch : Boxed, Weighted

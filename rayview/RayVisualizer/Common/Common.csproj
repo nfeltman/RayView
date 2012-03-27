@@ -119,6 +119,7 @@
     <Compile Include="RBVH2\OracleCost.cs" />
     <Compile Include="RBVH2\RBVH2.cs" />
     <Compile Include="RBVH2\TraceCost.cs" />
+    <Compile Include="RBVH2\TraversalKernel.cs" />
     <Compile Include="Trees\Nodes.cs" />
   </ItemGroup>
   <ItemGroup>

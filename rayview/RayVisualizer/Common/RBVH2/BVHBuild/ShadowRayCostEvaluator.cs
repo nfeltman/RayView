@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RayVisualizer.Common
 {
-    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, TraversalKernel, ShadowRayShuffleState, BoundAndCount>
+    public class ShadowRayCostEvaluator<Tri> : SplitEvaluator<ShadowRayCostEvaluator<Tri>.ShadowRayShuffleState, ShadowRayCostEvaluator<Tri>.ShadowRayMemoData, TraversalKernel, ShadowRayCostEvaluator<Tri>.ShadowRayShuffleState, BoundAndCount>
         where Tri : CenterIndexable, Bounded
     {
         private Segment3[] _connected;
@@ -112,6 +112,7 @@ namespace RayVisualizer.Common
             double leftAvoidable = left_maybe_traversal * leftFactor;
             double rightAvoidable = right_maybe_traversal * rightFactor;
             double unavoidablePart = left_sure_traversal * leftFactor + right_sure_traversal * rightFactor;
+
             //Console.WriteLine("{0,4}-{1,4} m{2} {3} s{4,4} {5,4} u{6}", leftNu, rightNu, left_maybe_traversal, right_maybe_traversal, left_sure_traversal, right_sure_traversal, unavoidablePart);
             bool traverseLeftFirst = leftAvoidable < rightAvoidable;
             // the rays that intersect with the non-dominant side are a subset of those that interact with the dominant side
@@ -180,17 +181,17 @@ namespace RayVisualizer.Common
                 DominantSideFilter = firstSideFilter;
             }
         }
-    }
 
-    public struct ShadowRayShuffleState
-    {
-        public int connectedMax;
-        public int brokenMax;
-
-        public ShadowRayShuffleState(int brokenPart, int connectedPart)
+        public struct ShadowRayShuffleState
         {
-            brokenMax = brokenPart;
-            connectedMax = connectedPart;
+            public int connectedMax;
+            public int brokenMax;
+
+            public ShadowRayShuffleState(int brokenPart, int connectedPart)
+            {
+                brokenMax = brokenPart;
+                connectedMax = connectedPart;
+            }
         }
     }
 }

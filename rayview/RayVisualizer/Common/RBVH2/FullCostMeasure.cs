@@ -23,7 +23,30 @@ namespace RayVisualizer.Common
                 {
                     return new TraceResult(false, new TraceCost(), new TraceCost(1, 0, 0, 0));
                 }
-                float pLeft = branch.Content.Kernel.GetProbLeftFirst(ShadowRay.Origin, ShadowRay.Difference);
+                float pLeft;
+                switch (branch.Content.Kernel)
+                {
+                    case TraversalKernel.LeftFirst:
+                        pLeft = 1f; break;
+                    case TraversalKernel.RightFirst:
+                        pLeft = 0f; break;
+                    case TraversalKernel.UniformRandom:
+                        pLeft = 0.5f; break;
+                    case TraversalKernel.FrontToBack:
+                        pLeft = Kernels.LeftIsCloser(
+                            branch.Left.OnContent((Boxed b) => b.BBox.GetCenter().Vec), 
+                            branch.Right.OnContent((Boxed b) => b.BBox.GetCenter().Vec), 
+                            ShadowRay.Origin) ? 1f: 0f;
+                        break;
+                    case TraversalKernel.BackToFront:
+                        pLeft = Kernels.LeftIsCloser(branch.Left.OnContent(
+                            (Boxed b) => b.BBox.GetCenter().Vec), 
+                            branch.Right.OnContent((Boxed b) => b.BBox.GetCenter().Vec), 
+                            ShadowRay.Origin) ? 0f : 1f;
+                        break;
+                    default:
+                        throw new Exception("unsupported kernel! ("+branch.Content.Kernel+")");
+                }
 
                 TraceResult left;
                 TraceResult right;

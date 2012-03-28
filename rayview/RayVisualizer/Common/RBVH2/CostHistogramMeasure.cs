@@ -33,6 +33,18 @@ namespace RayVisualizer.Common
                         firstChild = branch.Right; break;
                     case TraversalKernel.UniformRandom:
                         firstChild = rand.NextDouble() < 0.5 ? branch.Left : branch.Right; break;
+                    case TraversalKernel.FrontToBack:
+                        firstChild = Kernels.LeftIsCloser(
+                            branch.Left.OnContent((Boxed b) => b.BBox.GetCenter().Vec),
+                            branch.Right.OnContent((Boxed b) => b.BBox.GetCenter().Vec),
+                            ShadowRay.Origin) ? branch.Left : branch.Right;
+                        break;
+                    case TraversalKernel.BackToFront:
+                        firstChild = Kernels.LeftIsCloser(branch.Left.OnContent(
+                            (Boxed b) => b.BBox.GetCenter().Vec),
+                            branch.Right.OnContent((Boxed b) => b.BBox.GetCenter().Vec),
+                            ShadowRay.Origin) ? branch.Right : branch.Left;
+                        break;
                     default:
                         throw new Exception("unsupported kernel!");
                 }

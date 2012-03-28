@@ -93,7 +93,7 @@ namespace Topaz
         }
 
 
-        private static void SweepTestHelper(string dim, int numBins, float less, float times, TopazStreamWriter output, BasicBuildTriangle[] tris, ShadowRayCostEvaluator<BasicBuildTriangle> eval, ShadowRayShuffleState evaluatorState)
+        private static void SweepTestHelper(string dim, int numBins, float less, float times, TopazStreamWriter output, BasicBuildTriangle[] tris, ShadowRayCostEvaluator<BasicBuildTriangle> eval, ShadowRayCostEvaluator<BasicBuildTriangle>.ShadowRayShuffleState evaluatorState)
         {
             string splits_locs = "";
             string sah_vals = "";

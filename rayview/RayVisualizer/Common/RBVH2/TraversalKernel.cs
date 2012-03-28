@@ -17,19 +17,15 @@ namespace RayVisualizer.Common
 
     public static class Kernels
     {
-        public static float GetProbLeftFirst(this TraversalKernel kernel, Vector4f origin, Vector4f difference)
+
+        public static bool LeftIsCloser(Vector4f leftCenter, Vector4f rightCenter, Vector4f origin)
         {
-            switch (kernel)
-            {
-                case TraversalKernel.LeftFirst:
-                    return 1f;
-                case TraversalKernel.RightFirst:
-                    return 0f;
-                case TraversalKernel.UniformRandom:
-                    return 0.5f;
-                default:
-                    throw new Exception("unsupported kernel!");
-            }
+            leftCenter = leftCenter - origin;
+            leftCenter = leftCenter * leftCenter;
+            rightCenter = rightCenter - origin;
+            rightCenter = rightCenter * rightCenter;
+
+            return leftCenter.X + leftCenter.Y + leftCenter.Z < rightCenter.X + rightCenter.Y + rightCenter.Z;
         }
     }
 }

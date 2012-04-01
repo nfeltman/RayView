@@ -12,12 +12,14 @@ namespace RayVisualizer.Common
         private Segment3[] _connected;
         private CompiledShadowRay<Tri>[] _broken;
         private float _alpha;
+        private KernelOptions _options;
 
-        public SRDHEvaluator(ShadowRayResults<Tri> res, float alpha)
+        public SRDHEvaluator(ShadowRayResults<Tri> res, float alpha, KernelOptions options)
         {
             _alpha = alpha;
             _connected = res.Connected;
             _broken = res.Broken;
+            _options = options;
         }
 
         public ShadowRayShuffleState BeginEvaluations(int startTri, int endTri, BoundAndCount objectBounds, ShadowRayTransitionState parentState)
@@ -96,7 +98,7 @@ namespace RayVisualizer.Common
             {
                 // figure out if it hit a child
                 InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
-                bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, _broken[k].Ray.Origin);
+                bool originCloserLeft = _options.BTF_or_FTB && Kernels.LeftIsCloser(leftCenter, rightCenter, _broken[k].Ray.Origin);
                 switch (combo)
                 { 
                     case InteractionCombination.HitNeither:
@@ -135,10 +137,10 @@ namespace RayVisualizer.Common
             double leftFactor = Math.Pow(left.Count, _alpha);
             double rightFactor = Math.Pow(right.Count, _alpha);
 
-            double LF_extra_total = LF_extra_ltraversal * leftFactor;
-            double RF_extra_total = RF_extra_rtraversal * rightFactor;
-            double FTB_extra_total = FTB_extra_ltraversal * leftFactor + FTB_extra_rtraversal * rightFactor;
-            double BTF_extra_total = BTF_extra_ltraversal * leftFactor + BTF_extra_rtraversal * rightFactor;
+            double LF_extra_total = LF_extra_ltraversal * leftFactor + (_options.LeftFirst ? 0 : double.PositiveInfinity);
+            double RF_extra_total = RF_extra_rtraversal * rightFactor + (_options.RightFirst ? 0 : double.PositiveInfinity);
+            double FTB_extra_total = FTB_extra_ltraversal * leftFactor + FTB_extra_rtraversal * rightFactor + (_options.FrontToBack ? 0 : double.PositiveInfinity);
+            double BTF_extra_total = BTF_extra_ltraversal * leftFactor + BTF_extra_rtraversal * rightFactor + (_options.BackToFront ? 0 : double.PositiveInfinity);
 
             double unavoidablePart = sure_ltraversal * leftFactor + sure_rtraversal * rightFactor;
             
@@ -313,5 +315,14 @@ namespace RayVisualizer.Common
                 InitialFilter = initialFilter;
             }
         }
+    }
+
+    public class KernelOptions
+    {
+        public bool LeftFirst { get; set; }
+        public bool RightFirst { get; set; }
+        public bool FrontToBack { get; set; }
+        public bool BackToFront { get; set; }
+        public bool BTF_or_FTB { get { return BackToFront || FrontToBack; } }
     }
 }

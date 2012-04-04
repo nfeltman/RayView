@@ -9,7 +9,7 @@ namespace RayVisualizer.Common
     using RBVH2 = Tree<RBVH2Branch, RBVH2Leaf>;
     using BackedBVH2 = Tree<BackedBVH2Branch, BackedBVH2Leaf>;
     using BackedRBVH2 = Tree<BackedRBVH2Branch, BackedRBVH2Leaf>;
-
+    /*
     public class RBVH5050Factory<T> : NodeFactory<T, RBVH2Branch, RBVH2Leaf, RBVH2, Unit, BoundAndCount>
         where T : TriangleContainer
     {
@@ -35,14 +35,18 @@ namespace RayVisualizer.Common
         {
             return new RBVH2(root, numBranches);
         }
-    }
+    }*/
 
-    public class BackedRBVH5050Factory<T> : NodeFactory<T, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, Unit, BoundAndCount>
+    public class BackedRBVHConstantFactory<T> : NodeFactory<T, BackedRBVH2Branch, BackedRBVH2Leaf, BackedRBVH2, Unit, BoundAndCount>
         where T : OBJBacked
     {
-        public static readonly BackedRBVH5050Factory<T> ONLY = new BackedRBVH5050Factory<T>();
+        public static readonly BackedRBVHConstantFactory<T> ONLY_5050 = new BackedRBVHConstantFactory<T>(TraversalKernel.UniformRandom);
+        public static readonly BackedRBVHConstantFactory<T> ONLY_FTB = new BackedRBVHConstantFactory<T>(TraversalKernel.FrontToBack);
+        public static readonly BackedRBVHConstantFactory<T> ONLY_BTF = new BackedRBVHConstantFactory<T>(TraversalKernel.BackToFront);
 
-        private BackedRBVH5050Factory() { }
+        private TraversalKernel _kernel;
+
+        private BackedRBVHConstantFactory(TraversalKernel k) { _kernel = k; }
 
         public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, Unit unit, int branchCounter, int depth, BoundAndCount boundingBox)
         {

@@ -86,9 +86,11 @@ namespace Topaz
                 }
                 Func<OBJBackedBuildTriangle[], Func<OBJBackedBuildTriangle, Triangle>, Func<int, int, OBJBackedBuildTriangle>, RaySet, BackedRBVH2> build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBackedBuildTriangle, BackedRBVH2Branch, BackedRBVH2Leaf>
                     (dict["-build"][0], 
-                    BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY,
+                    BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_5050,
+                    BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_FTB,
+                    BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_BTF,
                     BackedRBVHNodeFactory<OBJBackedBuildTriangle>.ONLY,
-                    BackedRBVH5050Factory<OBJBackedBuildTriangle>.ONLY);
+                    BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_5050);
                 Func<Tuple<OBJBackedBuildTriangle[], List<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
@@ -146,15 +148,17 @@ namespace Topaz
         }
 
         private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tree<TBranch, TLeaf>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
-            (string method, 
+            (string method,
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> fact5050,
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factFTB,
+            NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factBTF,
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, TraversalKernel, BoundAndCount> factWeighted, 
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factBVHHelper)
             where Tri:TriB, CenterIndexable, Bounded
             where TBranch : Boxed, Weighted
             where TLeaf : Boxed, PrimCountable, Primitived<PrimT>
         {
-            if (method.ToLower().Equals("sah50"))
+            if (method.ToLower().Equals("sah-5050"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
@@ -165,6 +169,38 @@ namespace Topaz
                         fact5050, 
                         BoundsCountAggregator<Tri>.ONLY, 
                         TripleAASplitter.ONLY, 
+                        1);
+                    st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    return build;
+                };
+            }
+            else if (method.ToLower().Equals("sah-FTB"))
+            {
+                return (tris, mapping, constructor, rays) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.WriteLine("Starting SAH50 build. "); st.Start();
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris,
+                        new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea),
+                        factFTB,
+                        BoundsCountAggregator<Tri>.ONLY,
+                        TripleAASplitter.ONLY,
+                        1);
+                    st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    return build;
+                };
+            }
+            else if (method.ToLower().Equals("sah-BTF"))
+            {
+                return (tris, mapping, constructor, rays) =>
+                {
+                    Stopwatch st = new Stopwatch();
+                    Console.WriteLine("Starting SAH50 build. "); st.Start();
+                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris,
+                        new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea),
+                        factBTF,
+                        BoundsCountAggregator<Tri>.ONLY,
+                        TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
                     return build;
@@ -384,7 +420,7 @@ namespace Topaz
             }
             else
             {
-                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: sah50, rtsah, srdh", method);
+                Console.WriteLine("Method \"{0}\" not recognized.  Acceptible: sah-5050, sah-FTB, sah-BTF, rtsah, srdh", method);
                 return null;
             }
         }

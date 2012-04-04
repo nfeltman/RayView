@@ -80,8 +80,8 @@ namespace RayVisualizer.Common
             if (state.brokenMax == 0 && state.connectedMax == 0)
             {
                 // no rays here; revert to SAH
-                double cost = leftBox.SurfaceArea * leftFactor + rightBox.SurfaceArea * rightFactor;
-                return new EvalResult<ShadowRayMemoData>(cost, new ShadowRayMemoData(TraversalKernel.UniformRandom, null, null), false);
+                double sahCost = leftBox.SurfaceArea * leftFactor + rightBox.SurfaceArea * rightFactor;
+                return new EvalResult<ShadowRayMemoData>(sahCost, new ShadowRayMemoData(TraversalKernel.UniformRandom, null, null), false);
             }
 
             Vector4f leftCenter = leftBox.GetCenter().Vec;
@@ -90,13 +90,6 @@ namespace RayVisualizer.Common
             int sure_ltraversal = 0;
             int sure_rtraversal = 0;
 
-            int LF_extra_ltraversal = 0;
-            int RF_extra_rtraversal = 0;
-            int FTB_extra_ltraversal = 0;
-            int FTB_extra_rtraversal = 0;
-            int BTF_extra_ltraversal = 0;
-            int BTF_extra_rtraversal = 0;
-
             // test all the faux hits from the "connected" buffer
             for (int k = 0; k < state.connectedMax; k++)
             {
@@ -104,143 +97,157 @@ namespace RayVisualizer.Common
                 if (rightBox.DoesIntersectSegment(_connected[k].Origin, _connected[k].Difference)) ++sure_rtraversal;
             }
 
-            // test all the (maybe faux) hits from the "broken" buffer
-            for (int k = 0; k < state.brokenMax; k++)
+            if (state.brokenMax == 0)
             {
-                // figure out if it hit a child
-                InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
-                bool originCloserLeft = _options.BTF_or_FTB && Kernels.LeftIsCloser(leftCenter, rightCenter, _broken[k].Ray.Origin);
-                switch (combo)
-                { 
-                    case InteractionCombination.HitNeither:
-                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++sure_ltraversal;
-                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++sure_rtraversal; break;
-                    case InteractionCombination.HitBoth:
-                        //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  throw new Exception("uh oh 1");
-                        //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 2");
-                        ++RF_extra_rtraversal;
-                        ++LF_extra_ltraversal;
-                        if (originCloserLeft) { ++BTF_extra_rtraversal; ++FTB_extra_ltraversal; }
-                        else { ++FTB_extra_rtraversal; ++BTF_extra_ltraversal; }
-                        break;
-                    case InteractionCombination.HitOnlyLeft:
-                        //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 3");
-                        ++sure_ltraversal;
-                        if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
-                        {
-                            ++RF_extra_rtraversal;
-                            if (originCloserLeft) ++BTF_extra_rtraversal;
-                            else ++FTB_extra_rtraversal;
-                        }
-                        break;
-                    case InteractionCombination.HitOnlyRight:
-                        //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 4");
-                        ++sure_rtraversal;
-                        if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
-                        {
-                            ++LF_extra_ltraversal;
-                            if (originCloserLeft) ++FTB_extra_ltraversal;
-                            else ++BTF_extra_ltraversal;
-                        }
-                        break;
-                }
+                double unavoidablePart = sure_ltraversal * leftFactor + sure_rtraversal * rightFactor;
+                return new EvalResult<ShadowRayMemoData>(unavoidablePart, new ShadowRayMemoData(TraversalKernel.UniformRandom, null, null), false);
             }
+            else
+            {
 
-            double LF_extra_total = LF_extra_ltraversal * leftFactor + (_options.LeftFirst ? 0 : double.PositiveInfinity);
-            double RF_extra_total = RF_extra_rtraversal * rightFactor + (_options.RightFirst ? 0 : double.PositiveInfinity);
-            double FTB_extra_total = FTB_extra_ltraversal * leftFactor + FTB_extra_rtraversal * rightFactor + (_options.FrontToBack ? 0 : double.PositiveInfinity);
-            double BTF_extra_total = BTF_extra_ltraversal * leftFactor + BTF_extra_rtraversal * rightFactor + (_options.BackToFront ? 0 : double.PositiveInfinity);
+                int LF_extra_ltraversal = 0;
+                int RF_extra_rtraversal = 0;
+                int FTB_extra_ltraversal = 0;
+                int FTB_extra_rtraversal = 0;
+                int BTF_extra_ltraversal = 0;
+                int BTF_extra_rtraversal = 0;
 
-            double unavoidablePart = sure_ltraversal * leftFactor + sure_rtraversal * rightFactor;
-            
-            if (RF_extra_total <= Math.Min(Math.Min(LF_extra_total, FTB_extra_total), BTF_extra_total))
-                return new EvalResult<ShadowRayMemoData>(RF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.RightFirst, cRay =>
+                // test all the (maybe faux) hits from the "broken" buffer
+                for (int k = 0; k < state.brokenMax; k++)
                 {
-                    // traverse right first, so we build left first, so we need to filter out left ray set (right ray set is all)
-                    // a ray is in the left ray set if it didn't hit any (triangle in the active set on the right of the filter)
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                    // figure out if it hit a child
+                    InteractionCombination combo = GetInteractionType(_broken[k].IntersectedTriangles, _broken[k].MaxIntersectedTriangles, leftFilter);
+                    bool originCloserLeft = _options.BTF_or_FTB && Kernels.LeftIsCloser(leftCenter, rightCenter, _broken[k].Ray.Origin);
+                    switch (combo)
                     {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
-                            return false;
+                        case InteractionCombination.HitNeither:
+                            if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++sure_ltraversal;
+                            if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) ++sure_rtraversal; break;
+                        case InteractionCombination.HitBoth:
+                            //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))  throw new Exception("uh oh 1");
+                            //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 2");
+                            ++RF_extra_rtraversal;
+                            ++LF_extra_ltraversal;
+                            if (originCloserLeft) { ++BTF_extra_rtraversal; ++FTB_extra_ltraversal; }
+                            else { ++FTB_extra_rtraversal; ++BTF_extra_ltraversal; }
+                            break;
+                        case InteractionCombination.HitOnlyLeft:
+                            //if (!leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 3");
+                            ++sure_ltraversal;
+                            if (rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
+                            {
+                                ++RF_extra_rtraversal;
+                                if (originCloserLeft) ++BTF_extra_rtraversal;
+                                else ++FTB_extra_rtraversal;
+                            }
+                            break;
+                        case InteractionCombination.HitOnlyRight:
+                            //if (!rightBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference)) throw new Exception("uh oh 4");
+                            ++sure_rtraversal;
+                            if (leftBox.DoesIntersectSegment(_broken[k].Ray.Origin, _broken[k].Ray.Difference))
+                            {
+                                ++LF_extra_ltraversal;
+                                if (originCloserLeft) ++FTB_extra_ltraversal;
+                                else ++BTF_extra_ltraversal;
+                            }
+                            break;
                     }
-                    return true;
-                }, null), false);
+                }
 
-            if (LF_extra_total <= Math.Min(Math.Min(RF_extra_total, FTB_extra_total), BTF_extra_total))
-                return new EvalResult<ShadowRayMemoData>(LF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.LeftFirst, null,
-                cRay =>
-                {
-                    // traverse left first, so we build right first, so we need to filter out right ray set (left ray set is all)
-                    // a ray is in the right ray set if it didn't hit any (triangle in the active set on the left of the filter)
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
-                    {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex>= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
-                            return false;
-                    }
-                    return true;
-                }), false);
-            
-            if (FTB_extra_total <= Math.Min(Math.Min(LF_extra_total, RF_extra_total), BTF_extra_total))
-                return new EvalResult<ShadowRayMemoData>(FTB_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.FrontToBack, cRay =>
-                {
-                    // a ray is in the left ray set if it went left first or didn't hit any (triangle in the active set on the right of the filter)
-                    bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
-                    if (originCloserLeft) return true;
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
-                    {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
-                            return false;
-                    }
-                    return true;
-                }, 
-                cRay =>
-                {
-                    // a ray is in the right ray set if it went right first or didn't hit any (triangle in the active set on the left of the filter)
-                    bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
-                    if (!originCloserLeft) return true;
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
-                    {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
-                            return false;
-                    }
-                    return true;
-                }), true);
-            
-            if (BTF_extra_total <= Math.Min(Math.Min(LF_extra_total, RF_extra_total), FTB_extra_total))
-                return new EvalResult<ShadowRayMemoData>(BTF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.BackToFront, cRay =>
-                {
-                    // a ray is in the left ray set if it went left first or didn't hit any (triangle in the active set on the right of the filter)
-                    bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
-                    if (!originCloserLeft) return true;
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
-                    {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
-                            return false;
-                    }
-                    return true;
-                }, 
-                cRay =>
-                {
-                    // a ray is in the right ray set if it went right first or didn't hit any (triangle in the active set on the left of the filter)
-                    bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
-                    if (originCloserLeft) return true;
-                    for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
-                    {
-                        Tri t = cRay.IntersectedTriangles[k];
-                        if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
-                            return false;
-                    }
-                    return true;
-                }), true);
-             
+                double LF_extra_total = LF_extra_ltraversal * leftFactor + (_options.LeftFirst ? 0 : double.PositiveInfinity);
+                double RF_extra_total = RF_extra_rtraversal * rightFactor + (_options.RightFirst ? 0 : double.PositiveInfinity);
+                double FTB_extra_total = FTB_extra_ltraversal * leftFactor + FTB_extra_rtraversal * rightFactor + (_options.FrontToBack ? 0 : double.PositiveInfinity);
+                double BTF_extra_total = BTF_extra_ltraversal * leftFactor + BTF_extra_rtraversal * rightFactor + (_options.BackToFront ? 0 : double.PositiveInfinity);
 
+                double unavoidablePart = sure_ltraversal * leftFactor + sure_rtraversal * rightFactor;
 
-            throw new Exception("Whoa! How did I get here? One of the tests above me should pass.");
+                if (RF_extra_total <= Math.Min(Math.Min(LF_extra_total, FTB_extra_total), BTF_extra_total))
+                    return new EvalResult<ShadowRayMemoData>(RF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.RightFirst, cRay =>
+                    {
+                        // traverse right first, so we build left first, so we need to filter out left ray set (right ray set is all)
+                        // a ray is in the left ray set if it didn't hit any (triangle in the active set on the right of the filter)
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    }, null), false);
+
+                if (LF_extra_total <= Math.Min(Math.Min(RF_extra_total, FTB_extra_total), BTF_extra_total))
+                    return new EvalResult<ShadowRayMemoData>(LF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.LeftFirst, null,
+                    cRay =>
+                    {
+                        // traverse left first, so we build right first, so we need to filter out right ray set (left ray set is all)
+                        // a ray is in the right ray set if it didn't hit any (triangle in the active set on the left of the filter)
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    }), false);
+
+                if (FTB_extra_total <= Math.Min(Math.Min(LF_extra_total, RF_extra_total), BTF_extra_total))
+                    return new EvalResult<ShadowRayMemoData>(FTB_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.FrontToBack, cRay =>
+                    {
+                        // a ray is in the left ray set if it went left first or didn't hit any (triangle in the active set on the right of the filter)
+                        bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
+                        if (originCloserLeft) return true;
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    },
+                    cRay =>
+                    {
+                        // a ray is in the right ray set if it went right first or didn't hit any (triangle in the active set on the left of the filter)
+                        bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
+                        if (!originCloserLeft) return true;
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    }), true);
+
+                if (BTF_extra_total <= Math.Min(Math.Min(LF_extra_total, RF_extra_total), FTB_extra_total))
+                    return new EvalResult<ShadowRayMemoData>(BTF_extra_total + unavoidablePart, new ShadowRayMemoData(TraversalKernel.BackToFront, cRay =>
+                    {
+                        // a ray is in the left ray set if it went left first or didn't hit any (triangle in the active set on the right of the filter)
+                        bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
+                        if (!originCloserLeft) return true;
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && !leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    },
+                    cRay =>
+                    {
+                        // a ray is in the right ray set if it went right first or didn't hit any (triangle in the active set on the left of the filter)
+                        bool originCloserLeft = Kernels.LeftIsCloser(leftCenter, rightCenter, cRay.Ray.Origin);
+                        if (originCloserLeft) return true;
+                        for (int k = 0; k < cRay.IntersectedTriangles.Length; k++)
+                        {
+                            Tri t = cRay.IntersectedTriangles[k];
+                            if (t.BuildIndex >= state.StartTri && t.BuildIndex < state.EndTri && leftFilter(t))
+                                return false;
+                        }
+                        return true;
+                    }), true);
+
+                throw new Exception("Whoa! How did I get here? One of the tests above me should pass.");
+            }
         }
 
         private static InteractionCombination GetInteractionType<Tri2>(Tri2[] points, int max, Func<CenterIndexable, bool> leftFilter)

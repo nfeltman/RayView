@@ -73,6 +73,17 @@ namespace RayVisualizer.Common
         {
             Box3 leftBox = left.Box;
             Box3 rightBox = right.Box;
+
+            double leftFactor = Math.Pow(left.Count, _alpha);
+            double rightFactor = Math.Pow(right.Count, _alpha);
+
+            if (state.brokenMax == 0 && state.connectedMax == 0)
+            {
+                // no rays here; revert to SAH
+                double cost = leftBox.SurfaceArea * leftFactor + rightBox.SurfaceArea * rightFactor;
+                return new EvalResult<ShadowRayMemoData>(cost, new ShadowRayMemoData(TraversalKernel.UniformRandom, null, null), false);
+            }
+
             Vector4f leftCenter = leftBox.GetCenter().Vec;
             Vector4f rightCenter = rightBox.GetCenter().Vec;
 
@@ -134,8 +145,6 @@ namespace RayVisualizer.Common
                         break;
                 }
             }
-            double leftFactor = Math.Pow(left.Count, _alpha);
-            double rightFactor = Math.Pow(right.Count, _alpha);
 
             double LF_extra_total = LF_extra_ltraversal * leftFactor + (_options.LeftFirst ? 0 : double.PositiveInfinity);
             double RF_extra_total = RF_extra_rtraversal * rightFactor + (_options.RightFirst ? 0 : double.PositiveInfinity);

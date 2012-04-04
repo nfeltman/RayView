@@ -12,6 +12,8 @@ namespace Topaz
     {
         public static void TestSIMD()
         {
+            Console.WriteLine("GC max generation: {0}", GC.MaxGeneration);
+
             Console.WriteLine("SIMD Acceleration Mode: {0}.", SimdRuntime.AccelMode);
             Console.WriteLine("Vector4f (+) Acceleration Requirement: {0}. Met: {1}.", SimdRuntime.MethodAccelerationMode(typeof(Vector4f), "op_Addition", typeof(Vector4f), typeof(Vector4f)),
                 SimdRuntime.IsMethodAccelerated(typeof(Vector4f), "op_Addition", typeof(Vector4f), typeof(Vector4f)));

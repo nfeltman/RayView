@@ -174,7 +174,7 @@ namespace Topaz
                     return build;
                 };
             }
-            else if (method.ToLower().Equals("sah-FTB"))
+            else if (method.ToLower().Equals("sah-ftb"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
@@ -190,7 +190,7 @@ namespace Topaz
                     return build;
                 };
             }
-            else if (method.ToLower().Equals("sah-BTF"))
+            else if (method.ToLower().Equals("sah-btf"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
@@ -223,33 +223,6 @@ namespace Topaz
                     TreeOrdering.ApplyRTSAHOrdering(build);
                     //build.Root.Accept(br => { Console.WriteLine(br.Content.PLeft); }, le => { });
                     st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
-                };
-            }
-            else if (method.ToLower().Equals("srdh"))
-            {
-                return (tris, mapping, constructor, rays) =>
-                {
-                    Stopwatch st = new Stopwatch();
-                    Console.WriteLine("Starting SRDH helper build. "); st.Start();
-                    Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
-                        (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
-                    st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH ray compilation. "); st.Reset(); st.Start();
-                    ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT,Tri,TBranch,TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
-                    st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
-                    Console.WriteLine("Starting SRDH main build. "); st.Reset(); st.Start();
-                    Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
-                        res.Triangles,
-                        new ShadowRayCostEvaluator<Tri>(res, 1f), 
-                        factWeighted, 
-                        BoundsCountAggregator<Tri>.ONLY, 
-                        TripleAASplitter.ONLY, 
-                        1);
-                    st.Stop(); Console.WriteLine("Done with SRDH main build. Time(ms) = {0}", st.ElapsedMilliseconds);
-
                     return build;
                 };
             }

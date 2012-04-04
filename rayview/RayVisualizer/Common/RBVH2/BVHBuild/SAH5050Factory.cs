@@ -50,7 +50,7 @@ namespace RayVisualizer.Common
 
         public BackedRBVH2Branch BuildBranch(TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> left, TreeNode<BackedRBVH2Branch, BackedRBVH2Leaf> right, Unit unit, int branchCounter, int depth, BoundAndCount boundingBox)
         {
-            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Kernel = TraversalKernel.UniformRandom };
+            return new BackedRBVH2Branch() { ID = branchCounter, BBox = boundingBox.Box, Kernel = _kernel };
         }
 
         public BackedRBVH2Leaf BuildLeaf<Tri>(Tri[] tris, int start, int end, int leafCounter, int depth, BoundAndCount boundingBox)

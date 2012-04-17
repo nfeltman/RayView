@@ -11,5 +11,5 @@ let intersects b origin direction t =
 	let t_x = ((b.x - origin) / direction.x) & t in (isNonEmpty t_x) &&
 	let t_y = ((b.y - origin) / direction.y) & t_x in (isNonEmpty t_y) &&
 	intsersects ((b.z - origin) / direction.z) t_y
-let intersects (b: box3) (s: seg3) = intersects b seg.origin seg.direction { min = 0; max = 1 }
-let intersects (b: box3) (r: ray3) = intersects b seg.origin seg.difference { min = 0; max = infinity }
+let intersects (b: box3) (s: seg3) = intersects b seg.origin seg.direction { min = 0.0; max = 1.0 }
+let intersects (b: box3) (r: ray3) = intersects b seg.origin seg.difference { min = 0.0; max = infinity }

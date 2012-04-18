@@ -1,15 +1,27 @@
-type ne_box3 = { x: Interval.ne_interval; y: Interval.ne_interval; z: Interval.ne_interval }
+open Vectors;;
+open Interval;;
+module I = Interval;;
+
+type ne_box3 = { bx: Interval.ne_interval; by: Interval.ne_interval; bz: Interval.ne_interval }
 type box3 = Empty | NotEmpty of ne_box3
-let center neb = { x = center x; y = center y; z = center z }
+let center neb = { Vectors.x = Interval.center neb.bx; Vectors.y = Interval.center neb.by; Vectors.z = Interval.center neb.bz }
 let surfaceArea b = match b with
-	| Empty -> 0
-	| NotEmpty(x, y, z) -> let lx = length x, ly = length y, lz = length z in lx * ly + ly * lz + lz * lx
-let contains b v = match b with 
+	| Empty -> 0.0
+	| NotEmpty(neb) -> let (lx,ly,lz) = (ne_length neb.bx, ne_length neb.by, ne_length neb.bz) in lx *. ly +. ly *. lz +. lz *. lx
+let contains b (v:vec3) = match b with 
 	| Empty -> false 
-	| NotEmpty(bx, by, bz) -> (contains bx v.x) && (contains by v.y) && (contains bz v.z)
-let intersects b origin direction t =
-	let t_x = ((b.x - origin) / direction.x) & t in (isNonEmpty t_x) &&
-	let t_y = ((b.y - origin) / direction.y) & t_x in (isNonEmpty t_y) &&
-	intsersects ((b.z - origin) / direction.z) t_y
-let intersects (b: box3) (s: seg3) = intersects b seg.origin seg.direction { min = 0.0; max = 1.0 }
-let intersects (b: box3) (r: ray3) = intersects b seg.origin seg.difference { min = 0.0; max = infinity }
+	| NotEmpty(neb) -> (ne_contains neb.bx v.x) && (ne_contains neb.by v.y) && (ne_contains neb.bz v.z)
+let ne_intersects b origin direction t = 
+	let t_x = meet (ne_divide (ne_minus b.bx origin.x) direction.x) t in (isNonEmpty t_x) &&
+	let t_y = meet (ne_divide (ne_minus b.by origin.y) direction.y) t_x in (isNonEmpty t_y) &&
+	overlaps (ne_divide (ne_minus b.bz origin.z) direction.z) t_y
+let ne_intersectsSeg b (s: seg3) = ne_intersects b s.originS s.difference (I.make 0.0 1.0)
+let ne_intersectsRay b (r: ray3) = ne_intersects b r.originR r.direction (I.make 0.0 infinity)
+let intersectsSeg b (s: seg3) = match b with
+	| Empty -> false
+	| NotEmpty(neb) -> ne_intersectsSeg neb s
+let intersectsRay b (r: ray3) =  match b with
+	| Empty -> false
+	| NotEmpty(neb) -> ne_intersectsRay neb r
+
+let ne_join b1 b2 = {bx = ne_join b1.bx b2.bx; by = ne_join b1.by b2.by; bz = ne_join b1.bz b2.bz}

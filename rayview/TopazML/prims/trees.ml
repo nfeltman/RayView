@@ -1,7 +1,7 @@
 type ('b, 'l) tree = Branch of 'b * ('b, 'l) tree * ('b, 'l) tree | Leaf of 'l
 
-let rec foldUp node forBranch forLeaf = match node with
-	| Branch(content, left, right) -> forBranch content (foldUp left forBranch forLeaf) (foldUp right forBranch forLeaf)
+let rec foldUp forBranch forLeaf node = match node with
+	| Branch(content, left, right) -> forBranch content (foldUp forBranch forLeaf left) (foldUp forBranch forLeaf right)
 	| Leaf(l) -> forLeaf l;;
 
 let rec mapTree forBranch forLeaf node =

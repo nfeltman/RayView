@@ -4,4 +4,7 @@ type bvhLeaf = { boundsL : Box3.ne_box3; prims : Triangle.triangle array }
 type bvh = (bvhBranch, bvhLeaf) Trees.tree
 type refBVH = (Kernels.kernelType, int array) Trees.tree
 
-val measureCost : bvh -> Vectors.seg3 -> bool * float * float
+type agreementReport = { th_mh : int ; th_mm : int ; tm_mh : int ; tm_mm : int }
+type traversalCost = { spineCost : float; sideCost : float; missCost : float }
+
+val measureCost : bvh -> Vec3.shadowQuery array -> agreementReport * traversalCost

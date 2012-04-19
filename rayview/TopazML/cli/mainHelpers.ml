@@ -7,4 +7,5 @@ let loadBVH scene_loc bvh_loc =
 	print_endline "Number Triangles: "; print_int (Array.length tris); print_newline();
 	let indexed_bvh = BvhReader.readRefBVH_text bvh_channel in
 	close_in bvh_channel;
+	print_endline "Read bvh in.";
 	Trees.foldMapTree BvhReader.branchMapFold (BvhReader.leafMapFold (Array.get tris)) indexed_bvh;;

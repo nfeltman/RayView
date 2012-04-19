@@ -14,4 +14,9 @@ in Arg.parse arglist (fun anons -> ()) "Topaz: research-oriented build and evalu
 
 let bvh = MainHelpers.loadBVH !scene_loc !bvh_loc in
 
-Trees.foldUp (fun _ c1 c2 -> c1 + c2) (fun _ -> 1) bvh
+print_string "converted. \n";
+
+let counts = (Trees.foldUp (fun _ (l1,b1) (l2,b2) -> (l1 + l2, b1+b2+1)) (fun _ -> (1,0)) bvh) in
+print_int (fst counts);
+print_string " ";
+print_int (snd counts)

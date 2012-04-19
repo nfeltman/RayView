@@ -5,7 +5,8 @@ open Box3;;
 exception BVH_Error of string
 
 let readRefBVH_text input =
-	let readNum = fun () -> Scanf.fscanf input " %i" (fun x -> x) in
+	let scanner = Scanf.fscanf input " %i" in
+	let readNum = fun () -> scanner (fun x -> x) in
 	let rec parseNode() =
 		let nodeType = readNum() in
 		match nodeType with

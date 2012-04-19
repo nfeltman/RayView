@@ -8,3 +8,4 @@ val intersectsSeg : box3 -> Vectors.seg3 -> bool
 val ne_intersectsRay : ne_box3 -> Vectors.ray3 -> bool
 val intersectsRay : box3 -> Vectors.ray3 -> bool
 val ne_join : ne_box3 -> ne_box3 -> ne_box3
+val calcBound : Triangle.triangle array -> ne_box3

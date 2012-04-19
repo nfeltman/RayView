@@ -7,4 +7,4 @@ type refBVH = (Kernels.kernelType, int array) Trees.tree
 type agreementReport = { th_mh : int ; th_mm : int ; tm_mh : int ; tm_mm : int }
 type traversalCost = { spineCost : float; sideCost : float; missCost : float }
 
-val measureCost : bvh -> Vec3.shadowQuery array -> agreementReport * traversalCost
+val measureCost : bvh -> Vectors.shadowQuery array -> traversalCost * agreementReport

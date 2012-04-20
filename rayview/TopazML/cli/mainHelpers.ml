@@ -9,3 +9,9 @@ let loadBVH scene_loc bvh_loc =
 	close_in bvh_channel;
 	print_endline "Read bvh in.";
 	Trees.foldMapTree BvhReader.branchMapFold (BvhReader.leafMapFold (Array.get tris)) indexed_bvh;;
+
+let loadRays ray_loc =
+	let ray_channel = open_in_bin ray_loc in
+	let rays = RayReader.readRays ray_channel in
+	close_in ray_channel;
+	rays;;

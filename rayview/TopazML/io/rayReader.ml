@@ -3,8 +3,9 @@ open Vectors;;
 exception RayReadError of string
 
 let readRays input =
-	let readInt() = input_binary_int input in
-	if readInt() <> 1234 then raise (RayReadError "Bad header.");
+	let readInt() = Util.read_Int32 input in
+	let header = readInt() in
+	if header <> 1234 then raise (RayReadError (Printf.sprintf "Bad header. Expected 1234, got %d" header));
 	let readsT = match readInt() with
 		| 1 -> true
 		| 2 -> false

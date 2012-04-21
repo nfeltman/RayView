@@ -1,4 +1,5 @@
 open Bvh2;;
+open Printf;;
 
 let output_loc = ref ""
 let rays_loc = ref ""
@@ -17,19 +18,27 @@ in Arg.parse arglist (fun anons -> ()) "Topaz: research-oriented build and evalu
 print_endline !scene_loc;
 print_endline !bvh_loc;
 print_endline !rays_loc;
+let timer = Timer.create() in
 
-let bvh = MainHelpers.loadBVH !scene_loc !bvh_loc in
+let tris = MainHelpers.loadTris !scene_loc in
+printf "Triangles loaded. Time = %f \n" (Timer.reset_s timer); flush_all();
 
-print_string "converted. \n";
+let indexed_bvh = MainHelpers.loadBVH !bvh_loc in
+printf "Indexed BVH loaded. Time = %f \n" (Timer.reset_s timer); flush_all();
+
+let bvh = Trees.foldMapTree BvhReader.branchMapFold (BvhReader.leafMapFold (Array.get tris)) indexed_bvh in
+printf "BVH built. Time = %f \n" (Timer.reset_s timer); flush_all();
 
 let (leafCount, branchCount) = (Trees.foldUp (fun _ (l1,b1) (l2,b2) -> (l1 + l2, b1+b2+1)) (fun _ -> (1,0)) bvh) in
-Printf.printf "counts: %d %d \n" leafCount branchCount;
+Printf.printf "counts: %d %d \n" leafCount branchCount; flush_all();
 
 let rays = MainHelpers.loadRays !rays_loc in
-
-print_endline "I read the rays!";
+printf "Rays loaded! Time = %f \n" (Timer.reset_s timer); flush_all();
 
 let costs, acc = Bvh2.measureCost bvh rays in
 
-Printf.printf "costs: %f %f %f \n" costs.spineCost costs.sideCost costs.missCost;
-Printf.printf "accuracy: %d %d %d %d \n" acc.th_mh acc.tm_mm acc.tm_mh acc.th_mm;
+printf "Measuring done! %f \n" (Timer.reset_s timer); flush_all();
+
+printf "costs: %f %f %f \n" costs.spineCost costs.sideCost costs.missCost;
+print_endline "th_mh tm_mm tm_mh th_mm";
+printf "accuracy: %d %d %d %d \n" acc.th_mh acc.tm_mm acc.tm_mh acc.th_mm;

@@ -45,7 +45,7 @@ let ne_divide ne v = if v > 0.0 then
 		NotEmpty({ min = ne.min /. v; max = ne.max /. v })
 	else if v < 0.0 then
 		NotEmpty({ min = ne.max /. v; max = ne.min /. v })
-	else if ne.max <=0.0 && ne.max >=0.0 then
+	else if ne_contains ne 0.0 then
 		NotEmpty({ min = neg_infinity; max = infinity })
 	else
 		Empty

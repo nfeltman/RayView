@@ -14,3 +14,4 @@ let readVector input =
 	let y = Util.read_single input in
 	let z = Util.read_single input in
 	{x = x; y = y; z = z}
+let firstIsCloser f s v = length2 (f-v) <= length2 (s-v)

@@ -11,3 +11,4 @@ val (+) : vec3 -> vec3 -> vec3
 val (-) : vec3 -> vec3 -> vec3
 val (^) : vec3 -> vec3 -> vec3
 val readVector : in_channel -> vec3
+val firstIsCloser : vec3 -> vec3 -> vec3 -> bool

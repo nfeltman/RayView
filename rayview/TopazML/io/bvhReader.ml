@@ -27,8 +27,8 @@ let readRefBVH_text input =
 	if readNum() <> 9215 then raise (BVH_Error "Bad Sentinel");
 	bvh
 
-(* these functions are for use with Trees.foldMapTree I expect to call the *)
-(* leaf case by partially invoking with the triMap                         *)
+(* these functions are for use with Trees.foldMapTree. I expect to call    *)
+(* the leaf case by partially invoking with the triMap                     *)
 let branchMapFold k b1 b2 = let b = ne_join b1 b2 in ({ kernel = k; boundsB = b }, b);;
 let leafMapFold triMap indeces = let tris = Array.map triMap indeces in
 	let b = calcBound tris in ({ prims = tris; boundsL = b }, b)

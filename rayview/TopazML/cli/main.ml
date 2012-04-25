@@ -45,7 +45,7 @@ let runEval () =
 	print_endline "th_mh tm_mm tm_mh th_mm";
 	printf "accuracy: %d %d %d %d \n" acc.th_mh acc.tm_mm acc.tm_mh acc.th_mm;;
 
-module SAHBuilder = General_builder.Make(SahEvaluator.E);;
+module SAHBuilder = General_builder.Builder(SahEvaluator.E)(Sah50Factory.F);;
 
 let runBuild () =
 	
@@ -64,6 +64,8 @@ let runBuild () =
 	
 	let tris = MainHelpers.loadTris !scene_loc in
 	printf "Triangles loaded. Time = %f \n" (Timer.reset_s timer); flush_all();
+	SAHBuilder.build_bvh {General_builder.leaf_size = 1} (Build_triangle.createBuildTriangles tris) ()
+	;;
 	
 
-runEval()
+runBuild()

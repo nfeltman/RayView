@@ -1,9 +1,9 @@
 open Trees;;
 
-module type NodeFactory =
+module F :
 sig
-	type leafType
-	type branchType
+	type leafType = int array
+	type branchType = Kernels.kernelType
 	type branchBuildData = Kernels.kernelType
 	
 	val makeLeaf : Build_triangle.bTri array -> ArrayUtil.range -> (branchType, leafType) tree

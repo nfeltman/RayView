@@ -41,7 +41,7 @@ struct
 						let (leftAgg, rightAgg) = (Triangle_aggregator.roll leftRange tris), (Triangle_aggregator.roll rightRange tris) in
 						(CE.evaluate_split newState leftAgg rightAgg (fun bt -> !(getBuildIndex bt) < midpoint)), leftRange, rightRange, leftAgg, rightAgg
 					else
-						let bestP = Splitter.perform_best_partition tris range in
+						let bestP = Splitter.perform_best_partition (CE.evaluate_split newState) range tris total_agg in
 						let (leftRange, rightRange) = split_range range bestP.pivot_index in
 						(bestP.build_data, leftRange, rightRange, bestP.left_aggregate, bestP.right_aggregate)
 				in

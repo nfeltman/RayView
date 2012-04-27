@@ -31,10 +31,33 @@ let intersectsRay b (r: ray3) = match b with
 
 let ne_join b1 b2 = { bx = ne_join b1.bx b2.bx; by = ne_join b1.by b2.by; bz = ne_join b1.bz b2.bz }
 
+let ne1_join ne1 b2 = match b2 with
+	| Empty -> ne1
+	| NotEmpty(ne2) -> ne_join ne1 ne2
+
+let join b1 b2 = match b1, b2 with
+	| b1, Empty -> b1
+	| Empty, b2 -> b2
+	| NotEmpty(ne1), NotEmpty(ne2) -> NotEmpty(ne_join ne1 ne2)
+
 exception BoundsError of string
 
-let calcBound tris =
-	if Array.length tris == 0 then
+let calcBoundMap map tris range =
+	if ArrayUtil.rangeSize range <= 0 then
+		raise (BoundsError "Expected non-empty array.")
+	else
+		let (f1, f2, f3) = map(tris.(0)) in
+		let (xMin, xMax, yMin, yMax, zMin, zMax) = (ref f1.x, ref f1.x, ref f1.y, ref f1.y, ref f1.z, ref f1.z) in
+		let bound p =
+			xMin := min !xMin p.x; xMax := max !xMax p.x;
+			yMin := min !yMin p.y; yMax := max !yMax p.y;
+			zMin := min !zMin p.z; zMax := max !zMax p.z in
+		bound(f2); bound(f3);
+		ArrayUtil.iterRange (fun t -> let (p1, p2, p3) = map(t) in bound(p1); bound(p2); bound(p3)) (ArrayUtil.incrBottom range) tris;
+		{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
+
+let calcBound tris range =
+	if ArrayUtil.rangeSize range <= 0 then
 		raise (BoundsError "Expected non-empty array.")
 	else
 		let (f1, f2, f3) = tris.(0) in
@@ -44,7 +67,13 @@ let calcBound tris =
 			yMin := min !yMin p.y; yMax := max !yMax p.y;
 			zMin := min !zMin p.z; zMax := max !zMax p.z in
 		bound(f2); bound(f3);
-		for i = 1 to pred (Array.length tris) do
-			let (p1, p2, p3) = tris.(i) in bound(p1); bound(p2); bound(p3)
-		done;
+		ArrayUtil.iterRange (fun (p1, p2, p3) -> bound(p1); bound(p2); bound(p3)) (ArrayUtil.incrBottom range) tris;
 		{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
+
+let calcBoundAll tris = calcBound tris (0, Array.length tris)
+
+let fromTri (p1, p2, p3) =
+	let minX, maxX = min (min p1.x p2.x) p3.x, max (max p1.x p2.x) p3.x in
+	let minY, maxY = min (min p1.y p2.y) p3.y, max (max p1.y p2.y) p3.y in
+	let minZ, maxZ = min (min p1.z p2.z) p3.z, max (max p1.z p2.z) p3.z in
+	{ bx = I.ne_make minX maxX; by = I.ne_make minY maxY; bz = I.ne_make minZ maxZ }

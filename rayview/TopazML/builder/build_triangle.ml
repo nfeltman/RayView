@@ -5,6 +5,8 @@ type bTri = { build_index : int ref; obj_index : int; tri : Triangle.triangle; c
 let getCenter bTri = bTri.center
 let getBuildIndex bTri = bTri.build_index
 let getObjIndex bTri = bTri.obj_index
+let getBounds bTri = Box3.fromTri bTri.tri
+let getTriangle bTri = bTri.tri
 
 let createBuildTriangles tris = 
 	let calcCenter a b c = 

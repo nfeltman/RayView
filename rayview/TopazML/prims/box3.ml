@@ -42,11 +42,24 @@ let join b1 b2 = match b1, b2 with
 
 exception BoundsError of string
 
+let calcPointBoundMap map tris range =
+	if ArrayUtil.rangeSize range <= 0 then
+		raise (BoundsError "Expected non-empty array.")
+	else
+		let p0 = map(tris.(fst(range))) in
+		let (xMin, xMax, yMin, yMax, zMin, zMax) = (ref p0.x, ref p0.x, ref p0.y, ref p0.y, ref p0.z, ref p0.z) in
+		let bound p =
+			xMin := min !xMin p.x; xMax := max !xMax p.x;
+			yMin := min !yMin p.y; yMax := max !yMax p.y;
+			zMin := min !zMin p.z; zMax := max !zMax p.z in
+		ArrayUtil.iterRange (fun t -> bound(map(t))) (ArrayUtil.incrBottom range) tris;
+		{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
+
 let calcBoundMap map tris range =
 	if ArrayUtil.rangeSize range <= 0 then
 		raise (BoundsError "Expected non-empty array.")
 	else
-		let (f1, f2, f3) = map(tris.(0)) in
+		let (f1, f2, f3) = map(tris.(fst(range))) in
 		let (xMin, xMax, yMin, yMax, zMin, zMax) = (ref f1.x, ref f1.x, ref f1.y, ref f1.y, ref f1.z, ref f1.z) in
 		let bound p =
 			xMin := min !xMin p.x; xMax := max !xMax p.x;
@@ -60,7 +73,7 @@ let calcBound tris range =
 	if ArrayUtil.rangeSize range <= 0 then
 		raise (BoundsError "Expected non-empty array.")
 	else
-		let (f1, f2, f3) = tris.(0) in
+		let (f1, f2, f3) = tris.(fst(range)) in
 		let (xMin, xMax, yMin, yMax, zMin, zMax) = (ref f1.x, ref f1.x, ref f1.y, ref f1.y, ref f1.z, ref f1.z) in
 		let bound p =
 			xMin := min !xMin p.x; xMax := max !xMax p.x;

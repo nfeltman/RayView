@@ -1,6 +1,5 @@
 open ArrayUtil;;
 open Vectors;;
-open Triangle_aggregator;;
 open Box3;;
 open Interval;;
 
@@ -11,14 +10,11 @@ struct
 	type dim3 = X | Y | Z
 	type extraParams = dim3
 	type series = { less : float; times : float; dim : dim3 }
-	let makeSeries dim agg numBins =
-		let box = match agg.box with
-			| Box3.NotEmpty(ne) -> ne
-			| Box3.Empty -> raise SplitFromEmptyAggError
-		in match dim with
-		| X -> { less = box.bx.min ; times = (float_of_int numBins) /. Interval.ne_length box.bx; dim = X }
-		| Y -> { less = box.by.min ; times = (float_of_int numBins) /. Interval.ne_length box.by; dim = Y }
-		| Z -> { less = box.bz.min ; times = (float_of_int numBins) /. Interval.ne_length box.bz; dim = Z }
+	let makeSeries dim centroidBounds numBins =
+		match dim with
+		| X -> { less = centroidBounds.bx.min ; times = (float_of_int numBins) /. Interval.ne_length centroidBounds.bx; dim = X }
+		| Y -> { less = centroidBounds.by.min ; times = (float_of_int numBins) /. Interval.ne_length centroidBounds.by; dim = Y }
+		| Z -> { less = centroidBounds.bz.min ; times = (float_of_int numBins) /. Interval.ne_length centroidBounds.bz; dim = Z }
 	
 	let getBucket series p = let v = match series.dim with
 			| X -> p.x

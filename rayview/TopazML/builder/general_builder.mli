@@ -10,4 +10,4 @@ module type B =
 		val build_bvh : build_parameters -> bTri array -> uniform_data -> tree
 	end
 
-module Builder (CE : Cost_evaluator.CostEvaluator) (NC : Node_constructor.NodeFactory) : (B with type uniform_data = CE.uniform_data)
+module Builder (CE : Cost_evaluator.CostEvaluator) (NC : Node_constructor.NodeFactory) : (B with type uniform_data = CE.uniform_data with type tree = (NC.branchType, NC.leafType) Trees.tree)

@@ -14,4 +14,4 @@ val smartPartition : 'a left_filter -> ('a -> int -> unit) -> range -> 'a array 
 val pickMin : ('a -> float * 'b) -> 'a array -> float * 'b
 
 type ('retVal, 'foldVal) skipable = Skip of 'foldVal | NoSkip of 'retVal * 'foldVal
-val pickMinFoldLeft : (int -> 'a -> 'c -> (float * 'b, 'c) skipable) -> 'c -> 'a array -> float * 'b * 'c
+val pickMinFoldLeft : (int -> 'a -> 'c -> (float * 'b, 'c) skipable) -> 'c -> range -> 'a array -> float * 'b * 'c

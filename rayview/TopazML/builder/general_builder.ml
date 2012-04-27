@@ -13,6 +13,8 @@ sig
 	val build_bvh : build_parameters -> bTri array -> uniform_data -> tree
 end
 
+exception BuildException of string
+
 module Builder (CE : Cost_evaluator.CostEvaluator) (NC : Node_constructor.NodeFactory) =
 struct
 	
@@ -30,7 +32,9 @@ struct
 	let build_bvh params tris unif =
 		let rec buildNode range total_agg trans_in =
 			let numTris = rangeSize range in
-			if numTris < params.leaf_size then
+			if numTris == 0 then
+				raise (BuildException "Somehow building a 0 size array.")
+			else if numTris <= params.leaf_size then
 				NC.makeLeaf tris range
 			else
 				let newState = CE.begin_evaluations range total_agg unif trans_in in
@@ -41,7 +45,7 @@ struct
 						let (leftAgg, rightAgg) = (Triangle_aggregator.roll leftRange tris), (Triangle_aggregator.roll rightRange tris) in
 						(CE.evaluate_split newState leftAgg rightAgg (fun bt -> !(getBuildIndex bt) < midpoint)), leftRange, rightRange, leftAgg, rightAgg
 					else
-						let bestP = Splitter.perform_best_partition (CE.evaluate_split newState) range tris total_agg in
+						let bestP = Splitter.perform_best_partition (CE.evaluate_split newState) range tris in
 						let (leftRange, rightRange) = split_range range bestP.pivot_index in
 						(bestP.build_data, leftRange, rightRange, bestP.left_aggregate, bestP.right_aggregate)
 				in

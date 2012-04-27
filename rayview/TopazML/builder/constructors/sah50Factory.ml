@@ -9,7 +9,7 @@ struct
 	let makeLeaf arr range =
 		let refs = Array.make (ArrayUtil.rangeSize range) (-1) in
 		let (s, e) = range in
-		for i = s to e + 1 do
+		for i = s to e - 1 do
 			refs.(i - s) <- getObjIndex arr.(i)
 		done;
 		Trees.Leaf(refs);;

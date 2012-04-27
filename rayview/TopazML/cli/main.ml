@@ -54,6 +54,8 @@ let runBuild () =
 	let doEvalBVH = ref false in
 	
 	let arglist = [("-s", Arg.Set_string(scene_loc), "Scene file");
+		("-b", Arg.String (fun str -> ()), "BVH file");
+		("-r", Arg.String (fun str -> ()), "Ray file");
 		("-o", Arg.Set_string(output_loc), "Output file");
 		("-evalbvh", Arg.Set(doEvalBVH), "Perf eval run")]
 	in
@@ -64,7 +66,11 @@ let runBuild () =
 	
 	let tris = MainHelpers.loadTris !scene_loc in
 	printf "Triangles loaded. Time = %f \n" (Timer.reset_s timer); flush_all();
-	SAHBuilder.build_bvh {General_builder.leaf_size = 1} (Build_triangle.createBuildTriangles tris) ()
+	let bvh = SAHBuilder.build_bvh {General_builder.leaf_size = 1} (Build_triangle.createBuildTriangles tris) () in
+	printf "BVH built. Time = %f \n" (Timer.reset_s timer); flush_all();
+		
+	let (leafCount, branchCount) = Trees.foldUp (fun _ (l1, b1) (l2, b2) -> (l1 + l2, b1 + b2 +1)) (fun _ -> (1,0)) bvh in
+	Printf.printf "counts: %d %d \n" leafCount branchCount; flush_all();
 	;;
 	
 

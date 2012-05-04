@@ -5,7 +5,7 @@ open Build_triangle;;
 open Box3;;
 open SplitSeries.SplitSeries;;
 
-type 'a best_partition = { pivot_index : int; left_aggregate : agg; right_aggregate : agg; build_data : 'a eval_result }
+type 'a best_partition = {left_tris : bTri list; right_tris : bTri list; left_aggregate : agg; right_aggregate : agg; build_data : 'a eval_result}
 type 'a nd_scoreResult = { filt : bTri left_filter ; lAgg : agg ; rAgg : agg ; res : 'a eval_result }
 type 'a scoreResult = Degen | NotDegen of 'a nd_scoreResult
 
@@ -43,15 +43,15 @@ let scoreSeries bins splitSeries eval =
 exception DegenerateError
 exception BadPartition of string
 
-let perform_best_partition eval range tris =
-	let binCount = min 32 ((rangeSize range) / 20 + 4) in
-	let centroidBounds = Box3.calcPointBoundMap (fun bTri -> getCenter bTri) tris range in
+let perform_best_partition eval tris =
+	let binCount = min 32 ((List.length tris) / 20 + 4) in
+	let centroidBounds = Box3.calcPointBoundMapList getCenter tris in
 	let xSeries, ySeries, zSeries =
 		makeSeries X centroidBounds binCount,
 		makeSeries Y centroidBounds binCount,
 		makeSeries Z centroidBounds binCount in
 	let xBins, yBins, zBins = Array.make binCount defaultAgg, Array.make binCount defaultAgg, Array.make binCount defaultAgg in
-	iterRange (fun bTri ->
+	List.iter (fun bTri ->
 					let center = getCenter bTri in
 					let x, y, z =
 						max 0 (min (binCount - 1) (getBucket xSeries center)),
@@ -61,17 +61,15 @@ let perform_best_partition eval range tris =
 					xBins.(x) <- add_triangle bTri xBins.(x);
 					yBins.(y) <- add_triangle bTri yBins.(y);
 					zBins.(z) <- add_triangle bTri zBins.(z)
-		) range tris;
+		) tris;
 	let bestX, bestY, bestZ = scoreSeries xBins xSeries eval, scoreSeries yBins ySeries eval, scoreSeries zBins zSeries eval in
 	let bestResults = match pickBetter (pickBetter bestX bestY) bestZ with
 		| NotDegen(nd) -> nd
 		| Degen -> raise DegenerateError
 	in
-	let pivot = ArrayUtil.smartPartition bestResults.filt (fun tri newIndex -> (getBuildIndex tri) := newIndex) range tris in
-	(* let count = ref 0 in ArrayUtil.iterRange (fun tri -> if                 *)
-	(* bestResults.filt tri then incr count) range tris; if !count <> (pivot - *)
-	(* (fst range)) then raise (BadPartition "waaaaat"); Printf.printf         *)
-	(* "numbins: %i chose: %f count: %i %i pivot: %i \n" binCount              *)
-	(* bestResults.res.cost !count (pivot - (fst range)) pivot;                *)
-	if pivot <= 0 || pivot >= (snd range) then raise (BadPartition (Printf.sprintf "Bad partition %i" pivot)) else
-		{ pivot_index = pivot ; left_aggregate = bestResults.lAgg; right_aggregate = bestResults.rAgg; build_data = bestResults.res }
+	let leftTris, rightTris = List.partition bestResults.filt tris in
+		{left_tris = leftTris; right_tris = rightTris; left_aggregate = bestResults.lAgg; right_aggregate = bestResults.rAgg; build_data = bestResults.res}
+		
+		
+		
+		

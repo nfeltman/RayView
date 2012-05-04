@@ -4,15 +4,9 @@ module F =
 struct
 	type leafType = int array
 	type branchType = Kernels.kernelType
-	type branchBuildData = Kernels.kernelType
+	type branchBuildData = unit
 	
-	let makeLeaf arr range =
-		let refs = Array.make (ArrayUtil.rangeSize range) (-1) in
-		let (s, e) = range in
-		for i = s to e - 1 do
-			refs.(i - s) <- getObjIndex arr.(i)
-		done;
-		Trees.Leaf(refs);;
+	let makeLeaf list = Trees.Leaf(Array.of_list (List.map getObjIndex list))
 	
-	let makeBranch left right kernel = Trees.Branch(kernel, left, right)
+	let makeBranch left right kernel agg = Trees.Branch(Kernels.UniformRandom, left, right)
 end

@@ -371,7 +371,7 @@ namespace Topaz
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
-
+                    
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
                         res.Triangles,

@@ -7,6 +7,7 @@ val incrBottom : range -> range
 val entireRange : 'a array -> range
 val rangeSize : range -> int
 val rangeMidpoint : range -> int
+val rangeIncludes : range -> int -> bool
 val iterRange : ('a -> unit) -> range -> 'a array -> unit
 val partition : 'a left_filter -> range -> 'a array -> int
 val smartPartition : 'a left_filter -> ('a -> int -> unit) -> range -> 'a array -> int
@@ -15,3 +16,5 @@ val pickMin : ('a -> float * 'b) -> 'a array -> float * 'b
 
 type ('retVal, 'foldVal) skipable = Skip of 'foldVal | NoSkip of 'retVal * 'foldVal
 val pickMinFoldLeft : (int -> 'a -> 'c -> (float * 'b, 'c) skipable) -> 'c -> range -> 'a array -> float * 'b * 'c
+
+val splitList : 'a list -> 'a list * 'a list

@@ -1,1 +1,0 @@
-type compiled_ray_n = { ray : Vectors.seg3 ; maxIntersected : int ref ; intersectedTris : bTri array}

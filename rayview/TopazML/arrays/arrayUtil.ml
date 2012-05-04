@@ -7,6 +7,7 @@ let incrBottom (s, e) = (s +1, e)
 let entireRange a = (0, Array.length a)
 let rangeSize (s, e) = e - s
 let rangeMidpoint (s, e) = (e + s) /2
+let rangeIncludes (s, e) v = v >= s && v < e
 
 let iterRange action (s, e) a =	for i = s to e - 1 do	action(Array.get a i) done
 
@@ -65,3 +66,11 @@ let pickMinFoldLeft objective seed (s, e) arr =
 			| Skip(nextFold) -> findMinBootstrap (index + 1) nextFold
 	in
 	findMinBootstrap s seed
+	
+exception ImpossibleSplittingError
+	let splitList l =
+		let rec adv front back l = match back, l with
+			| (_, [] | _, _::[]) -> List.rev front, back
+			| h::t1, _::_::t2 -> adv (h::front) t1 t2
+			| [], _::_::_ -> raise ImpossibleSplittingError
+		in adv [] l l

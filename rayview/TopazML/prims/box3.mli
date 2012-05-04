@@ -12,6 +12,8 @@ val ne1_join : ne_box3 -> box3 -> ne_box3
 val join : box3 -> box3 -> box3
 val calcBound : Triangle.triangle array -> ArrayUtil.range -> ne_box3
 val calcBoundMap : ('a -> Triangle.triangle) -> 'a array -> ArrayUtil.range -> ne_box3
+val calcBoundMapList : ('a -> Triangle.triangle) -> 'a list -> ne_box3
 val calcPointBoundMap : ('a -> Vectors.vec3) -> 'a array -> ArrayUtil.range -> ne_box3
+val calcPointBoundMapList : ('a -> Vectors.vec3) -> 'a list -> ne_box3
 val calcBoundAll : Triangle.triangle array -> ne_box3
 val fromTri : Triangle.triangle -> ne_box3

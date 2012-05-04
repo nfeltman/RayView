@@ -55,6 +55,13 @@ let calcPointBoundMap map tris range =
 		ArrayUtil.iterRange (fun t -> bound(map(t))) (ArrayUtil.incrBottom range) tris;
 		{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
 
+let calcPointBoundMapList map tris = match tris with
+	| [] -> raise (BoundsError "Expected non-empty array.")
+	| h:: t ->	let rec bound l xMin xMax yMin yMax zMin zMax = match l with
+				| [] -> { bx = I.ne_make xMin xMax; by = I.ne_make yMin yMax; bz = I.ne_make zMin zMax }
+				| h:: t -> let p = map h in	bound t (min xMin p.x) (max xMax p.x) (min yMin p.y) (max yMax p.y) (min zMin p.z) (max zMax p.z)
+			in let p0 = map h in bound t p0.x p0.x p0.y p0.y p0.z p0.z
+
 let calcBoundMap map tris range =
 	if ArrayUtil.rangeSize range <= 0 then
 		raise (BoundsError "Expected non-empty array.")
@@ -68,6 +75,18 @@ let calcBoundMap map tris range =
 		bound(f2); bound(f3);
 		ArrayUtil.iterRange (fun t -> let (p1, p2, p3) = map(t) in bound(p1); bound(p2); bound(p3)) (ArrayUtil.incrBottom range) tris;
 		{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
+
+let calcBoundMapList map tris = match list with
+	| [] -> raise (BoundsError "Expected non-empty array.")
+	| h:: t ->	let (f1, f2, f3) = map h in
+			let (xMin, xMax, yMin, yMax, zMin, zMax) = (ref f1.x, ref f1.x, ref f1.y, ref f1.y, ref f1.z, ref f1.z) in
+			let bound p =
+				xMin := min !xMin p.x; xMax := max !xMax p.x;
+				yMin := min !yMin p.y; yMax := max !yMax p.y;
+				zMin := min !zMin p.z; zMax := max !zMax p.z in
+			bound(f2); bound(f3);
+			List.iter (fun t -> let (p1, p2, p3) = map(t) in bound(p1); bound(p2); bound(p3)) (ArrayUtil.incrBottom range) tris;
+			{ bx = I.ne_make !xMin !xMax; by = I.ne_make !yMin !yMax; bz = I.ne_make !zMin !zMax }
 
 let calcBound tris range =
 	if ArrayUtil.rangeSize range <= 0 then

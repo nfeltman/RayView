@@ -255,20 +255,20 @@ namespace RayVisualizer.Common
         {
             if (max == 0)
                 return InteractionCombination.HitNeither;
-                if (leftFilter(points[0]))
-                {
-                    for (int k = 1; k < max; k++)
-                        if (!leftFilter(points[k]))
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyLeft;
-                }
-                else
-                {
-                    for (int k = 1; k < max; k++)
-                        if (leftFilter(points[k]))
-                            return InteractionCombination.HitBoth;
-                    return InteractionCombination.HitOnlyRight;
-                }
+            if (leftFilter(points[0]))
+            {
+                for (int k = 1; k < max; k++)
+                    if (!leftFilter(points[k]))
+                        return InteractionCombination.HitBoth;
+                return InteractionCombination.HitOnlyLeft;
+            }
+            else
+            {
+                for (int k = 1; k < max; k++)
+                    if (leftFilter(points[k]))
+                        return InteractionCombination.HitBoth;
+                return InteractionCombination.HitOnlyRight;
+            }
         }
 
         private enum InteractionCombination

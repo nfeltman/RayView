@@ -84,7 +84,9 @@ let runBuild () =
 	
 	let bTris = Build_triangle.createBuildTriangleList tris in	
 	let helperBVH = HelperBuilder.build_bvh { General_builder.leaf_size = 4 } bTris () () in
+	printf "Helper bvh built. Time = %f \n" (Timer.reset_s timer); flush_all();
 	let compiledRays = Ray_compiler.compileRays helperBVH (Array.map fst rays) in
+	printf "Compiled rays. Time = %f \n" (Timer.reset_s timer); flush_all();
 	
 	let ml_ref_bvh = SRDHBuilder.build_bvh { General_builder.leaf_size = 1 } bTris () (SrdhEvaluator.getInitialTransition compiledRays) in
 	printf "BVH built from scratch. Time = %f \n" (Timer.reset_s timer); flush_all();

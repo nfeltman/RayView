@@ -57,7 +57,7 @@ struct
 		in filterTris (cRay.intersectedFirst:: cRay.intersectedRest) []
 	
 	let ffalse a = false
-	let errorOut = raise InternalLies
+	let errorOut x = raise InternalLies
 	
 	let evaluate_split stack leftAgg rightAgg leftFilter =
 		match leftAgg.box, rightAgg.box with

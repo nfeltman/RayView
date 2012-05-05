@@ -20,11 +20,12 @@ let pickBetter sRes1 sRes2 =
 let scoreSeries bins splitSeries eval =
 	let n = (Array.length bins) in
 	let backwardAccumulator = Array.make n defaultAgg in
-	let _ = Array.fold_right
+	let (total_agg, _) = Array.fold_right
 			(fun agg (acc, i) ->
 						let nextAcc = combine agg acc in
 						backwardAccumulator.(i) <- nextAcc;
 						(nextAcc, i - 1)) bins (defaultAgg, n - 1) in
+	if total_agg.count == bins.(0).count then Degen else
 	let (_, (bestFilter, bestLeft, bestRight, bestRes), _) = ArrayUtil.pickMinFoldLeft
 			begin fun index agg forwardAccumulator ->
 						if agg.count == 0 then

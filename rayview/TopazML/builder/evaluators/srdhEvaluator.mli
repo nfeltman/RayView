@@ -1,5 +1,5 @@
 open Cost_evaluator;;
-open Ray_compiler;;
+open RayCompiler;;
 
 module E : CostEvaluator
 with type uniform_data = unit

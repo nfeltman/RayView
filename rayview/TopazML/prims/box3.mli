@@ -2,6 +2,7 @@ type ne_box3 = { bx: Interval.ne_interval; by: Interval.ne_interval; bz: Interva
 type box3 = Empty | NotEmpty of ne_box3
 val center : ne_box3 -> Vectors.vec3
 val surfaceArea : box3 -> float
+val ne_surfaceArea : ne_box3 -> float
 val contains : box3 -> Vectors.vec3 -> bool
 val ne_intersectsSeg : ne_box3 -> Vectors.seg3 -> bool
 val intersectsSeg : box3 -> Vectors.seg3 -> bool

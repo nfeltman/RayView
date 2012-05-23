@@ -6,9 +6,11 @@ type ne_box3 = { bx: I.ne_interval; by: I.ne_interval; bz: I.ne_interval }
 type box3 = Empty | NotEmpty of ne_box3
 let center neb = { Vectors.x = I.center neb.bx; Vectors.y = I.center neb.by; Vectors.z = I.center neb.bz }
 
+let ne_surfaceArea neb = let (lx, ly, lz) = (ne_length neb.bx, ne_length neb.by, ne_length neb.bz) in lx *. ly +. ly *. lz +. lz *. lx
+
 let surfaceArea b = match b with
 	| Empty -> 0.0
-	| NotEmpty(neb) -> let (lx, ly, lz) = (ne_length neb.bx, ne_length neb.by, ne_length neb.bz) in lx *. ly +. ly *. lz +. lz *. lx
+	| NotEmpty(neb) -> ne_surfaceArea neb
 
 let contains b (v: vec3) = match b with
 	| Empty -> false

@@ -1,12 +1,12 @@
 open ArrayUtil;;
-open Triangle_aggregator;;
+open BoxCountAgg.A;;
 open Cost_evaluator;;
 open Build_triangle;;
 open Box3;;
 open SplitSeries.SplitSeries;;
 
-type 'a best_partition = {left_tris : bTri list; right_tris : bTri list; left_aggregate : agg; right_aggregate : agg; build_data : 'a eval_result}
-type 'a nd_scoreResult = { filt : bTri left_filter ; lAgg : agg ; rAgg : agg ; res : 'a eval_result }
+type 'a best_partition = { left_tris : bTri list; right_tris : bTri list; left_aggregate : ne_agg; right_aggregate : ne_agg; build_data : 'a eval_result }
+type 'a nd_scoreResult = { filt : bTri left_filter ; lAgg : ne_agg ; rAgg : ne_agg ; res : 'a eval_result }
 type 'a scoreResult = Degen | NotDegen of 'a nd_scoreResult
 
 (* Paula Dean would prefer I call this function pickButter *)
@@ -17,29 +17,33 @@ let pickBetter sRes1 sRes2 =
 				| Degen -> sRes1)
 	| Degen -> sRes2
 
+exception AllBinsEmpty
+
 let scoreSeries bins splitSeries eval =
-	let n = (Array.length bins) in
-	let backwardAccumulator = Array.make n defaultAgg in
-	let (total_agg, _) = Array.fold_right
-			(fun agg (acc, i) ->
-						let nextAcc = combine agg acc in
-						backwardAccumulator.(i) <- nextAcc;
-						(nextAcc, i - 1)) bins (defaultAgg, n - 1) in
-	if total_agg.count == bins.(0).count then Degen else
-	let (_, (bestFilter, bestLeft, bestRight, bestRes), _) = ArrayUtil.pickMinFoldLeft
-			begin fun index agg forwardAccumulator ->
-						if agg.count == 0 then
-							Skip(forwardAccumulator)
-						else
-							let leftAcc = combine agg forwardAccumulator in
-							let rightAcc, filter = backwardAccumulator.(index +1), getFilter splitSeries (index +1) in
-							let res = eval leftAcc rightAcc filter in
-							(* Printf.printf "index: %i (%i/%i) cost: %f \n" index       *)
-							(* leftAcc.count rightAcc.count res.cost;                    *)
-							NoSkip((res.cost, (filter, leftAcc, rightAcc, res)), leftAcc)
-			end defaultAgg (0, n -1) bins in
-	if (bestLeft.count == 0 || bestRight.count == 0)	then Degen
-	else NotDegen ({ filt = bestFilter ; lAgg = bestLeft ; rAgg = bestRight ; res = bestRes })
+	let calcScore index leftAcc rightAcc =
+		begin
+			let filter = getFilter splitSeries (index +1) in
+			let res = eval (NonEmptyAgg leftAcc) (NonEmptyAgg rightAcc) filter in
+			{ filt = filter ; lAgg = leftAcc ; rAgg = rightAcc ; res = res }, res.cost
+		end in
+	let _, reversedNonEmptyList = Array.fold_left
+			(fun (i, l) agg -> match agg with
+						| EmptyAgg -> i +1, l
+						| NonEmptyAgg(ne) -> i +1, (i, ne) :: l ) (0, []) bins
+	in
+	match reversedNonEmptyList with
+	| [] -> raise AllBinsEmpty
+	| (_, ne):: rest ->
+			let _, backwardsAcc = List.fold_left (fun (backAcc, accList) (i, agg) -> (ne_combine backAcc agg, (i, agg, backAcc):: accList)) (ne,[]) rest in
+			match backwardsAcc with
+			| [] -> Degen
+			| (firstIndex, agg, backAcc):: rest ->
+					let (_,(bestAnswer, _)) =	List.fold_left
+							(fun (forAcc, (bestRes, bestCost)) (i, agg, backAcc) ->
+										let (res, cost) = calcScore i forAcc backAcc in	(ne_combine forAcc agg), if cost < bestCost then (res, cost) else (bestRes, bestCost))
+							(agg, (calcScore firstIndex agg backAcc)) rest
+					in NotDegen(bestAnswer)
+;;
 
 exception DegenerateError
 exception BadPartition of string
@@ -51,7 +55,7 @@ let perform_best_partition eval tris =
 		makeSeries X centroidBounds binCount,
 		makeSeries Y centroidBounds binCount,
 		makeSeries Z centroidBounds binCount in
-	let xBins, yBins, zBins = Array.make binCount defaultAgg, Array.make binCount defaultAgg, Array.make binCount defaultAgg in
+	let xBins, yBins, zBins = Array.make binCount EmptyAgg, Array.make binCount EmptyAgg, Array.make binCount EmptyAgg in
 	List.iter (fun bTri ->
 					let center = getCenter bTri in
 					let x, y, z =
@@ -69,8 +73,4 @@ let perform_best_partition eval tris =
 		| Degen -> raise DegenerateError
 	in
 	let leftTris, rightTris = List.partition bestResults.filt tris in
-		{left_tris = leftTris; right_tris = rightTris; left_aggregate = bestResults.lAgg; right_aggregate = bestResults.rAgg; build_data = bestResults.res}
-		
-		
-		
-		
+	{ left_tris = leftTris; right_tris = rightTris; left_aggregate = bestResults.lAgg; right_aggregate = bestResults.rAgg; build_data = bestResults.res }

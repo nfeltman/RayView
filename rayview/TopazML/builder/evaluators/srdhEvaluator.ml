@@ -1,7 +1,8 @@
-open Ray_compiler;;
+open RayCompiler;;
 open ArrayUtil;;
 open Cost_evaluator;;
-open Triangle_aggregator;;
+open BoxCountAgg.A;;
+open BoxCountAgg;;
 open Box3;;
 open Build_triangle;;
 
@@ -19,19 +20,17 @@ struct
 	
 	exception EvaluatingEmptyNode
 	let begin_evaluations wholeAgg unif trans =
-		match wholeAgg.box with
-		| Empty -> raise EvaluatingEmptyNode
-		| NotEmpty(ne) ->
-				let already_connected = List.filter (Box3.ne_intersectsSeg ne) trans.con_t in
-				let connected, broken = List.fold_left (fun (conn, bro) cRay ->
-									if Box3.ne_intersectsSeg ne cRay.ray then
-										match trans.ray_sieve cRay with
-										| Skip -> conn, bro
-										| PassSimpleRay(seg) -> seg:: conn, bro
-										| PassCRayN(cray) -> conn, cray:: bro
-									else conn, bro
-						) (already_connected,[]) trans.bro_t in
-				{ con_s = connected; bro_s = broken }
+		let box = wholeAgg.box in
+		let already_connected = List.filter (Box3.ne_intersectsSeg box) trans.con_t in
+		let connected, broken = List.fold_left (fun (conn, bro) cRay ->
+							if Box3.ne_intersectsSeg box cRay.ray then
+								match trans.ray_sieve cRay with
+								| Skip -> conn, bro
+								| PassSimpleRay(seg) -> seg:: conn, bro
+								| PassCRayN(cray) -> conn, cray:: bro
+							else conn, bro
+				) (already_connected,[]) trans.bro_t in
+		{ con_s = connected; bro_s = broken }
 	
 	exception InternalLies
 	
@@ -60,18 +59,19 @@ struct
 	let errorOut x = raise InternalLies
 	
 	let evaluate_split stack leftAgg rightAgg leftFilter =
-		match leftAgg.box, rightAgg.box with
-		| (Empty, Empty | Empty, NotEmpty _ | NotEmpty _, Empty) -> raise InternalLies
-		| NotEmpty(ne_left), NotEmpty(ne_right) ->
-				let leftCenter, rightCenter = (center ne_left), (center ne_right) in
+		match leftAgg, rightAgg with 
+		| (EmptyAgg, EmptyAgg | EmptyAgg, NonEmptyAgg _ | NonEmptyAgg _, EmptyAgg) -> raise InternalLies
+		| NonEmptyAgg(ne_left), NonEmptyAgg(ne_right) ->
+				let leftBox, rightBox = ne_left.box, ne_right.box in
+				let leftCenter, rightCenter = (center leftBox), (center rightBox) in
 				let leftCloser cRay = Vectors.firstIsCloser leftCenter rightCenter cRay.ray.Vectors.originS in
-				let leftFactor, rightFactor = float_of_int leftAgg.count, float_of_int rightAgg.count in
+				let leftFactor, rightFactor = float_of_int ne_left.count, float_of_int ne_right.count in
 				
 				let sure_ltraversal, sure_rtraversal =
 					let rec connCount conn sure_ltraversal sure_rtraversal =
 						match conn with
 						| [] -> sure_ltraversal, sure_rtraversal
-						| h:: t -> connCount t (sure_ltraversal + if ne_intersectsSeg ne_left h then 1 else 0) (sure_rtraversal + if ne_intersectsSeg ne_right h then 1 else 0)
+						| h:: t -> connCount t (sure_ltraversal + if ne_intersectsSeg leftBox h then 1 else 0) (sure_rtraversal + if ne_intersectsSeg rightBox h then 1 else 0)
 					in
 					connCount stack.con_s 0 0 in
 				match stack.bro_s with
@@ -86,8 +86,8 @@ struct
 								| [] -> ()
 								| h:: t -> match getInteractionType h.intersectedFirst h.intersectedRest leftFilter with
 										| HitNeither -> begin
-													if ne_intersectsSeg ne_left h.ray then incr sure_ltraversal;
-													if ne_intersectsSeg ne_left h.ray then incr sure_ltraversal end
+													if ne_intersectsSeg leftBox h.ray then incr sure_ltraversal;
+													if ne_intersectsSeg rightBox h.ray then incr sure_rtraversal end
 										| HitBoth -> begin
 													incr rf_extra_r;
 													incr lf_extra_l;
@@ -97,11 +97,11 @@ struct
 														(incr ftb_extra_r; incr btf_extra_l) end
 										| HitOnlyLeft -> begin
 													incr sure_ltraversal;
-													if ne_intersectsSeg ne_right h.ray then
+													if ne_intersectsSeg rightBox h.ray then
 														(incr rf_extra_r; incr (if leftCloser h then btf_extra_r else ftb_extra_r)) end
 										| HitOnlyRight -> begin
 													incr sure_rtraversal;
-													if ne_intersectsSeg ne_left h.ray then
+													if ne_intersectsSeg leftBox h.ray then
 														(incr lf_extra_l; incr (if leftCloser h then ftb_extra_l else btf_extra_l)) end
 							in broCount broken;
 							let lf_total, rf_total, ftb_total, btf_total, sure_cost =

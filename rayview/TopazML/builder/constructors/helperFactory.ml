@@ -1,5 +1,6 @@
 open Build_triangle;;
-open Triangle_aggregator;;
+open BoxCountAgg.A;;
+open BoxCountAgg;;
 open Box3;;
 
 module F =
@@ -12,10 +13,6 @@ struct
 		let refs = Array.of_list list in
 		Trees.Leaf(Box3.calcBoundMapList getTriangle list, refs);;
 	
-	exception BuildingFromEmptyAgg
+	let makeBranch left right kernel ne_agg = Trees.Branch(ne_agg.box, left, right)
 	
-	let makeBranch left right kernel agg = 
-		match agg.box with
-			| Empty -> raise BuildingFromEmptyAgg
-			| NotEmpty(ne) -> Trees.Branch(ne, left, right);;
 end

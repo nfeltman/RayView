@@ -3,6 +3,7 @@ open Bvh2;;
 open ArrayUtil;;
 open Splitter;;
 open Cost_evaluator;;
+open BoxCountAgg.A;;
 
 type build_parameters = { leaf_size : int }
 
@@ -46,9 +47,9 @@ struct
 					let buildData, leftAgg, rightAgg, leftTris, rightTris =
 						if is_completely_degenerate first rest then
 							let (leftHalf, rightHalf) = splitList tris in
-							let (leftAgg, rightAgg) = (Triangle_aggregator.rollList leftHalf), (Triangle_aggregator.rollList rightHalf) in
+							let (leftAgg, rightAgg) = (rollList leftHalf), (rollList rightHalf) in
 							let midpoint = getBuildIndex (List.hd rightHalf) in
-							(CE.evaluate_split newState leftAgg rightAgg (fun bt -> getBuildIndex bt < midpoint)), leftAgg, rightAgg, leftHalf, rightHalf
+							(CE.evaluate_split newState (NonEmptyAgg leftAgg) (NonEmptyAgg rightAgg) (fun bt -> getBuildIndex bt < midpoint)), leftAgg, rightAgg, leftHalf, rightHalf
 						else
 							let bestP = Splitter.perform_best_partition (CE.evaluate_split newState) tris in
 							bestP.build_data, bestP.left_aggregate, bestP.right_aggregate, bestP.left_tris, bestP.right_tris
@@ -63,5 +64,5 @@ struct
 						let leftChild = buildNode leftTris leftAgg report.left_transition in
 						NC.makeBranch leftChild rightChild report.build_info total_agg
 		in
-		buildNode tris (Triangle_aggregator.rollList tris) initialTransition
+		buildNode tris (rollList tris) initialTransition
 end

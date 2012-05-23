@@ -84,7 +84,7 @@ namespace Topaz
                     Console.WriteLine("Usage: topaz -makebvh -build <build method> -scene <triangle source file> -buildrays <build ray source file> -o <output file> ");
                     return;
                 }
-                Func<OBJBackedBuildTriangle[], Func<OBJBackedBuildTriangle, Triangle>, Func<int, int, OBJBackedBuildTriangle>, RaySet, BackedRBVH2> build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBackedBuildTriangle, BackedRBVH2Branch, BackedRBVH2Leaf>
+                var build = GetBuildMethod<OBJBackedBuildTriangle, int, OBJBackedBuildTriangle, BackedRBVH2Branch, BackedRBVH2Leaf>
                     (dict["-build"][0], 
                     BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_5050,
                     BackedRBVHConstantFactory<OBJBackedBuildTriangle>.ONLY_FTB,
@@ -94,14 +94,20 @@ namespace Topaz
                 Func<Tuple<OBJBackedBuildTriangle[], List<Triangle>>> tris = GetOBJBuildTrianglesForBuild(dict["-scene"][0]);
                 Func<RaySet> buildrays = GetRaysFromFile(dict["-buildrays"][0]);
                 TopazStreamWriter output = GetFileWriteStream(dict["-o"][0]);
+                TopazStreamWriter output2 = GetFileWriteStream(dict["-o"][0]+".info");
                 if (build == null || tris == null || output == null) return;
                 using (output)
                 {
-                    Tuple<OBJBackedBuildTriangle[], List<Triangle>> scene = tris();
-                    IList<Triangle> backing = scene.Item2;
-                    BackedRBVH2 bvh = build(scene.Item1, objTri => backing[objTri.OBJIndex], (objIndex, counter) => new OBJBackedBuildTriangle(counter, backing[objIndex], objIndex), buildrays());
-                    bvh.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(i => backing[i]), bvh.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
-                    BVHTextParser.WriteBVH_Text(bvh, output);
+                    using (output2)
+                    {
+                        Tuple<OBJBackedBuildTriangle[], List<Triangle>> scene = tris();
+                        IList<Triangle> backing = scene.Item2;
+                        var bvh = build(scene.Item1, objTri => backing[objTri.OBJIndex], (objIndex, counter) => new OBJBackedBuildTriangle(counter, backing[objIndex], objIndex), buildrays());
+                        bvh.Item1.Accept(new ConsistencyCheck<BackedRBVH2Branch, BackedRBVH2Leaf, int>(i => backing[i]), bvh.Item1.Root.Accept(b => b.Content.BBox, l => l.Content.BBox));
+                        BVHTextParser.WriteBVH_Text(bvh.Item1, output);
+                        output2.WriteLine(bvh.Item2);
+                        Console.WriteLine(bvh.Item2);
+                    }
                 }
             }
             else if (command.Equals("-sweep"))
@@ -147,7 +153,7 @@ namespace Topaz
             return dict.ContainsKey(command) && dict[command].Count > 0;
         }
 
-        private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tree<TBranch, TLeaf>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
+        private static Func<Tri[], Func<Tri, Triangle>, Func<PrimT, int, Tri>, RaySet, Tuple<Tree<TBranch, TLeaf>,string>> GetBuildMethod<Tri, PrimT, TriB, TBranch, TLeaf>
             (string method,
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> fact5050,
             NodeFactory<TriB, TBranch, TLeaf, Tree<TBranch, TLeaf>, Unit, BoundAndCount> factFTB,
@@ -162,6 +168,7 @@ namespace Topaz
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris, 
@@ -171,13 +178,15 @@ namespace Topaz
                         TripleAASplitter.ONLY, 
                         1);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
+                    bvhInfo += " " + st.ElapsedMilliseconds;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("sah-ftb"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris,
@@ -187,13 +196,15 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
+                    bvhInfo += " " + st.ElapsedMilliseconds;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("sah-btf"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SAH50 build. "); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(tris,
@@ -203,12 +214,15 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SAH50 build. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
+                    bvhInfo += " " + st.ElapsedMilliseconds;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("rtsah"))
             {
-                return (tris, mapping, constructor, rays) => {
+                return (tris, mapping, constructor, rays) =>
+                {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting RTSAH build. "); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -219,26 +233,31 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with RTSAH build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
                     Console.WriteLine("Applying RTSAH ordering. "); st.Reset(); st.Start();
                     TreeOrdering.ApplyRTSAHOrdering(build);
                     //build.Root.Accept(br => { Console.WriteLine(br.Content.PLeft); }, le => { });
                     st.Stop(); Console.WriteLine("Done with RTSAH ordering. Time(ms) = {0}", st.ElapsedMilliseconds);
-                    return build;
+                    bvhInfo += " " + st.ElapsedMilliseconds;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("srdh-10"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDHv2 helper build. "); st.Start();
                     Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
                         (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -255,23 +274,27 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SRDHv2 main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
-                    return build;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("srdh-ftb"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length+" "+rays.ShadowQueries.Count()+"\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDHv2 helper build. "); st.Start();
                     Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
                         (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -288,23 +311,27 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SRDHv2 main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
-                    return build;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("srdh-btf"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDHv2 helper build. "); st.Start();
                     Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
                         (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -321,23 +348,27 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SRDHv2 main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
-                    return build;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("srdh-btf-ftb"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDHv2 helper build. "); st.Start();
                     Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
                         (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -354,23 +385,27 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SRDHv2 main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
-                    return build;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else if (method.ToLower().Equals("srdh-all"))
             {
                 return (tris, mapping, constructor, rays) =>
                 {
+                    string bvhInfo = tris.Length + " " + rays.ShadowQueries.Count() + "\n";
                     Stopwatch st = new Stopwatch();
                     Console.WriteLine("Starting SRDHv2 helper build. "); st.Start();
                     Tree<TBranch, TLeaf> initialBuild = GeneralBVH2Builder.BuildStructure<Tri, TriB, Unit, Unit, Unit, Unit, TBranch, TLeaf, Tree<TBranch, TLeaf>, BoundAndCount>
                         (tris, new StatelessSplitEvaluator((ln, lb, rn, rb) => (ln - 1) * lb.SurfaceArea + (rn - 1) * rb.SurfaceArea), factBVHHelper, BoundsCountAggregator<Tri>.ONLY, TripleAASplitter.ONLY, 4);
                     st.Stop(); Console.WriteLine("Done with SRDH helper build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += st.ElapsedMilliseconds;
 
                     Console.WriteLine("Starting SRDHv2 ray compilation. "); st.Reset(); st.Start();
                     ShadowRayResults<Tri> res = ShadowRayCompiler.CompileCasts<PrimT, Tri, TBranch, TLeaf>(rays.ShadowQueries.Select(q => new Segment3(q.Origin, q.Difference)), initialBuild, mapping, constructor);
                     st.Stop(); Console.WriteLine("Done with SRDH ray compilation. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " "+st.ElapsedMilliseconds;
                     
                     Console.WriteLine("Starting SRDHv2 main build. "); st.Reset(); st.Start();
                     Tree<TBranch, TLeaf> build = GeneralBVH2Builder.BuildStructure(
@@ -387,8 +422,9 @@ namespace Topaz
                         TripleAASplitter.ONLY,
                         1);
                     st.Stop(); Console.WriteLine("Done with SRDHv2 main build. Time(ms) = {0}", st.ElapsedMilliseconds);
+                    bvhInfo += " " + st.ElapsedMilliseconds;
 
-                    return build;
+                    return new Tuple<Tree<TBranch, TLeaf>, string>(build, bvhInfo);
                 };
             }
             else

@@ -1,4 +1,4 @@
-open Triangle_aggregator;;
+open BoxCountAgg.A;;
 open ArrayUtil;;
 
 type 'mem eval_result = { cost : float; memo : 'mem }
@@ -13,7 +13,7 @@ module type CostEvaluator = sig
 	type memo_data
 	type kernel_data
 	
-	val begin_evaluations : agg -> uniform_data -> transition_data -> stack_data
+	val begin_evaluations : ne_agg -> uniform_data -> transition_data -> stack_data
 	val evaluate_split : stack_data -> memo_data evaluator
 	val finish_evaluations : memo_data eval_result -> uniform_data -> stack_data -> (transition_data, kernel_data) finished_report
 

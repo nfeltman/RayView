@@ -1,7 +1,7 @@
-open Triangle_aggregator;;
+open TriangleAggregator;;
 open ArrayUtil;;
-open Build_triangle;;
-open Cost_evaluator;;
+open BuildTriangle;;
+open CostEvaluator;;
 
 module E : CostEvaluator
 with type uniform_data = unit

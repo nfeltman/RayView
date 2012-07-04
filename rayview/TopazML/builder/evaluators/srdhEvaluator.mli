@@ -1,4 +1,4 @@
-open Cost_evaluator;;
+open CostEvaluator;;
 open RayCompiler;;
 
 module E : CostEvaluator

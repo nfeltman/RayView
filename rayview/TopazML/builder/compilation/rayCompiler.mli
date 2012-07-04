@@ -1,5 +1,5 @@
 
-type cRay_n = { ray : Vectors.seg3 ; intersectedFirst : Build_triangle.bTri; intersectedRest : Build_triangle.bTri list}
+type cRay_n = { ray : Vectors.seg3 ; intersectedFirst : BuildTriangle.bTri; intersectedRest : BuildTriangle.bTri list}
 
 type ray_compile_output = { connected : Vectors.seg3 list ; broken : cRay_n list}
 

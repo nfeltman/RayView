@@ -2,6 +2,7 @@ open ArrayUtil;;
 open Vectors;;
 open Box3;;
 open Interval;;
+open BuildTriangle;;
 
 exception SplitFromEmptyAggError
 
@@ -23,7 +24,7 @@ struct
 		in int_of_float ((v -. series.less) *. series.times)
 	
 	let getFilter series threshold = match series.dim with
-		| X -> fun p -> int_of_float (((Build_triangle.getCenter p).x -. series.less) *. series.times) < threshold
-		| Y -> fun p -> int_of_float (((Build_triangle.getCenter p).y -. series.less) *. series.times) < threshold
-		| Z -> fun p -> int_of_float (((Build_triangle.getCenter p).z -. series.less) *. series.times) < threshold
+		| X -> fun p -> int_of_float (((getCenter p).x -. series.less) *. series.times) < threshold
+		| Y -> fun p -> int_of_float (((getCenter p).y -. series.less) *. series.times) < threshold
+		| Z -> fun p -> int_of_float (((getCenter p).z -. series.less) *. series.times) < threshold
 end

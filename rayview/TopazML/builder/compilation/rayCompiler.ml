@@ -2,9 +2,9 @@
 open Box3;;
 open Triangle;;
 open Trees;;
-open Build_triangle;;
+open BuildTriangle;;
 
-type cRay_n = { ray : Vectors.seg3 ; intersectedFirst : Build_triangle.bTri; intersectedRest : Build_triangle.bTri list}
+type cRay_n = { ray : Vectors.seg3 ; intersectedFirst : bTri; intersectedRest : bTri list}
 
 type ray_compile_output = { connected : Vectors.seg3 list ; broken : cRay_n list }
 

@@ -1,9 +1,9 @@
 open Bvh2;;
 open Printf;;
 
-module SAHBuilder = General_builder.Builder(SahEvaluator.E)(Sah50Factory.F);;
-module HelperBuilder = General_builder.Builder(SahEvaluator.E)(HelperFactory.F);;
-module SRDHBuilder = General_builder.Builder(SrdhEvaluator.E)(SrdhFactory.F);;
+module SAHBuilder = GeneralBuilder.Builder(SahEvaluator.E)(Sah50Factory.F);;
+module HelperBuilder = GeneralBuilder.Builder(SahEvaluator.E)(HelperFactory.F);;
+module SRDHBuilder = GeneralBuilder.Builder(SrdhEvaluator.E)(SrdhFactory.F);;
 
 exception TopazException of string
 type 'a param = Supplied of 'a | Unsupplied
@@ -80,13 +80,13 @@ let runTopaz () =
 							let rays = MainHelpers.loadRays build_rays_loc in
 							printf "Rays loaded! Time = %f \n" (Timer.reset_s timer); flush_all();
 							
-							let bTris = Build_triangle.createBuildTriangleList tris in
-							let helperBVH = HelperBuilder.build_bvh { General_builder.leaf_size = 4 } bTris () () in
+							let bTris = BuildTriangle.createBuildTriangleList tris in
+							let helperBVH = HelperBuilder.build_bvh { GeneralBuilder.leaf_size = 4 } bTris () () in
 							printf "Helper bvh built. Time = %f \n" (Timer.reset_s timer); flush_all();
 							let compiledRays = RayCompiler.compileRays helperBVH (Array.map fst rays) in
 							printf "Compiled rays. Time = %f \n" (Timer.reset_s timer); flush_all();
 							
-							let ml_ref_bvh = SRDHBuilder.build_bvh { General_builder.leaf_size = 1 } bTris () (SrdhEvaluator.getInitialTransition compiledRays) in
+							let ml_ref_bvh = SRDHBuilder.build_bvh { GeneralBuilder.leaf_size = 1 } bTris () (SrdhEvaluator.getInitialTransition compiledRays) in
 							printf "BVH built from scratch. Time = %f \n" (Timer.reset_s timer); flush_all();
 							
 							let ml_bvh = Trees.foldMapTree BvhReader.branchMapFold (BvhReader.leafMapFold (Array.get tris)) ml_ref_bvh in

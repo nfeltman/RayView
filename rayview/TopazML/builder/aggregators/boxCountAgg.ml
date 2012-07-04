@@ -1,4 +1,4 @@
-open Build_triangle;;
+open BuildTriangle;;
 open Box3;;
 open ArrayUtil;;
 

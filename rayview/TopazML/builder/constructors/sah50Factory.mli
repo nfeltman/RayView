@@ -1,5 +1,5 @@
 open Trees;;
-open Node_constructor;;
+open NodeConstructor;;
 
 module F : NodeFactory 
 with type leafType = int array
@@ -11,7 +11,7 @@ sig
 	type branchType = Kernels.kernelType
 	type branchBuildData = unit
 	
-	val makeLeaf : Build_triangle.bTri array -> ArrayUtil.range -> (branchType, leafType) tree
+	val makeLeaf : BuildTriangle.bTri array -> ArrayUtil.range -> (branchType, leafType) tree
 	val makeBranch : (branchType, leafType) tree -> (branchType, leafType) tree -> branchBuildData -> (branchType, leafType) tree
 end
 

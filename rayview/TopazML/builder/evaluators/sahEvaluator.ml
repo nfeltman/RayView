@@ -1,8 +1,8 @@
 open BoxCountAgg.A;;
 open BoxCountAgg;;
 open ArrayUtil;;
-open Build_triangle;;
-open Cost_evaluator;;
+open BuildTriangle;;
+open CostEvaluator;;
 
 
 module E =

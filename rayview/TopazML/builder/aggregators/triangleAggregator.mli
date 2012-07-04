@@ -1,4 +1,4 @@
-open Build_triangle;;
+open BuildTriangle;;
 
 module type Aggregator = sig
 	type ne_agg

@@ -1,7 +1,7 @@
 open ArrayUtil;;
 open BoxCountAgg.A;;
-open Cost_evaluator;;
-open Build_triangle;;
+open CostEvaluator;;
+open BuildTriangle;;
 open Box3;;
 open SplitSeries.SplitSeries;;
 

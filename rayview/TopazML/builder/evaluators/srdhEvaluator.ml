@@ -1,10 +1,10 @@
 open RayCompiler;;
 open ArrayUtil;;
-open Cost_evaluator;;
+open CostEvaluator;;
 open BoxCountAgg.A;;
 open BoxCountAgg;;
 open Box3;;
-open Build_triangle;;
+open BuildTriangle;;
 
 module E =
 struct
